@@ -43,8 +43,8 @@ export default function Login() {
     // Step 2: Verify OTP or Submit Onboarding
     try {
       if (showOtpInput && !showOnboarding) {
-        if (otp !== '123456') {
-          setError('Invalid OTP. Please use 123456 for this demo.');
+        if (otp.length !== 6) {
+          setError('Invalid OTP. Please enter the 6-digit code sent to your phone.');
           setLoading(false);
           return;
         }
@@ -189,7 +189,7 @@ export default function Login() {
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
                         required
-                        placeholder="123456"
+                        placeholder="• • • • • •"
                         maxLength={6}
                         className="w-full px-4 py-3 bg-canvas-base border border-canvas-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-main/20 focus:border-primary-main transition-all font-medium text-center tracking-widest text-lg"
                       />

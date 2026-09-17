@@ -13,7 +13,7 @@ async def create_staff():
     supabase = await get_supabase()
     
     # Check if super admin already exists to prevent duplicates
-    resp = await supabase.table("users").select("id").eq("name", "rit").execute()
+    resp = await supabase.table("users").select("id").eq("name", "system_admin").execute()
     if resp.data:
         print("Staff accounts already exist.")
         return
@@ -21,7 +21,7 @@ async def create_staff():
     staff_users = [
         {
             "id": "10000000-0000-0000-0000-000000000001",
-            "name": "rit",
+            "name": "system_admin",
             "role_type": "super_admin",
             "phone_number": "+910000000001",
             "created_at": datetime.utcnow().isoformat()
