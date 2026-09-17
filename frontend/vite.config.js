@@ -9,7 +9,7 @@ export default defineConfig({
   ],
   server: {
     allowedHosts: [
-      'desirae-nonfeldspathic-pinnately.ngrok-free.dev'
+      '<your-ngrok-domain>.ngrok-free.dev'
     ],
     proxy: {
       '/api': {

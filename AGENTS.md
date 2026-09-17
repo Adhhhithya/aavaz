@@ -8,7 +8,7 @@
 - Python backend: PEP8, type hints mandatory on all function signatures
 - Async-first: all I/O (DB, external API, webhook) calls must be async
 - No business logic in route handlers — routes call `services/`, services call `models/`
-- **Current Ngrok URL:** `https://desirae-nonfeldspathic-pinnately.ngrok-free.dev` (Use this for all webhooks and external links)
+- **Current Ngrok URL:** `<your-ngrok-domain>.ngrok-free.dev` (Use this for all webhooks and external links)
 
 ## Naming
 - `snake_case` for Python, `camelCase` for JS/React
