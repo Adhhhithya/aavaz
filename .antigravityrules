@@ -1,0 +1,37 @@
+# .antigravityrules
+
+## General
+- Python backend: PEP8, type hints mandatory on all function signatures
+- Async-first: all I/O (DB, external API, webhook) calls must be async
+- No business logic in route handlers — routes call services/, services call models/
+
+## Naming
+- snake_case for Python, camelCase for JS/React
+- DB tables: plural snake_case (e.g., `interactions`, `cases`)
+- API routes: /api/v1/{resource}/{action}
+
+## Data & Privacy
+- Never log raw PII (name, phone, transcript text) to console/stdout
+- All PII fields must pass through pii_redaction service before any non-district-tier response
+- Raw audio/transcripts only in Supabase Storage buckets, never inline in API responses
+
+## Scoring Pipeline
+- Every score computation must return a breakdown object (component values + weights), never just a final number — required for XAI compliance
+- All scoring functions must be pure (no side effects) and independently testable
+
+## Error Handling
+- All external API calls (Bolna, Pushbullet, LLM wrapper) wrapped in try/except with fallback/retry, never allowed to crash the intake pipeline
+- Failed scoring on one signal (e.g., acoustic fails) must degrade gracefully — reweight remaining signals, do not block the interaction record
+
+## Testing
+- Minimum: unit tests for fusion.py, rules_engine.py, auto_assign.py, escalation.py before merging
+- Webhook handlers require a mocked-payload test before integration testing
+
+## Git/Commits
+- Conventional commits (feat:, fix:, docs:, refactor:)
+- No direct commits to main; feature branches only
+
+## Mobile (Expo)
+- Test all features in Expo Go before assuming they need a custom dev client
+- Do not add native modules without first checking Expo Go compatibility
+- expo-location and expo-notifications are Expo Go-safe; verify any new native dependency against Expo's compatibility docs before adding

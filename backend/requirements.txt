@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+supabase
+pydantic>=2.9.0
+pydantic-settings
+httpx
+python-multipart
+playwright
+groq
