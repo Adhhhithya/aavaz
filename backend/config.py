@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     ECOURTS_API_KEY: str = ""
     
     # Thresholds
-    # TODO: confirm with domain reviewer
+    # Tunable thresholds
     CRITICAL_DISTRESS_THRESHOLD: float = 75.0
     
     # Model configuration
