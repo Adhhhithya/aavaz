@@ -5,8 +5,18 @@ class Location(BaseModel):
     lat: float
     lng: float
 
-class AppRegistrationRequest(BaseModel):
+class OtpRequestPayload(BaseModel):
     phone_number: str = Field(..., description="E.164 formatted phone number")
+
+class OtpVerifyPayload(BaseModel):
+    phone_number: str = Field(..., description="E.164 formatted phone number")
+    code: str = Field(..., min_length=4, max_length=8, description="The OTP digits as submitted by the user")
+
+class AppRegistrationRequest(BaseModel):
+    # phone_number is intentionally NOT accepted here (S2): it is derived
+    # server-side from the caller's phone-verified token instead, so a client
+    # can never register an account for a phone number it hasn't proven it
+    # controls. See api/intake/app_routes.py.
     name: str
     role_type: str = Field(..., description="victim, witness, or family")
     consent_given: bool

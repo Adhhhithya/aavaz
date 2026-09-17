@@ -115,11 +115,10 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
             try {
               setIsLoading(true);
               setCnrNumber(cnr);
-              // Call the new single synchronous API to auto-solve and scrape
-              const res = await api.post('/api/v1/ecourts/search', { 
-                cnr,
-                user_id: userProfile?.id
-              });
+              // Call the new single synchronous API to auto-solve and scrape.
+              // S2: user_id is no longer sent — the backend attaches the result
+              // to the authenticated victim's own account.
+              const res = await api.post('/api/v1/ecourts/search', { cnr });
               
               if (res.success) {
                 Alert.alert('Success', 'Case fetched and parsed successfully!');

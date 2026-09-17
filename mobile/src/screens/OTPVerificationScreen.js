@@ -83,13 +83,6 @@ export default function OTPVerificationScreen({
     }, 600);
   };
 
-  const handleAutoFillTestOtp = () => {
-    const testDigits = ['1', '2', '3', '4', '5', '6'];
-    setOtp(testDigits);
-    setError('');
-    submitVerification(Array(6).fill('0').join('')); // Auto-fill mock for demo
-  };
-
   const handleResend = () => {
     if (timer === 0) {
       setTimer(45);
@@ -128,18 +121,10 @@ export default function OTPVerificationScreen({
             </TouchableOpacity>
           </View>
 
-          {/* Test OTP Helper Banner */}
-          {__DEV__ && (
-            <TouchableOpacity
-              style={styles.testBadge}
-              onPress={handleAutoFillTestOtp}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.testBadgeText}>
-                🧪 Test Mode: Tap to auto-fill mock OTP
-              </Text>
-            </TouchableOpacity>
-          )}
+          {/* S2: the dev "auto-fill mock OTP" button was removed here — OTP
+              verification is now real, so a hardcoded code can no longer
+              succeed. In development, the code is logged server-side by
+              SyntheticOtpProvider (see backend/services/otp_providers.py). */}
 
           {/* 6 Individual Rounded Square Boxes */}
           <View style={styles.otpGrid}>

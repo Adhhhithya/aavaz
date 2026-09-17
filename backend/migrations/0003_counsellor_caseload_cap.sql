@@ -1,0 +1,32 @@
+-- 0003_counsellor_caseload_cap.sql
+-- S5 (Node registration parity) — adds a caseload cap to `counsellors`.
+--
+-- This is an ADDITIVE migration only: it adds one nullable-safe column (with
+-- a default, so every existing row is valid immediately) to an existing
+-- table. It does not alter, rename, or drop any existing column, and it does
+-- not touch any other table.
+--
+-- Why this is needed: docs/spec/AAVAZ_TECHNICAL_WORKFLOW_V0.2.pdf, Workflow A
+-- step A6, requires counsellor assignment to respect "lowest active caseload
+-- below the cap (default 80)" and to fall back to an unassigned/supervisor
+-- task when no counsellor is under the cap. The existing
+-- `backend/api/assignment/auto_assign.py` algorithm has no cap concept at
+-- all — it will always assign to *some* counsellor in the district
+-- regardless of how large `current_caseload` already is. See
+-- docs/S5_REGISTRATION_MIGRATION.md for the full comparison. This migration
+-- only adds the column; enforcing the cap is Node application logic
+-- (apps/core-api/src/cases/assignment.service.ts), not a DB constraint —
+-- existing FastAPI behavior is intentionally left unchanged (it continues to
+-- ignore this column, exactly as it ignores every other column it doesn't
+-- select).
+--
+-- Per project instruction (same as 0002_otp_codes.sql), this file is NOT
+-- applied automatically or against any production database as part of this
+-- change. Apply it the same way backend/schema.sql,
+-- backend/migrations/0002_otp_codes.sql, and scripts/apply_rls.sql are
+-- applied today (per README.md: run it in the Supabase SQL editor for the
+-- target project) before relying on cap-aware assignment in that
+-- environment.
+
+ALTER TABLE counsellors
+    ADD COLUMN IF NOT EXISTS caseload_cap INT NOT NULL DEFAULT 80;

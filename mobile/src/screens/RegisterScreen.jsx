@@ -15,7 +15,7 @@ import { User, Calendar, PhoneCall, ShieldCheck, Heart } from 'lucide-react-nati
 import { DS } from '../theme/designSystem';
 import { api } from '../services/api';
 
-export default function RegisterScreen({ phoneNumber, onCompleteSetup }) {
+export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onCompleteSetup }) {
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [emergencyName, setEmergencyName] = useState('');
@@ -26,10 +26,16 @@ export default function RegisterScreen({ phoneNumber, onCompleteSetup }) {
 
   const handleSubmit = async () => {
     if (!isValid) return;
+    if (!phoneVerifiedToken) {
+      alert('Your phone verification has expired. Please start over.');
+      return;
+    }
     try {
       setLoading(true);
+      // S2: phone_number is no longer sent here — the backend derives it from
+      // the phone-verified token proving this device just completed OTP
+      // verification for that number.
       const data = {
-        phone_number: phoneNumber || '+919999999999',
         name: fullName.trim(),
         role_type: 'victim',
         consent_given: true,
@@ -37,7 +43,9 @@ export default function RegisterScreen({ phoneNumber, onCompleteSetup }) {
         location: { lat: 18.5204, lng: 73.8567 } // Optional location mock
       };
 
-      const res = await api.post('/api/v1/intake/app/register', data);
+      const res = await api.post('/api/v1/intake/app/register', data, {
+        authorization: phoneVerifiedToken,
+      });
 
       onCompleteSetup({
         fullName: fullName.trim(),
@@ -48,6 +56,7 @@ export default function RegisterScreen({ phoneNumber, onCompleteSetup }) {
         },
         id: res?.user_id || res?.id,
         case_id: res?.case_id,
+        token: res?.token,
       });
     } catch (e) {
       alert("Registration failed: " + e.message);

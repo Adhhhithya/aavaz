@@ -4,7 +4,7 @@ import { ShieldAlert, ArrowRight, HeartPulse } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function VictimDashboard() {
-  const { user } = useAuth();
+  const { user, authFetch } = useAuth();
   const [greeting, setGreeting] = useState('');
   const [scoreData, setScoreData] = useState(null);
 
@@ -13,17 +13,19 @@ export default function VictimDashboard() {
     if (hour < 12) setGreeting('Good morning');
     else if (hour < 18) setGreeting('Good afternoon');
     else setGreeting('Good evening');
-    
-    // Fetch score if user exists
+
+    // Fetch score if user exists. S2: uses authFetch so the victim's session
+    // token is attached — /api/v1/intake/app/cases/{id} and
+    // /api/v1/cases/{id}/progress both require it (see
+    // docs/AAVAZ_IMPLEMENTATION_AUDIT.md).
     if (user?.id) {
-      // First get the active case
-      fetch(`/api/v1/cases?user_id=${user.id}`, {
+      authFetch(`/api/v1/intake/app/cases/${user.id}`, {
         headers: { 'ngrok-skip-browser-warning': '1' }
       })
       .then(res => res.json())
       .then(data => {
-        if (data.length > 0) {
-          return fetch(`/api/v1/cases/${data[0].id}/progress`, {
+        if (data.cases && data.cases.length > 0) {
+          return authFetch(`/api/v1/cases/${data.cases[0].id}/progress`, {
             headers: { 'ngrok-skip-browser-warning': '1' }
           });
         }
@@ -35,7 +37,7 @@ export default function VictimDashboard() {
       })
       .catch(err => console.error("Error fetching score:", err));
     }
-  }, [user]);
+  }, [user, authFetch]);
 
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

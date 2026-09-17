@@ -7,3 +7,4 @@ httpx
 python-multipart
 playwright
 groq
+reportlab

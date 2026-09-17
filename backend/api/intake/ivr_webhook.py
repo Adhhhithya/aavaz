@@ -2,9 +2,10 @@ from fastapi import APIRouter, HTTPException, Depends
 from models.intake_models import BolnaWebhookPayload, BolnaDistressAssessment, BolnaPreCallPayload
 from services.supabase_client import get_supabase
 from api.scoring.fusion import calculate_dynamic_score
+from api.auth.webhook_auth import verify_bolna_webhook
 import logging
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verify_bolna_webhook)])
 logger = logging.getLogger(__name__)
 
 @router.post("/webhook")

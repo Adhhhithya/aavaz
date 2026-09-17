@@ -40,6 +40,28 @@ interface UserRow {
   createdAt: Date;
 }
 
+interface CounsellorRow {
+  id: string;
+  name: string;
+  district: string;
+  languages: string[];
+  currentCaseload: number | null;
+  caseloadCap: number;
+}
+
+interface CaseRow {
+  id: string;
+  userId: string | null;
+  caseType: string;
+  intakeChannel: string;
+  caseStage: string | null;
+  assignedCounsellorId: string | null;
+  currentDistressScore: number | null;
+  priorityRank: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 let idCounter = 0;
 function nextId(): string {
   idCounter += 1;
@@ -49,6 +71,8 @@ function nextId(): string {
 export class FakePrismaService {
   otpRows: OtpCodeRow[] = [];
   userRows: UserRow[] = [];
+  counsellorRows: CounsellorRow[] = [];
+  caseRows: CaseRow[] = [];
 
   otpCode = {
     create: async ({ data }: { data: Partial<OtpCodeRow> }): Promise<OtpCodeRow> => {
@@ -133,4 +157,73 @@ export class FakePrismaService {
       return row;
     },
   };
+
+  counsellor = {
+    // Scoped by district only — the real query can't compare two columns of
+    // the same row (currentCaseload < caseloadCap) in a `where` filter
+    // either, so AssignmentService applies the per-row cap in memory after
+    // this call. See assignment.service.ts.
+    findMany: async (args: {
+      where: { district: string };
+      orderBy: { currentCaseload: 'asc' | 'desc' };
+    }): Promise<CounsellorRow[]> => {
+      const matches = this.counsellorRows.filter((c) => c.district === args.where.district);
+      matches.sort((a, b) =>
+        args.orderBy.currentCaseload === 'asc'
+          ? (a.currentCaseload ?? 0) - (b.currentCaseload ?? 0)
+          : (b.currentCaseload ?? 0) - (a.currentCaseload ?? 0),
+      );
+      return matches.map((c) => ({ ...c }));
+    },
+
+    // Mirrors the real atomic-conditional-update pattern in
+    // assignment.service.ts: only increments and reports success if the
+    // WHERE clause (id + still-under-cap) still matches at the moment of
+    // the "write" — the fake applies this synchronously, which is enough to
+    // exercise the retry-next-candidate logic in unit tests. Real
+    // concurrent-race safety is proven against real Postgres in the
+    // integration suite, not here.
+    updateMany: async (args: {
+      where: { id: string; currentCaseload: { lt: number } };
+      data: { currentCaseload: { increment: number } };
+    }): Promise<{ count: number }> => {
+      const row = this.counsellorRows.find((c) => c.id === args.where.id);
+      if (!row || (row.currentCaseload ?? 0) >= args.where.currentCaseload.lt) {
+        return { count: 0 };
+      }
+      row.currentCaseload = (row.currentCaseload ?? 0) + args.data.currentCaseload.increment;
+      return { count: 1 };
+    },
+  };
+
+  case = {
+    create: async ({ data }: { data: Partial<CaseRow> }): Promise<CaseRow> => {
+      const row: CaseRow = {
+        id: nextId(),
+        userId: data.userId ?? null,
+        caseType: data.caseType!,
+        intakeChannel: data.intakeChannel!,
+        caseStage: data.caseStage ?? 'registered',
+        assignedCounsellorId: data.assignedCounsellorId ?? null,
+        currentDistressScore: data.currentDistressScore ?? 0,
+        priorityRank: data.priorityRank ?? 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.caseRows.push(row);
+      return row;
+    },
+  };
+
+  /**
+   * Not a real transaction — no atomicity or isolation, just runs the
+   * callback against this same fake instance. Enough to unit-test
+   * RegistrationService's orchestration logic (what gets called, in what
+   * order, with what data); it does NOT prove rollback-on-failure, which is
+   * why that guarantee is proven against real Postgres in
+   * test/registration.integration-spec.ts instead, not claimed here.
+   */
+  async $transaction<T>(fn: (tx: this) => Promise<T>): Promise<T> {
+    return fn(this);
+  }
 }

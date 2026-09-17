@@ -1,16 +1,28 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from services.supabase_client import get_supabase
+from api.auth.dependencies import CurrentStaffUser, require_roles
 from typing import List
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# Counsellors may only see their own queue/cases; district/state/national/super_admin
+# have broader oversight per the original access matrix (SYSTEM_SPEC.md 2.2).
+_ALLOWED_ROLES = ("counsellor", "district_admin", "state_admin", "national_admin", "super_admin")
+
+
 @router.get("/queue/{counsellor_id}")
-async def get_counsellor_queue(counsellor_id: str):
+async def get_counsellor_queue(
+    counsellor_id: str,
+    current_user: CurrentStaffUser = Depends(require_roles(*_ALLOWED_ROLES)),
+):
     """
     Returns the assigned cases for a counsellor, sorted by distress score.
     """
+    if current_user.role == "counsellor" and current_user.id != counsellor_id:
+        raise HTTPException(status_code=403, detail="Counsellors may only view their own queue")
+
     supabase = await get_supabase()
     try:
         resp = await supabase.table("cases")\
@@ -35,7 +47,10 @@ async def get_counsellor_queue(counsellor_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/case/{case_id}")
-async def get_case_detail(case_id: str):
+async def get_case_detail(
+    case_id: str,
+    current_user: CurrentStaffUser = Depends(require_roles(*_ALLOWED_ROLES)),
+):
     """
     Returns case detail, interactions history, and engagement profile.
     """
@@ -43,7 +58,10 @@ async def get_case_detail(case_id: str):
     try:
         case_resp = await supabase.table("cases").select("*").eq("id", case_id).single().execute()
         case_data = case_resp.data
-        
+
+        if current_user.role == "counsellor" and case_data.get("assigned_counsellor_id") != current_user.id:
+            raise HTTPException(status_code=403, detail="This case is not assigned to you")
+
         u_resp = await supabase.table("users").select("name, phone_number, role_type").eq("id", case_data["user_id"]).single().execute()
         if u_resp.data:
             case_data["user_name"] = u_resp.data["name"]
@@ -67,6 +85,8 @@ async def get_case_detail(case_id: str):
             "interactions": interactions,
             "engagement_profile": profile
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching case detail: {e}")
         raise HTTPException(status_code=500, detail=str(e))

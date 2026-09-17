@@ -1,13 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from services.supabase_client import get_supabase
 from services.pii_redaction import apply_tier_redaction
+from api.auth.dependencies import CurrentStaffUser, require_roles
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.get("/stats")
-async def get_national_dashboard():
+async def get_national_dashboard(
+    current_user: CurrentStaffUser = Depends(require_roles("national_admin", "super_admin")),
+):
     """
     Returns aggregate stats for the national dashboard. PII is redacted.
     """

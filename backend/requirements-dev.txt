@@ -1,0 +1,5 @@
+# Test-only dependencies. Install with: pip install -r requirements-dev.txt
+# (this pulls in requirements.txt too).
+-r requirements.txt
+pytest
+pytest-asyncio

@@ -1,32 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ArrowLeft, Activity, Scale, Clock, AlertTriangle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function CaseDetail() {
   const { caseId } = useParams();
-  const { user } = useAuth();
+  const { logout, authFetch } = useAuth();
+  const navigate = useNavigate();
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // In MVP, we fetch the progress data which includes the trend
-    fetch(`/api/v1/cases/${caseId}/progress`, {
+    // S3: uses authFetch so the staff bearer token is attached — this route
+    // requires it (S1's require_roles + counsellor-must-own-the-case check).
+    // 401 means the session itself is invalid/expired; 403 means this
+    // counsellor is authenticated but not assigned to this case — the server
+    // is the authority on both, this page never assumes access client-side.
+    authFetch(`/api/v1/cases/${caseId}/progress`, {
       headers: { 'ngrok-skip-browser-warning': '1' }
     })
-    .then(res => res.json())
+    .then(res => {
+      if (res.status === 401) {
+        logout();
+        navigate('/login');
+        return null;
+      }
+      if (res.status === 403) {
+        setError('You do not have access to this case.');
+        setLoading(false);
+        return null;
+      }
+      if (!res.ok) {
+        setError('Case not found.');
+        setLoading(false);
+        return null;
+      }
+      return res.json();
+    })
     .then(data => {
+      if (!data) return;
       setCaseData(data);
       setLoading(false);
     })
     .catch(err => {
       console.error(err);
+      setError('Failed to load case details.');
       setLoading(false);
     });
-  }, [caseId]);
+  }, [caseId, authFetch, navigate, logout]);
 
   if (loading) return <div className="p-10 text-center text-text-muted font-medium">Loading Case Details...</div>;
+  if (error) return <div className="p-10 text-center text-accent-sos font-semibold">{error}</div>;
   if (!caseData) return <div className="p-10 text-center text-text-muted font-medium">Case not found.</div>;
 
   return (

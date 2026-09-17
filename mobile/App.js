@@ -15,7 +15,7 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import BreathingScreen from './src/screens/BreathingScreen';
 
 // Services
-import { api } from './src/services/api';
+import { api, setAuthToken, clearAuthToken } from './src/services/api';
 
 // Navigation components
 import FloatingTabBar from './src/components/FloatingTabBar';
@@ -83,15 +83,15 @@ export default function App() {
   useEffect(() => {
     async function checkSession() {
       const session = await storage.getSession();
-      if (session && session.token) {
-        if (session.is_new_user) {
-          setAuthData((prev) => ({ ...prev, ...session }));
-          setCurrentScreen('Onboarding');
-        } else {
-          setAuthData((prev) => ({ ...prev, ...session }));
-          setCurrentScreen('MainApp');
-        }
+      // S2: only a real victim_session token (issued after OTP verification or
+      // registration) restores MainApp — a lingering phone_verified token (from
+      // an interrupted registration) is not a session and must not be trusted.
+      if (session && session.token && session.token_type === 'victim_session') {
+        setAuthToken(session.token);
+        setAuthData((prev) => ({ ...prev, ...session }));
+        setCurrentScreen('MainApp');
       } else {
+        await storage.clearSession();
         setCurrentScreen('Login');
       }
     }
@@ -99,52 +99,83 @@ export default function App() {
   }, []);
 
   // Handlers
-  const handleSendOTP = ({ countryCode, phoneNumber }) => {
-    setAuthData((prev) => ({ ...prev, countryCode, phoneNumber }));
-    setCurrentScreen('OTP');
+  const handleSendOTP = async ({ countryCode, phoneNumber }) => {
+    const formattedPhone = `${countryCode}${phoneNumber}`;
+    try {
+      await api.post('/api/v1/auth/otp/request', { phone_number: formattedPhone });
+      setAuthData((prev) => ({ ...prev, countryCode, phoneNumber }));
+      setCurrentScreen('OTP');
+    } catch (e) {
+      alert('Could not send a verification code. Please try again.');
+    }
   };
 
   const handleVerifySuccess = async (otpCode) => {
     try {
       const formattedPhone = `${authData.countryCode}${authData.phoneNumber}`;
-      const res = await api.post('/api/v1/auth/verify_otp', { phone_number: formattedPhone });
-      
-      const isNew = res.is_new_user;
-      
-      const session = {
-        token: 'mock_jwt_token_' + Date.now(), // Real auth would issue token here
-        phone: formattedPhone,
-        is_new_user: isNew,
-        userProfile: res.userProfile || {
-          name: '',
-          phone: formattedPhone,
-        },
-      };
+      const res = await api.post('/api/v1/auth/otp/verify', {
+        phone_number: formattedPhone,
+        code: otpCode,
+      });
 
-      await storage.saveSession(session);
-      setAuthData((prev) => ({ ...prev, ...session }));
+      const isNew = res.is_new_user;
 
       if (isNew) {
+        // res.token is a short-lived phone-verified token, NOT a session — it
+        // only authorizes the upcoming call to /register. It is deliberately
+        // not persisted to storage.
+        setAuthData((prev) => ({
+          ...prev,
+          phone: formattedPhone,
+          is_new_user: true,
+          phoneVerifiedToken: res.token,
+        }));
         setCurrentScreen('Onboarding');
-      } else {
-        setCurrentScreen('MainApp');
+        return;
       }
+
+      const session = {
+        token: res.token,
+        token_type: res.token_type,
+        phone: formattedPhone,
+        is_new_user: false,
+        userProfile: res.userProfile || { name: '', phone: formattedPhone },
+      };
+
+      setAuthToken(res.token);
+      await storage.saveSession(session);
+      setAuthData((prev) => ({ ...prev, ...session }));
+      setCurrentScreen('MainApp');
     } catch (e) {
-      alert("Verification failed: " + e.message);
+      alert('Verification failed: incorrect or expired code.');
     }
   };
 
-  const handleCompleteOnboarding = async (profileData) => {
-    const updated = await storage.updateProfile(profileData);
-    setAuthData((prev) => ({
-      ...prev,
-      userProfile: { ...(prev.userProfile || {}), ...profileData },
+  const handleCompleteOnboarding = async (result) => {
+    // RegisterScreen performs the actual POST /register call (it holds the
+    // phone-verified token) and passes back the issued victim_session token.
+    const session = {
+      token: result.token,
+      token_type: 'victim_session',
+      phone: authData.phone,
       is_new_user: false,
-    }));
+      userProfile: {
+        fullName: result.fullName,
+        age: result.age,
+        emergencyContact: result.emergencyContact,
+        id: result.id,
+        case_id: result.case_id,
+        phone: authData.phone,
+      },
+    };
+    setAuthToken(result.token);
+    await storage.saveSession(session);
+    setAuthData((prev) => ({ ...prev, ...session }));
     setCurrentScreen('MainApp');
   };
 
   const handleLogout = async () => {
+    clearAuthToken();
     await storage.clearSession();
     setAuthData({
       countryCode: '+91',
@@ -186,9 +217,10 @@ export default function App() {
         )}
 
         {currentScreen === 'Onboarding' && (
-          <RegisterScreen 
-            phoneNumber={authData.countryCode + authData.phoneNumber}
-            onCompleteSetup={handleCompleteOnboarding} 
+          <RegisterScreen
+            phoneNumber={authData.phone}
+            phoneVerifiedToken={authData.phoneVerifiedToken}
+            onCompleteSetup={handleCompleteOnboarding}
           />
         )}
 

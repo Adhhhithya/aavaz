@@ -19,6 +19,7 @@ import { PhoneVerifiedNumber, Victim } from './identity.decorators';
 import { IdentityService } from './identity.service';
 import { ExpiredOtpError, InvalidOtpError, OtpService, RateLimitedError } from './otp.service';
 import { PhoneVerifiedGuard } from './phone-verified.guard';
+import { RegistrationService } from './registration.service';
 import { CurrentVictim, TokenService } from './token.service';
 import { VictimAuthGuard } from './victim-auth.guard';
 
@@ -44,6 +45,7 @@ export class IdentityController {
     private readonly otpService: OtpService,
     private readonly tokenService: TokenService,
     private readonly identityService: IdentityService,
+    private readonly registrationService: RegistrationService,
   ) {}
 
   @Post('otp/request')
@@ -101,10 +103,19 @@ export class IdentityController {
   async register(
     @Body() dto: RegisterDto,
     @PhoneVerifiedNumber() phoneNumber: string,
-  ): Promise<{ status: string; userId: string; token: string; tokenType: string }> {
-    const user = await this.identityService.registerVictim(phoneNumber, dto);
+  ): Promise<{ status: string; userId: string; caseId: string; token: string; tokenType: string }> {
+    // S5: registration now creates identity + case + counsellor assignment
+    // atomically — see registration.service.ts and
+    // docs/S5_REGISTRATION_MIGRATION.md. `caseId` is new in the response
+    // compared to S4. Field names stay camelCase (idiomatic NestJS/JSON),
+    // which is a KNOWN, documented mismatch with FastAPI's snake_case
+    // response (`user_id`/`case_id`/`token_type`) that the existing mobile
+    // client expects — see the S5 doc's "API compatibility" section. This
+    // endpoint is still not wired to any real client (Phase 8/9), so the
+    // mismatch has no live effect yet.
+    const { user, case: caseRow } = await this.registrationService.register(phoneNumber, dto);
     const token = this.tokenService.issueVictimSessionToken(user.id, phoneNumber);
-    return { status: 'success', userId: user.id, token, tokenType: 'victim_session' };
+    return { status: 'success', userId: user.id, caseId: caseRow.id, token, tokenType: 'victim_session' };
   }
 
   @UseGuards(VictimAuthGuard)

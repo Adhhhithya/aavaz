@@ -2,12 +2,13 @@ from fastapi import APIRouter, HTTPException, Depends
 from models.intake_models import PushbulletWebhookPayload
 from services.supabase_client import get_supabase
 from config import settings
+from api.auth.webhook_auth import verify_pushbullet_webhook
 import logging
 import json
 from datetime import datetime, timezone
 from groq import AsyncGroq
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verify_pushbullet_webhook)])
 logger = logging.getLogger(__name__)
 
 @router.post("/webhook")

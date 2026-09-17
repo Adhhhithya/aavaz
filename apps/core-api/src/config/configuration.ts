@@ -47,5 +47,11 @@ export default registerAs(
     victimSessionSecret: process.env.VICTIM_SESSION_SECRET ?? '',
     victimSessionTtlSeconds: int(process.env.VICTIM_SESSION_TTL_SECONDS, 86400),
     phoneVerifiedTokenTtlSeconds: int(process.env.PHONE_VERIFIED_TOKEN_TTL_SECONDS, 600),
+    // No global counsellor-caseload-cap setting here on purpose: v0.2's data
+    // model (§12) makes `caseload_cap` a per-staff-row column, not a
+    // system-wide constant, so it lives on `counsellors.caseload_cap`
+    // (backend/migrations/0003_counsellor_caseload_cap.sql) — each row
+    // defaults to 80 at the database level — and is read per-row by
+    // cases/assignment.service.ts, not from environment configuration.
   }),
 );

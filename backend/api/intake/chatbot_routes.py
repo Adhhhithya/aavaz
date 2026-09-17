@@ -1,13 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 import asyncio
 import logging
+
+from api.auth.victim_dependencies import CurrentVictim, get_current_victim
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 class ChatMessage(BaseModel):
-    user_id: str
+    # user_id intentionally removed (S2): derived from the authenticated
+    # victim's session instead of trusted client input.
     session_id: str
     message: str
 
@@ -16,26 +19,29 @@ from services.llm_parser import generate_chat_response
 from api.scoring.fusion import calculate_dynamic_score
 
 @router.post("/message")
-async def handle_chatbot_message(payload: ChatMessage):
+async def handle_chatbot_message(
+    payload: ChatMessage,
+    current_victim: CurrentVictim = Depends(get_current_victim),
+):
     """
     Chatbot LLM endpoint using Gemini.
     Returns dynamic responses for mobile app and saves to DB.
     """
-    logger.info(f"Received chat from {payload.user_id}: {payload.message}")
-    
+    logger.info(f"Received chat from {current_victim.id}")
+
     reply = "I'm having trouble connecting right now, but I'm here for you. Please try again in a moment."
     emotion = "neutral"
-    
+
     try:
         from services.supabase_client import get_supabase
         supabase = await get_supabase()
-        
+
         # Get active case and history for context
-        cases_resp = await supabase.table("cases").select("*").eq("user_id", payload.user_id).order("created_at", desc=True).limit(1).execute()
+        cases_resp = await supabase.table("cases").select("*").eq("user_id", current_victim.id).order("created_at", desc=True).limit(1).execute()
         case_data = cases_resp.data[0] if cases_resp.data else None
         case_id = case_data["id"] if case_data else None
-        
-        user_resp = await supabase.table("users").select("name, preferred_language, role_type").eq("id", payload.user_id).execute()
+
+        user_resp = await supabase.table("users").select("name, preferred_language, role_type").eq("id", current_victim.id).execute()
         user_data = user_resp.data[0] if user_resp.data else None
         
         case_context = None
@@ -130,10 +136,19 @@ async def handle_chatbot_message(payload: ChatMessage):
     }
 
 @router.get("/history/{user_id}")
-async def get_chat_history(user_id: str):
+async def get_chat_history(
+    user_id: str,
+    current_victim: CurrentVictim = Depends(get_current_victim),
+):
     """
-    Gets chat history for the user
+    Gets chat history for the user.
+
+    S2: `user_id` is verified against the authenticated victim's own id — a
+    mismatch is rejected before any data is read.
     """
+    if user_id != current_victim.id:
+        raise HTTPException(status_code=403, detail="You may only view your own chat history")
+
     try:
         from services.supabase_client import get_supabase
         supabase = await get_supabase()

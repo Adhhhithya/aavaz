@@ -76,8 +76,9 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
 
     try {
       if (userProfile?.id) {
+        // S2: user_id is no longer sent — the backend derives the sender from
+        // the authenticated victim's session.
         const res = await api.post('/api/v1/intake/chatbot/message', {
-          user_id: userProfile.id,
           session_id: 'app_session',
           message: text.trim()
         });

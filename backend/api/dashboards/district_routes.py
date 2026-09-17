@@ -1,12 +1,24 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from services.supabase_client import get_supabase
+from api.auth.dependencies import CurrentStaffUser, require_roles
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# NOTE: the data model has no per-admin `district` scoping field (users.role_type is
+# the only staff-role signal available), so a district_admin here is authorized for
+# ANY district, not just their own. Fine-grained per-district scoping needs a schema
+# change and is out of scope for this remediation pass — see
+# docs/AAVAZ_IMPLEMENTATION_AUDIT.md for this gap.
+_ALLOWED_ROLES = ("district_admin", "state_admin", "national_admin", "super_admin")
+
+
 @router.get("/district/{district_name}/stats")
-async def get_district_stats(district_name: str):
+async def get_district_stats(
+    district_name: str,
+    current_user: CurrentStaffUser = Depends(require_roles(*_ALLOWED_ROLES)),
+):
     """
     Returns aggregate stats for the district dashboard.
     """
@@ -40,7 +52,10 @@ async def get_district_stats(district_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/district/{district_name}/cases")
-async def get_district_cases(district_name: str):
+async def get_district_cases(
+    district_name: str,
+    current_user: CurrentStaffUser = Depends(require_roles(*_ALLOWED_ROLES)),
+):
     """
     Returns case queue for district.
     """
@@ -66,7 +81,10 @@ async def get_district_cases(district_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/district/{district_name}/sos")
-async def get_district_sos(district_name: str):
+async def get_district_sos(
+    district_name: str,
+    current_user: CurrentStaffUser = Depends(require_roles(*_ALLOWED_ROLES)),
+):
     """
     Returns active SOS events for district map.
     """
@@ -81,7 +99,10 @@ async def get_district_sos(district_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/district/{district_name}/counsellors")
-async def get_district_counsellors(district_name: str):
+async def get_district_counsellors(
+    district_name: str,
+    current_user: CurrentStaffUser = Depends(require_roles(*_ALLOWED_ROLES)),
+):
     """
     Returns active counsellors for a district.
     """

@@ -19,24 +19,37 @@ export default function Login() {
   const [otp, setOtp] = useState('');
   const [preferredLanguage, setPreferredLanguage] = useState('hi');
   const [name, setName] = useState('');
+  // S2: the phone-verified token proving OTP success for `phone`, valid only
+  // long enough to complete registration — never persisted to localStorage.
+  const [phoneVerifiedToken, setPhoneVerifiedToken] = useState(null);
 
   const handleVictimLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Step 1: Request OTP
+    // Step 1: Request a real OTP
     if (!showOtpInput && !showOnboarding) {
       if (phone.length < 10) {
         setError('Please enter a valid phone number.');
         setLoading(false);
         return;
       }
-      // Mock sending OTP
-      setTimeout(() => {
-        setShowOtpInput(true);
-        setLoading(false);
-      }, 500);
+      try {
+        const response = await fetch('/api/v1/auth/otp/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
+          body: JSON.stringify({ phone_number: phone })
+        });
+        if (!response.ok) {
+          setError(response.status === 429 ? 'Too many attempts. Please try again later.' : 'Could not send a verification code.');
+        } else {
+          setShowOtpInput(true);
+        }
+      } catch (err) {
+        setError('Failed to connect to authentication server. Please check your network or try again.');
+      }
+      setLoading(false);
       return;
     }
 
@@ -49,38 +62,60 @@ export default function Login() {
           return;
         }
 
-        // Check if exists
-        const response = await fetch('/api/v1/auth/verify_otp', {
+        const response = await fetch('/api/v1/auth/otp/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
-          body: JSON.stringify({ phone_number: phone })
+          body: JSON.stringify({ phone_number: phone, code: otp })
         });
+        if (!response.ok) {
+          setError('Incorrect or expired code.');
+          setLoading(false);
+          return;
+        }
         const data = await response.json();
-        
+
         if (data.is_new_user) {
+          // data.token is a phone-verified token, not a session — only used
+          // for the upcoming /register call below.
+          setPhoneVerifiedToken(data.token);
           setShowOnboarding(true);
           setShowOtpInput(false);
         } else {
-          login({ id: data.userProfile.id, name: data.userProfile.name, role: data.userProfile.role_type, phone_number: phone });
+          login({
+            id: data.userProfile.id,
+            name: data.userProfile.name,
+            role: data.userProfile.role_type,
+            phone_number: phone,
+            token: data.token,
+          });
           navigate('/victim/dashboard');
         }
       } else if (showOnboarding) {
-        // Register new user
+        if (!phoneVerifiedToken) {
+          setError('Your phone verification has expired. Please start over.');
+          setLoading(false);
+          return;
+        }
+        // Register new user. phone_number is NOT sent — the backend derives
+        // it from the phone-verified token.
         const regResponse = await fetch('/api/v1/intake/app/register', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': '1',
+            'Authorization': `Bearer ${phoneVerifiedToken}`,
+          },
           body: JSON.stringify({
-            phone_number: phone,
             name: name || 'Citizen',
             role_type: 'victim',
             consent_given: true,
             preferred_language: preferredLanguage
           })
         });
-        
+
         const regData = await regResponse.json();
-        if (regData.status === 'success') {
-          login({ id: regData.user_id, name: name || 'Citizen', role: 'victim', phone_number: phone });
+        if (regResponse.ok && regData.status === 'success') {
+          login({ id: regData.user_id, name: name || 'Citizen', role: 'victim', phone_number: phone, token: regData.token });
           navigate('/victim/dashboard');
         } else {
           setError('Registration failed.');
@@ -108,8 +143,12 @@ export default function Login() {
       }
       
       const data = await response.json();
-      login(data.user);
-      
+      // Forward the Supabase access_token so subsequent staff dashboard
+      // requests can authenticate (see AuthContext.authFetch and S1's
+      // server-side authorization work) — previously discarded here, which
+      // meant no staff request could ever be authenticated after login.
+      login({ ...data.user, token: data.access_token });
+
       // Route based on role
       if (data.user.role === 'counsellor') navigate('/counsellor/queue');
       else if (data.user.role === 'admin_district') navigate('/admin/district');

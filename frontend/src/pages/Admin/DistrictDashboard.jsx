@@ -1,32 +1,60 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ShieldCheck, MapPin, AlertTriangle, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 export default function DistrictDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, authFetch } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     activeSOS: 0,
     highRisk: 0,
     totalCases: 0
   });
+  const [accessError, setAccessError] = useState(null);
 
   useEffect(() => {
-    // Fetch real data from backend
-    fetch('/api/v1/dashboards/district', {
+    // S3: uses authFetch so the staff bearer token (issued at login, see
+    // Login.jsx) is attached — the backend now requires it (see S1's
+    // require_roles("district_admin", ...) on this route).
+    //
+    // NOTE: the real route is scoped per district
+    // (/api/v1/dashboards/district/{district_name}/stats), but there is no
+    // per-admin district field anywhere in the data model or the staff login
+    // response yet (see docs/AAVAZ_IMPLEMENTATION_AUDIT.md — this is a known,
+    // separate, already-documented gap, not something fixed here). Using
+    // user?.district as a forward-compatible placeholder that is simply
+    // `undefined` today: once that field exists this call becomes fully
+    // correct with no further change here.
+    const districtName = user?.district || 'unassigned';
+    authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/stats`, {
       headers: { 'ngrok-skip-browser-warning': '1' }
     })
-    .then(res => res.json())
+    .then(res => {
+      if (res.status === 401) {
+        // Session invalid/expired — the server is the authority here, not
+        // any client-side assumption about who's logged in.
+        logout();
+        navigate('/login');
+        return null;
+      }
+      if (res.status === 403) {
+        setAccessError('You do not have permission to view this district.');
+        return null;
+      }
+      return res.json();
+    })
     .then(data => {
+      if (!data) return;
       // In a real scenario, this returns aggregated data based on RLS
       setStats({
-        activeSOS: data.activeSOS || 2, // fallback to mock for visuals
-        highRisk: data.highRisk || 5,
+        activeSOS: data.active_cases ?? data.activeSOS ?? 2, // fallback to mock for visuals
+        highRisk: data.critical_alerts ?? data.highRisk ?? 5,
         totalCases: data.totalCases || 120
       });
     })
     .catch(err => console.error("Error fetching district stats", err));
-  }, []);
+  }, [authFetch, navigate, logout, user]);
 
   return (
     <div className="min-h-screen bg-canvas-base">
@@ -46,6 +74,12 @@ export default function DistrictDashboard() {
           <h1 className="text-3xl font-black text-text-primary tracking-tight">District Overview</h1>
           <p className="text-text-secondary mt-1 font-medium">Real-time telemetry for your jurisdiction.</p>
         </div>
+
+        {accessError && (
+          <div className="bg-accent-sosBg border border-accent-sosLight/30 text-accent-sos rounded-xl p-4 font-semibold text-sm">
+            {accessError}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-canvas-surface p-6 rounded-2xl border border-canvas-border shadow-sm flex items-center gap-4">

@@ -1,7 +1,8 @@
 import io
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from services.supabase_client import get_supabase
+from api.auth.dependencies import CurrentStaffUser, require_roles
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -9,16 +10,26 @@ from reportlab.lib import colors
 
 router = APIRouter()
 
+_ALLOWED_ROLES = ("counsellor", "district_admin", "state_admin", "national_admin", "super_admin")
+
+
 @router.get("/{case_id}/report")
-async def generate_case_report(case_id: str):
+async def generate_case_report(
+    case_id: str,
+    current_user: CurrentStaffUser = Depends(require_roles(*_ALLOWED_ROLES)),
+):
     try:
         supabase = await get_supabase()
         case_resp = await supabase.table("cases").select("*").eq("id", case_id).single().execute()
-        
+
         if not case_resp.data:
             raise HTTPException(status_code=404, detail="Case not found")
-            
+
         case_data = case_resp.data
+
+        if current_user.role == "counsellor" and case_data.get("assigned_counsellor_id") != current_user.id:
+            raise HTTPException(status_code=403, detail="This case is not assigned to you")
+
         ecourts = case_data.get("ecourts_data") or {}
         
         buffer = io.BytesIO()

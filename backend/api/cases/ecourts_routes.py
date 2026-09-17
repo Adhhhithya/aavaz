@@ -1,22 +1,33 @@
 import uuid
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from services.ecourts_scraper import fetch_ecourts_case_api
 from services.supabase_client import get_supabase
+from api.auth.victim_dependencies import CurrentVictim, get_current_victim
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 class CNRSearchRequest(BaseModel):
     cnr: str
-    user_id: str
+    # user_id intentionally removed (S2 — see docs/AAVAZ_IMPLEMENTATION_AUDIT.md
+    # §16 "eCourts ownership fix"): this previously accepted an arbitrary
+    # client-supplied user_id with no check that it belonged to the caller,
+    # letting anyone attach any CNR's data to any victim's account. The
+    # authenticated victim's own id is used instead.
 
 @router.post("/search")
-async def ecourts_search(req: CNRSearchRequest):
+async def ecourts_search(
+    req: CNRSearchRequest,
+    current_victim: CurrentVictim = Depends(get_current_victim),
+):
     """
     Automated scrape: directly hits the eCourts JSON API, structures the data,
     and saves it to the database.
+
+    S2: the case created from this search is always attached to the
+    authenticated victim (`current_victim.id`), never to a client-supplied id.
     """
     try:
         # Direct API call
@@ -47,7 +58,7 @@ async def ecourts_search(req: CNRSearchRequest):
         # Insert a new case
         new_case = {
             "id": case_id,
-            "user_id": req.user_id,
+            "user_id": current_victim.id,
             "case_type": structured_data["case_type"],
             "intake_channel": "app",
             "case_stage": "registered", # default or derived from status

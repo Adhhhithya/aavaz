@@ -76,12 +76,9 @@ export default function HomeScreen({
   const handleMoodSelect = async (moodId) => {
     setSelectedMood(moodId);
     try {
-      if (userProfile?.id) {
-        await api.post('/api/v1/intake/app/checkin', {
-          user_id: userProfile.id,
-          mood: moodId
-        });
-      }
+      // S2: user_id is no longer sent — the backend derives the case owner
+      // from the authenticated victim's session (see api/intake/app_routes.py).
+      await api.post('/api/v1/intake/app/checkin', { mood: moodId });
     } catch (e) {
       console.error("Failed to log mood:", e);
     }

@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from services.supabase_client import get_supabase
+from api.auth.victim_dependencies import CurrentVictim, get_current_victim
 import logging
 from datetime import datetime, timezone
 
@@ -13,19 +14,31 @@ class SOSRequest(BaseModel):
     location_lng: float
 
 @router.post("/sos")
-async def trigger_sos(request: SOSRequest):
+async def trigger_sos(
+    request: SOSRequest,
+    current_victim: CurrentVictim = Depends(get_current_victim),
+):
     """
     Trigger an SOS event for a given case.
     This creates a record in the sos_events table and kicks off the 30-minute escalation timer.
+
+    S2: requires an authenticated victim session, and the target case must
+    belong to that victim. This is authentication/identity binding only — no
+    change to the crisis-response architecture, no emergency-service contacting
+    behavior, no operating-agency policy invented (out of scope; see
+    docs/AAVAZ_IMPLEMENTATION_AUDIT.md and docs/AAVAZ_MIGRATION_PLAN.md).
     """
     try:
         supabase = await get_supabase()
-        
-        # 1. Verify case exists and get assigned counsellor
-        case_resp = await supabase.table("cases").select("assigned_counsellor_id").eq("id", request.case_id).execute()
+
+        # 1. Verify case exists, belongs to the caller, and get assigned counsellor
+        case_resp = await supabase.table("cases").select("assigned_counsellor_id, user_id").eq("id", request.case_id).execute()
         if not case_resp.data:
             raise HTTPException(status_code=404, detail="Case not found")
-            
+
+        if case_resp.data[0].get("user_id") != current_victim.id:
+            raise HTTPException(status_code=403, detail="This is not your case")
+
         assigned_counsellor = case_resp.data[0].get("assigned_counsellor_id")
         
         # 2. Insert SOS Event
@@ -47,7 +60,9 @@ async def trigger_sos(request: SOSRequest):
         logger.info(f"SOS triggered for case {request.case_id}. 30-minute escalation timer started.")
         
         return {"status": "success", "sos_id": sos_resp.data[0]["id"]}
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error triggering SOS: {e}")
         raise HTTPException(status_code=500, detail=str(e))

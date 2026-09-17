@@ -4,17 +4,38 @@
 const NGROK_URL = 'http://10.0.2.2:8000'; // Default for Android Emulator
 export const API_BASE_URL = NGROK_URL;
 
-const defaultHeaders = {
-  'Content-Type': 'application/json',
-  'ngrok-skip-browser-warning': '1', // Important for bypassing free tier warnings
-};
+// S2: the backend now enforces real victim authentication on victim-facing
+// endpoints. This module-level token is attached as an Authorization header on
+// every request once set. Call api.setAuthToken(token) after OTP verification
+// or registration succeeds, and api.clearAuthToken() on logout.
+let authToken = null;
+
+export function setAuthToken(token) {
+  authToken = token || null;
+}
+
+export function clearAuthToken() {
+  authToken = null;
+}
+
+function buildHeaders(extra = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': '1', // Important for bypassing free tier warnings
+    ...extra,
+  };
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+  return headers;
+}
 
 export const api = {
   get: async (endpoint) => {
     try {
       const res = await fetch(`${NGROK_URL}${endpoint}`, {
         method: 'GET',
-        headers: defaultHeaders,
+        headers: buildHeaders(),
       });
       if (!res.ok) throw new Error(`API Error: ${res.status}`);
       return await res.json();
@@ -23,12 +44,12 @@ export const api = {
       throw e;
     }
   },
-  
-  post: async (endpoint, data) => {
+
+  post: async (endpoint, data, { authorization } = {}) => {
     try {
       const res = await fetch(`${NGROK_URL}${endpoint}`, {
         method: 'POST',
-        headers: defaultHeaders,
+        headers: buildHeaders(authorization ? { Authorization: `Bearer ${authorization}` } : {}),
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(`API Error: ${res.status}`);

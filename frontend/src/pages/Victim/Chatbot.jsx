@@ -10,7 +10,7 @@ const PROMPT_CHIPS = [
 ];
 
 export default function VictimChatbot() {
-  const { user } = useAuth();
+  const { user, authFetch } = useAuth();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -20,7 +20,7 @@ export default function VictimChatbot() {
     const fetchHistory = async () => {
       if (user?.id) {
         try {
-          const res = await fetch(`/api/v1/intake/chatbot/history/${user.id}`, {
+          const res = await authFetch(`/api/v1/intake/chatbot/history/${user.id}`, {
             headers: { 'ngrok-skip-browser-warning': '1' }
           });
           const data = await res.json();
@@ -35,7 +35,7 @@ export default function VictimChatbot() {
       }
     };
     fetchHistory();
-  }, [user]);
+  }, [user, authFetch]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -59,11 +59,12 @@ export default function VictimChatbot() {
 
     try {
       if (user?.id) {
-        const res = await fetch('/api/v1/intake/chatbot/message', {
+        // S2: user_id is no longer sent — the backend derives the sender from
+        // the authenticated victim's session (attached by authFetch).
+        const res = await authFetch('/api/v1/intake/chatbot/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
           body: JSON.stringify({
-            user_id: user.id,
             session_id: 'web_session',
             message: text.trim()
           })

@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { CasesModule } from '../cases/cases.module';
 import { IdentityController } from './identity.controller';
 import { IdentityService } from './identity.service';
 import { OtpService } from './otp.service';
 import { PhoneVerifiedGuard } from './phone-verified.guard';
+import { RegistrationService } from './registration.service';
 import { TokenService } from './token.service';
 import { VictimAuthGuard } from './victim-auth.guard';
 
@@ -13,9 +15,13 @@ import { VictimAuthGuard } from './victim-auth.guard';
   // token.service.ts::secret()), matching the Python side's per-call pepper
   // resolution (dev fallback vs. hard failure outside development) rather
   // than baking a secret into module configuration at boot time.
-  imports: [JwtModule.register({})],
+  //
+  // CasesModule is imported here (rather than the other way around) because
+  // registration is what needs case creation + assignment — see
+  // registration.service.ts and docs/S5_REGISTRATION_MIGRATION.md.
+  imports: [JwtModule.register({}), CasesModule],
   controllers: [IdentityController],
-  providers: [OtpService, TokenService, IdentityService, VictimAuthGuard, PhoneVerifiedGuard],
+  providers: [OtpService, TokenService, IdentityService, RegistrationService, VictimAuthGuard, PhoneVerifiedGuard],
   exports: [TokenService, OtpService],
 })
 export class IdentityModule {}

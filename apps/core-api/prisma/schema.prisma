@@ -17,6 +17,21 @@
 // Every other table (`cases`, `interactions`, `counsellors`, `sos_events`,
 // `case_updates`) exists in the same database but is deliberately NOT
 // modeled here — this slice has no owning logic for them yet.
+//
+// S5 UPDATE: `cases` and `counsellors` were added below via a SECOND real
+// introspection pass (same technique — throwaway Postgres with
+// backend/schema.sql plus every migration through
+// backend/migrations/0003_counsellor_caseload_cap.sql applied, then
+// `prisma db pull`), because S5 (registration parity) needs Node to create
+// case rows and run counsellor assignment. See
+// docs/S5_REGISTRATION_MIGRATION.md for the full mapping and rationale.
+// `interactions`, `sos_events`, and `case_updates` remain deliberately NOT
+// modeled — this slice still has no owning logic for them. Because `cases`
+// has real foreign keys to those three unmodeled tables, this schema is
+// intentionally partial: only the referencing side needed by this slice
+// (`cases` -> `users`, `cases` -> `counsellors`) is declared, exactly the
+// same "model only what this slice owns" pattern already used for
+// `otp_codes`/`users` in S4.
 
 generator client {
   provider = "prisma-client-js"
@@ -80,6 +95,10 @@ model User {
   locationLat       Float?            @map("location_lat")
   locationLng       Float?            @map("location_lng")
   createdAt         DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
+  // Reverse side of Case.user — Prisma requires both sides of a relation to
+  // be declared once both related models are present in the schema. Added
+  // in S5; does not change any column on `users`.
+  cases             Case[]
 
   @@map("users")
 }
@@ -105,4 +124,87 @@ model OtpCode {
   @@index([phoneHash, createdAt(sort: Desc)], map: "idx_otp_codes_phone_hash_created")
   @@index([phoneHash, purpose, createdAt(sort: Desc)], map: "idx_otp_codes_phone_purpose_created")
   @@map("otp_codes")
+}
+
+// Matches schema.sql's intake_channel_enum exactly (used by cases.intake_channel).
+enum IntakeChannel {
+  nhaa_sim
+  fir_sim
+  ivr
+  app
+  sms
+  chatbot
+
+  @@map("intake_channel_enum")
+}
+
+// Matches schema.sql's case_stage_enum exactly (used by cases.case_stage).
+// This is the OLD 6-stage enum, not the v0.2 11-state lifecycle machine
+// (PENDING_CONSENT / REGISTERED / VERIFIED / MONITORING / ESCALATED /
+// REFERRED / PAUSED / CLOSING / CLOSED / OPTED_OUT / PURGED) — see
+// docs/S5_REGISTRATION_MIGRATION.md Phase 2 for why migrating the lifecycle
+// enum is explicitly deferred, not silently done here.
+enum CaseStage {
+  registered
+  investigation
+  trial
+  compensation
+  rehabilitation
+  closed
+
+  @@map("case_stage_enum")
+}
+
+// Maps to the existing `cases` table (backend/schema.sql). Same "extend the
+// real table, don't duplicate it" approach as User/OtpCode in S4. Only the
+// columns/relations this slice's registration flow reads or writes are
+// modeled — `cnr` and `ecourts_data` are NOT modeled because (a)
+// schema.sql/introspection of a clean database don't define them at all
+// (confirmed live-schema drift, same caveat already recorded in S3/S4 —
+// backend/api/cases/ecourts_routes.py writes them, but that endpoint's
+// migration is out of this slice's scope) and (b) registration never sets
+// them in either implementation. `interactions`/`sos_events`/`case_updates`
+// reverse relations are likewise not modeled — see the file header.
+model Case {
+  id                   String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId               String?        @map("user_id") @db.Uuid
+  caseType             String         @map("case_type")
+  intakeChannel        IntakeChannel  @map("intake_channel")
+  caseStage            CaseStage?     @default(registered) @map("case_stage")
+  assignedCounsellorId String?        @map("assigned_counsellor_id") @db.Uuid
+  currentDistressScore Float?         @default(0.0) @map("current_distress_score")
+  priorityRank         Int?           @default(0) @map("priority_rank")
+  createdAt            DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user                 User?          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  counsellor           Counsellor?    @relation(fields: [assignedCounsellorId], references: [id], onUpdate: NoAction)
+
+  @@index([assignedCounsellorId], map: "idx_cases_assigned_counsellor_id")
+  @@index([caseStage], map: "idx_cases_case_stage")
+  @@index([currentDistressScore], map: "idx_cases_current_distress_score")
+  // schema.sql defines this as a second, functionally-duplicate index on the
+  // same single column (its own comment even says "Needs join logic for
+  // district" — it isn't one yet). Modeled anyway for introspection fidelity
+  // — Node did not invent or remove this; it's exactly what's in the DB.
+  @@index([currentDistressScore], map: "idx_cases_district_score")
+  @@map("cases")
+}
+
+// Maps to the existing `counsellors` table (backend/schema.sql), PLUS the
+// `caseload_cap` column added by
+// backend/migrations/0003_counsellor_caseload_cap.sql (S5). Real
+// introspection was re-run with that migration applied — `caseload_cap` is
+// not a value invented in this Prisma file, it is a real, NOT NULL, DEFAULT
+// 80 column confirmed to exist against a real Postgres instance.
+model Counsellor {
+  id               String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name             String
+  district         String
+  languages        String[]
+  currentCaseload  Int?    @default(0) @map("current_caseload")
+  caseloadCap      Int     @default(80) @map("caseload_cap")
+  cases            Case[]
+
+  @@index([district, currentCaseload], map: "idx_counsellors_district_caseload")
+  @@map("counsellors")
 }
