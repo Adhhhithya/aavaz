@@ -1,0 +1,108 @@
+// Prisma schema for the S4 identity/OTP/victim-authentication slice only.
+//
+// Produced from REAL introspection (`prisma db pull`) against an isolated,
+// throwaway PostgreSQL 17 instance with `backend/schema.sql` and
+// `backend/migrations/0002_otp_codes.sql` applied — the same two files that
+// would be applied to a real Supabase project. Full introspection revealed
+// all 7 existing tables and 9 enums; only the two tables this slice's code
+// actually reads/writes (`users`, `otp_codes`) are modeled here on purpose.
+// See docs/S4_IDENTITY_MIGRATION.md for the full mapping and rationale.
+//
+// KNOWN LIMITATION discovered during introspection: Prisma silently omits
+// partial indexes (`CREATE INDEX ... WHERE ...`) from `db pull` output. The
+// migration's `idx_otp_codes_ip_hash_created` (`WHERE ip_hash IS NOT NULL`)
+// exists and functions in Postgres — Prisma just doesn't represent or manage
+// it. This is not something to fix; it's a documented tool limitation.
+//
+// Every other table (`cases`, `interactions`, `counsellors`, `sos_events`,
+// `case_updates`) exists in the same database but is deliberately NOT
+// modeled here — this slice has no owning logic for them yet.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Matches schema.sql's role_type_enum exactly (used by users.role_type).
+enum RoleType {
+  victim
+  witness
+  family
+
+  @@map("role_type_enum")
+}
+
+// Matches schema.sql's lang_enum exactly (used by users.preferred_language).
+enum PreferredLanguage {
+  hi
+  ta
+  ml
+  en
+
+  @@map("lang_enum")
+}
+
+// Matches schema.sql's location_source_enum exactly.
+enum LocationSource {
+  ivr
+  sms
+  app
+
+  @@map("location_source_enum")
+}
+
+// Maps to the existing `users` table (backend/schema.sql). Node does not
+// create, own, or migrate this table's DDL in this slice — it only reads and
+// inserts rows via Prisma, using the exact same table Python's
+// `services/supabase_client.py`-based code already writes. This is
+// deliberately the SAME table, not a duplicate (Phase 3 requirement).
+//
+// Only identity-relevant behavior is implemented in this slice: the
+// location_*/consent_* columns are carried through unmodified because
+// registration accepts them today, but no logic in this slice computes or
+// validates them (that stays wherever `profile-case` logic lives until that
+// domain is extracted).
+model User {
+  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  phoneNumber       String            @unique @map("phone_number")
+  name              String
+  roleType          RoleType          @map("role_type")
+  preferredLanguage PreferredLanguage @map("preferred_language")
+  consentGiven      Boolean?          @default(false) @map("consent_given")
+  consentTimestamp  DateTime?         @map("consent_timestamp") @db.Timestamptz(6)
+  locationDistrict  String?           @map("location_district")
+  locationState     String?           @map("location_state")
+  locationSource    LocationSource?   @map("location_source")
+  locationLat       Float?            @map("location_lat")
+  locationLng       Float?            @map("location_lng")
+  createdAt         DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("users")
+}
+
+// Maps to the existing `otp_codes` table (backend/migrations/0002_otp_codes.sql,
+// introduced in S2). Node reuses this table as-is — no duplicate OTP storage
+// was created, per Phase 3's explicit instruction. Column names, types,
+// defaults, and the two representable indexes match the live-introspected
+// schema exactly.
+model OtpCode {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  phoneHash   String    @map("phone_hash")
+  codeHash    String    @map("code_hash")
+  salt        String
+  purpose     String    @default("login")
+  ipHash      String?   @map("ip_hash")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3) @map("max_attempts")
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt  DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([phoneHash, createdAt(sort: Desc)], map: "idx_otp_codes_phone_hash_created")
+  @@index([phoneHash, purpose, createdAt(sort: Desc)], map: "idx_otp_codes_phone_purpose_created")
+  @@map("otp_codes")
+}
