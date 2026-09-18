@@ -131,6 +131,32 @@ export class TaskService {
     });
   }
 
+  /**
+   * S15: called from BreakGlassService's own transaction (v0.2 §15:
+   * "Break-glass: out-of-scope access needs a typed reason, expires in 2
+   * hours, and notifies the supervisor") whenever a break-glass grant is
+   * requested. This task IS the "notifies the supervisor" mechanism —
+   * it becomes visible in the district-scoped queue of every
+   * `supervisor`/`district_admin` whose scope covers the case's own
+   * district, via the exact same `listTasks` visibility every other task
+   * type already uses. `priority: 'critical'` is a considered default
+   * (not spec-evidenced — §15 names no priority): an out-of-scope access
+   * grant is, by definition, an exception to this system's normal
+   * authorization boundary, which this codebase treats as the most
+   * serious category of event it has a vocabulary for.
+   */
+  async createBreakGlassReviewTaskTx(tx: TxClient, kase: { id: string; userId: string }): Promise<void> {
+    await tx.task.create({
+      data: {
+        userId: kase.userId,
+        caseId: kase.id,
+        type: 'break_glass_review',
+        priority: 'critical',
+        status: 'OPEN',
+      },
+    });
+  }
+
   async transition(staff: ResolvedStaff, taskId: string, targetState: TaskState): Promise<TaskView> {
     if (!CONSOLE_INDIVIDUAL_RECORD_ROLES.includes(staff.role)) {
       throw new ForbiddenException('This staff role does not have access to tasks');

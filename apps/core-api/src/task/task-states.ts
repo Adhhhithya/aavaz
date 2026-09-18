@@ -60,15 +60,24 @@ export function isValidTaskTransition(from: TaskState, to: TaskState): boolean {
  *     deliberately NOT given this task, since no district supervisor's
  *     queue could ever show it; see docs/S14_TASK_TRIGGER_EXTENSION.md).
  *
+ *   - `break_glass_review`: §15 — "Break-glass: out-of-scope access needs
+ *     a typed reason, expires in 2 hours, and notifies the supervisor."
+ *     Added in S15, created AUTOMATICALLY by
+ *     apps/core-api/src/break-glass/break-glass.service.ts's own
+ *     transaction whenever a break-glass grant is requested — this IS
+ *     the "notifies the supervisor" mechanism, reusing this domain's own
+ *     district-scoped task visibility rather than needing a real SMS/
+ *     push/email provider (none exists in this repository).
+ *
  * Other task-shaped mentions found in v0.2's text (`court_sync_stale`,
  * Workflow B "B4"; `silence`, the silence-ladder code sample) are real,
  * evidenced, but NOT wired to an automatic trigger yet — see
  * docs/S12_TASK_MIGRATION.md section C for why: both need infrastructure
  * (automated court-sync polling, a job queue) this repository still does
- * not have, unlike `unassigned_case`, whose trigger condition S5's own
- * `RegistrationService` already detects and logs today.
+ * not have, unlike `unassigned_case`/`break_glass_review`, whose trigger
+ * conditions are detected synchronously inside an existing request.
  */
-export const TASK_TYPES = ['referral_stalled', 'referral_review', 'unassigned_case'] as const;
+export const TASK_TYPES = ['referral_stalled', 'referral_review', 'unassigned_case', 'break_glass_review'] as const;
 export type TaskType = (typeof TASK_TYPES)[number];
 
 export function isTaskType(value: string): value is TaskType {

@@ -171,6 +171,16 @@ interface MilestoneRow {
   updatedAt: Date;
 }
 
+interface BreakGlassGrantRow {
+  id: string;
+  staffId: string;
+  caseId: string;
+  reason: string;
+  grantedAt: Date;
+  expiresAt: Date;
+  createdAt: Date;
+}
+
 let idCounter = 0;
 function nextId(): string {
   idCounter += 1;
@@ -900,6 +910,42 @@ export class FakePrismaService {
         );
       }
       return matches.map((m) => ({ ...m }));
+    },
+  };
+
+  breakGlassGrantRows: BreakGlassGrantRow[] = [];
+
+  breakGlassGrant = {
+    create: async ({ data }: { data: Partial<BreakGlassGrantRow> }): Promise<BreakGlassGrantRow> => {
+      const row: BreakGlassGrantRow = {
+        id: nextId(),
+        staffId: data.staffId!,
+        caseId: data.caseId!,
+        reason: data.reason!,
+        grantedAt: data.grantedAt ?? new Date(),
+        expiresAt: data.expiresAt!,
+        createdAt: new Date(),
+      };
+      this.breakGlassGrantRows.push(row);
+      return row;
+    },
+
+    findFirst: async (args: {
+      where: { staffId: string; caseId: string; expiresAt: { gt: Date } };
+      orderBy?: { grantedAt?: 'asc' | 'desc' };
+    }): Promise<BreakGlassGrantRow | null> => {
+      const matches = this.breakGlassGrantRows.filter(
+        (g) =>
+          g.staffId === args.where.staffId &&
+          g.caseId === args.where.caseId &&
+          g.expiresAt.getTime() > args.where.expiresAt.gt.getTime(),
+      );
+      matches.sort((a, b) =>
+        args.orderBy?.grantedAt === 'asc'
+          ? a.grantedAt.getTime() - b.grantedAt.getTime()
+          : b.grantedAt.getTime() - a.grantedAt.getTime(),
+      );
+      return matches[0] ?? null;
     },
   };
 

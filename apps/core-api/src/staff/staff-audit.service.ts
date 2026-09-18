@@ -22,6 +22,12 @@ import { ChainVerificationResult, computeAuditHash, verifyChain } from './audit-
  * comment for why. S13 adds
  * `milestone.created`/`milestone.marked_met`/`milestone.list.read`/
  * `milestone` — see apps/core-api/src/milestone/milestone.service.ts.
+ * S15 adds `break_glass.requested` (resourceType `case`, reusing the
+ * existing code rather than adding a new one) — see
+ * apps/core-api/src/break-glass/break-glass.service.ts. The grant's real
+ * reason text is NEVER passed to this method — it lives only on
+ * `break_glass_grants.reason`, a deliberate exception to this codebase's
+ * audit-log discipline documented on that table's own migration.
  */
 export type StaffAuditAction =
   | 'console.queue.read'
@@ -36,7 +42,8 @@ export type StaffAuditAction =
   | 'task.list.read'
   | 'milestone.created'
   | 'milestone.marked_met'
-  | 'milestone.list.read';
+  | 'milestone.list.read'
+  | 'break_glass.requested';
 export type StaffAuditResourceType = 'queue' | 'victim' | 'case' | 'referral' | 'district' | 'task' | 'milestone';
 
 /** See assignment.service.ts's QueryClient for why this accepts either a

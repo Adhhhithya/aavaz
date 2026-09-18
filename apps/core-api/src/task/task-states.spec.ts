@@ -59,9 +59,11 @@ describe('task-states', () => {
     }
   });
 
-  it('has exactly the 3 evidenced, wired task types (S12: referral_stalled/referral_review; S14: unassigned_case)', () => {
-    expect(TASK_TYPES).toEqual(expect.arrayContaining(['referral_stalled', 'referral_review', 'unassigned_case']));
-    expect(TASK_TYPES).toHaveLength(3);
+  it('has exactly the 4 evidenced, wired task types (S12: referral_stalled/referral_review; S14: unassigned_case; S15: break_glass_review)', () => {
+    expect(TASK_TYPES).toEqual(
+      expect.arrayContaining(['referral_stalled', 'referral_review', 'unassigned_case', 'break_glass_review']),
+    );
+    expect(TASK_TYPES).toHaveLength(4);
   });
 
   it('isTaskType rejects a plausible-but-still-unwired type (e.g. from an evidenced-but-deferred trigger)', () => {

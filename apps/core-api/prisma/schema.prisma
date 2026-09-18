@@ -234,6 +234,8 @@ model Case {
   tasks                Task[]
   // Reverse side of Milestone.case — added in S13.
   milestones           Milestone[]
+  // Reverse side of BreakGlassGrant.case — added in S15.
+  breakGlassGrants     BreakGlassGrant[]
 
   @@index([assignedCounsellorId], map: "idx_cases_assigned_counsellor_id")
   @@index([caseStage], map: "idx_cases_case_stage")
@@ -365,6 +367,8 @@ model Staff {
   createdTasks     Task[] @relation("TaskCreator")
   // Reverse side of Milestone.enteredByStaff — added in S13.
   enteredMilestones Milestone[]
+  // Reverse side of BreakGlassGrant.staff — added in S15.
+  breakGlassGrants  BreakGlassGrant[]
 
   @@index([counsellorId], map: "idx_staff_counsellor_id")
   @@map("staff")
@@ -520,4 +524,30 @@ model Milestone {
 
   @@index([caseId], map: "idx_milestones_case_id")
   @@map("milestones")
+}
+
+// Maps to the new `break_glass_grants` table
+// (backend/migrations/0012_break_glass_grants.sql, S15). No FastAPI
+// equivalent exists — net-new capability, v0.2 §15. `reason` is real,
+// staff-typed free text — a deliberate exception to `StaffAuditLog`'s own
+// "IDs and codes only" discipline, kept on this separate table so that
+// invariant is not violated elsewhere. See
+// apps/core-api/src/break-glass/break-glass.service.ts and
+// docs/S15_BREAK_GLASS_MIGRATION.md for why no existing domain's
+// authorization check honors a grant yet — this slice is the request/
+// record/notify foundation only.
+model BreakGlassGrant {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  staffId    String   @map("staff_id") @db.Uuid
+  caseId     String   @map("case_id") @db.Uuid
+  reason     String
+  grantedAt  DateTime @default(now()) @map("granted_at") @db.Timestamptz(6)
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  staff      Staff    @relation(fields: [staffId], references: [id], onUpdate: NoAction)
+  case       Case     @relation(fields: [caseId], references: [id], onUpdate: NoAction)
+
+  @@index([staffId], map: "idx_break_glass_grants_staff_id")
+  @@index([caseId], map: "idx_break_glass_grants_case_id")
+  @@map("break_glass_grants")
 }
