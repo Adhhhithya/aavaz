@@ -28,6 +28,9 @@ export class ProfileService {
       userId,
       relationType: null,
       preferredChannel: null,
+      // S8 adds optedOutAt to this table; defaulted to null here for the
+      // same "never set yet" reason as every other field in this shape.
+      optedOutAt: null,
       safeWindows: null,
       safeToCall: null,
       updatedAt: new Date(0),

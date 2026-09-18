@@ -3,11 +3,12 @@
  * counsellor assignment, against a REAL, isolated, throwaway PostgreSQL
  * instance (see test/pg-harness.ts, factored out of S4's
  * identity.integration-spec.ts). Runs the full Nest app over real HTTP
- * (supertest), with backend/schema.sql plus
- * backend/migrations/0002_otp_codes.sql and
- * backend/migrations/0003_counsellor_caseload_cap.sql applied — the same
- * files a real deployment would apply. No real victim data anywhere — only
- * synthetic, clearly-fake identifiers.
+ * (supertest), with backend/schema.sql plus every migration through
+ * backend/migrations/0006_lifecycle.sql applied — the same files a real
+ * deployment would apply, since the shared Prisma schema (and therefore
+ * every Case insert) now depends on later milestones' additive columns
+ * regardless of which milestone this suite itself exercises. No real
+ * victim data anywhere — only synthetic, clearly-fake identifiers.
  */
 
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
@@ -31,6 +32,9 @@ describeIfPostgres('Registration module — real PostgreSQL integration', () => 
     pgInstance = await startThrowawayPostgres(PORT, 'aavaz_core_api_registration_test', [
       '0002_otp_codes.sql',
       '0003_counsellor_caseload_cap.sql',
+      '0004_consent_profile_safety.sql',
+      '0005_staff.sql',
+      '0006_lifecycle.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';

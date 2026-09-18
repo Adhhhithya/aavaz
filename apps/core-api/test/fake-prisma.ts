@@ -60,6 +60,8 @@ interface CaseRow {
   priorityRank: number | null;
   createdAt: Date;
   updatedAt: Date;
+  lifecycleState: string;
+  lifecycleUpdatedAt: Date;
 }
 
 interface ConsentRow {
@@ -79,6 +81,7 @@ interface VictimProfileRow {
   preferredChannel: string | null;
   safeWindows: unknown;
   safeToCall: boolean | null;
+  optedOutAt: Date | null;
   updatedAt: Date;
 }
 
@@ -280,9 +283,48 @@ export class FakePrismaService {
         priorityRank: data.priorityRank ?? 0,
         createdAt: new Date(),
         updatedAt: new Date(),
+        lifecycleState: data.lifecycleState ?? 'REGISTERED',
+        lifecycleUpdatedAt: new Date(),
       };
       this.caseRows.push(row);
       return row;
+    },
+
+    findUnique: async ({
+      where,
+      include,
+    }: {
+      where: { id: string };
+      include?: { user?: { select?: { locationDistrict?: boolean } } };
+    }): Promise<(CaseRow & { user?: { locationDistrict: string | null } | null }) | null> => {
+      const row = this.caseRows.find((c) => c.id === where.id);
+      if (!row) return null;
+      const result: CaseRow & { user?: { locationDistrict: string | null } | null } = { ...row };
+      if (include?.user) {
+        const owner = this.userRows.find((u) => u.id === row.userId);
+        result.user = owner ? { locationDistrict: owner.locationDistrict } : null;
+      }
+      return result;
+    },
+
+    // Mirrors the real atomic-conditional-update pattern used by
+    // lifecycle.service.ts: only updates and reports success if the
+    // WHERE clause (id + still-matching lifecycleState) still matches at
+    // the moment of the "write" — enough to exercise the
+    // lost-the-race-returns-zero-rows behavior in unit tests. Real
+    // concurrent-race safety against real Postgres is proven in the
+    // integration suite, not here.
+    updateMany: async (args: {
+      where: { id: string; lifecycleState: string };
+      data: { lifecycleState: string; lifecycleUpdatedAt: Date };
+    }): Promise<{ count: number }> => {
+      const row = this.caseRows.find((c) => c.id === args.where.id);
+      if (!row || row.lifecycleState !== args.where.lifecycleState) {
+        return { count: 0 };
+      }
+      row.lifecycleState = args.data.lifecycleState;
+      row.lifecycleUpdatedAt = args.data.lifecycleUpdatedAt;
+      return { count: 1 };
     },
 
     // Supports exactly the two shapes console.service.ts needs: a flat
@@ -383,6 +425,7 @@ export class FakePrismaService {
         preferredChannel: create.preferredChannel ?? null,
         safeWindows: create.safeWindows ?? null,
         safeToCall: create.safeToCall ?? null,
+        optedOutAt: create.optedOutAt ?? null,
         updatedAt: new Date(),
       };
       this.victimProfileRows.push(row);

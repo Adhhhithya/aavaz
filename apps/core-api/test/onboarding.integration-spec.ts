@@ -2,9 +2,11 @@
  * S6 integration test: consent + profile + safety settings, against a REAL,
  * isolated, throwaway PostgreSQL instance (test/pg-harness.ts). Runs the
  * full Nest app over real HTTP (supertest), with backend/schema.sql plus
- * every migration through
- * backend/migrations/0004_consent_profile_safety.sql applied. No real
- * victim data anywhere — only synthetic, clearly-fake identifiers.
+ * every migration through backend/migrations/0006_lifecycle.sql applied —
+ * the shared Prisma schema (and therefore every Case insert) now depends
+ * on later milestones' additive columns regardless of which milestone this
+ * suite itself exercises. No real victim data anywhere — only synthetic,
+ * clearly-fake identifiers.
  */
 
 import * as crypto from 'crypto';
@@ -33,6 +35,8 @@ describeIfPostgres('Consent/Profile/Safety modules — real PostgreSQL integrati
       '0002_otp_codes.sql',
       '0003_counsellor_caseload_cap.sql',
       '0004_consent_profile_safety.sql',
+      '0005_staff.sql',
+      '0006_lifecycle.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';

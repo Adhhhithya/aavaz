@@ -2,8 +2,10 @@
  * S7 integration test: staff identity + console authorization, against a
  * REAL, isolated, throwaway PostgreSQL instance (test/pg-harness.ts). Runs
  * the full Nest app over real HTTP (supertest), with backend/schema.sql
- * plus every migration through backend/migrations/0005_staff.sql applied.
- * No real staff or victim data anywhere — only synthetic, clearly-fake
+ * plus every migration through backend/migrations/0006_lifecycle.sql
+ * applied (S8's additive columns are also required here — the shared
+ * Prisma schema affects every Case insert regardless of milestone). No
+ * real staff or victim data anywhere — only synthetic, clearly-fake
  * identifiers.
  *
  * This file proves, against real Postgres and real HTTP, every scenario
@@ -41,6 +43,7 @@ describeIfPostgres('Staff identity + console authorization — real PostgreSQL i
       '0003_counsellor_caseload_cap.sql',
       '0004_consent_profile_safety.sql',
       '0005_staff.sql',
+      '0006_lifecycle.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';

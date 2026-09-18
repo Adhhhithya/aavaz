@@ -70,16 +70,19 @@ describeIfPostgres('Identity module — real PostgreSQL integration', () => {
       ['-d', 'aavaz_core_api_test', '-f', path.join(repoRoot, 'backend', 'schema.sql')],
       { env },
     );
-    execFileSync(
-      path.join(PG_BIN, 'psql.exe'),
-      [
-        '-d',
-        'aavaz_core_api_test',
-        '-f',
-        path.join(repoRoot, 'backend', 'migrations', '0002_otp_codes.sql'),
-      ],
-      { env },
-    );
+    for (const migrationFile of [
+      '0002_otp_codes.sql',
+      '0003_counsellor_caseload_cap.sql',
+      '0004_consent_profile_safety.sql',
+      '0005_staff.sql',
+      '0006_lifecycle.sql',
+    ]) {
+      execFileSync(
+        path.join(PG_BIN, 'psql.exe'),
+        ['-d', 'aavaz_core_api_test', '-f', path.join(repoRoot, 'backend', 'migrations', migrationFile)],
+        { env },
+      );
+    }
 
     process.env.DATABASE_URL = `postgresql://verify_user@localhost:${PORT}/aavaz_core_api_test?schema=public`;
     process.env.NODE_ENV = 'development'; // uses SyntheticOtpProvider + dev secret fallbacks, same as local dev

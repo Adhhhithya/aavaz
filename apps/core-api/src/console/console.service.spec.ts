@@ -56,6 +56,8 @@ describe('ConsoleService', () => {
       priorityRank: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
+      lifecycleState: 'REGISTERED',
+      lifecycleUpdatedAt: new Date(),
     };
     fake.caseRows.push(row);
     return row;
