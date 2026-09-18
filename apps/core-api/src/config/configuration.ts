@@ -25,6 +25,12 @@ export interface AppConfig {
   victimSessionSecret: string;
   victimSessionTtlSeconds: number;
   phoneVerifiedTokenTtlSeconds: number;
+  // S7: deliberately a SEPARATE secret from victimSessionSecret — a staff
+  // session token must never be verifiable with the victim session secret
+  // or vice versa, even if both happened to share a value by accident. See
+  // docs/S7_STAFF_CONSOLE_MIGRATION.md.
+  staffSessionSecret: string;
+  staffSessionTtlSeconds: number;
 }
 
 function int(value: string | undefined, fallback: number): number {
@@ -47,6 +53,11 @@ export default registerAs(
     victimSessionSecret: process.env.VICTIM_SESSION_SECRET ?? '',
     victimSessionTtlSeconds: int(process.env.VICTIM_SESSION_TTL_SECONDS, 86400),
     phoneVerifiedTokenTtlSeconds: int(process.env.PHONE_VERIFIED_TOKEN_TTL_SECONDS, 600),
+    staffSessionSecret: process.env.STAFF_SESSION_SECRET ?? '',
+    // 8 hours — a work-shift-length default, deliberately shorter than the
+    // victim session's 24h default (staff sessions authorize access to
+    // other people's sensitive data; victims only ever access their own).
+    staffSessionTtlSeconds: int(process.env.STAFF_SESSION_TTL_SECONDS, 28800),
     // No global counsellor-caseload-cap setting here on purpose: v0.2's data
     // model (§12) makes `caseload_cap` a per-staff-row column, not a
     // system-wide constant, so it lives on `counsellors.caseload_cap`

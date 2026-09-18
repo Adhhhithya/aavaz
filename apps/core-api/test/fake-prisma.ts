@@ -92,6 +92,29 @@ interface SafetySettingRow {
   updatedAt: Date;
 }
 
+interface StaffRow {
+  id: string;
+  userId: string;
+  counsellorId: string | null;
+  role: string;
+  orgId: string | null;
+  districtScope: string[];
+  languages: string[];
+  caseloadCap: number | null;
+  onCallSchedule: unknown;
+  createdAt: Date;
+}
+
+interface StaffAuditLogRow {
+  id: string;
+  staffId: string;
+  action: string;
+  resourceType: string;
+  resourceId: string | null;
+  reason: string | null;
+  createdAt: Date;
+}
+
 let idCounter = 0;
 function nextId(): string {
   idCounter += 1;
@@ -106,6 +129,8 @@ export class FakePrismaService {
   consentRows: ConsentRow[] = [];
   victimProfileRows: VictimProfileRow[] = [];
   safetySettingRows: SafetySettingRow[] = [];
+  staffRows: StaffRow[] = [];
+  staffAuditLogRows: StaffAuditLogRow[] = [];
 
   otpCode = {
     create: async ({ data }: { data: Partial<OtpCodeRow> }): Promise<OtpCodeRow> => {
@@ -166,8 +191,21 @@ export class FakePrismaService {
   };
 
   user = {
-    findUnique: async ({ where }: { where: { phoneNumber: string } }): Promise<UserRow | null> => {
-      return this.userRows.find((u) => u.phoneNumber === where.phoneNumber) ?? null;
+    findUnique: async ({
+      where,
+      include,
+    }: {
+      where: { phoneNumber?: string; id?: string };
+      include?: { cases?: boolean };
+    }): Promise<(UserRow & { cases?: CaseRow[] }) | null> => {
+      const row = where.phoneNumber
+        ? this.userRows.find((u) => u.phoneNumber === where.phoneNumber)
+        : this.userRows.find((u) => u.id === where.id);
+      if (!row) return null;
+      if (include?.cases) {
+        return { ...row, cases: this.caseRows.filter((c) => c.userId === row.id).map((c) => ({ ...c })) };
+      }
+      return { ...row };
     },
 
     create: async ({ data }: { data: Partial<UserRow> }): Promise<UserRow> => {
@@ -245,6 +283,48 @@ export class FakePrismaService {
       };
       this.caseRows.push(row);
       return row;
+    },
+
+    // Supports exactly the two shapes console.service.ts needs: a flat
+    // assignedCounsellorId match (counsellor-role queue), or a
+    // user.locationDistrict-in-list match (district-scoped queue) — plus
+    // sort-by-distress-score and an `include: { user: {...} }` join,
+    // resolved against the in-memory user rows.
+    findMany: async (args: {
+      where?: {
+        assignedCounsellorId?: string;
+        user?: { locationDistrict?: { in: string[] } };
+      };
+      orderBy?: { currentDistressScore?: 'asc' | 'desc' };
+      include?: { user?: { select?: { name?: boolean; locationDistrict?: boolean } } };
+    }): Promise<Array<CaseRow & { user?: { name: string; locationDistrict: string | null } | null }>> => {
+      let matches = [...this.caseRows];
+      if (args.where?.assignedCounsellorId !== undefined) {
+        matches = matches.filter((c) => c.assignedCounsellorId === args.where!.assignedCounsellorId);
+      }
+      if (args.where?.user?.locationDistrict?.in) {
+        const allowed = args.where.user.locationDistrict.in;
+        matches = matches.filter((c) => {
+          const owner = this.userRows.find((u) => u.id === c.userId);
+          return owner?.locationDistrict != null && allowed.includes(owner.locationDistrict);
+        });
+      }
+      if (args.orderBy?.currentDistressScore) {
+        const dir = args.orderBy.currentDistressScore;
+        matches.sort((a, b) =>
+          dir === 'desc'
+            ? (b.currentDistressScore ?? 0) - (a.currentDistressScore ?? 0)
+            : (a.currentDistressScore ?? 0) - (b.currentDistressScore ?? 0),
+        );
+      }
+      return matches.map((c) => {
+        const result: CaseRow & { user?: { name: string; locationDistrict: string | null } | null } = { ...c };
+        if (args.include?.user) {
+          const owner = this.userRows.find((u) => u.id === c.userId);
+          result.user = owner ? { name: owner.name, locationDistrict: owner.locationDistrict } : null;
+        }
+        return result;
+      });
     },
   };
 
@@ -339,6 +419,45 @@ export class FakePrismaService {
         updatedAt: new Date(),
       };
       this.safetySettingRows.push(row);
+      return row;
+    },
+  };
+
+  staff = {
+    findUnique: async ({ where }: { where: { userId: string } }): Promise<StaffRow | null> => {
+      return this.staffRows.find((s) => s.userId === where.userId) ?? null;
+    },
+
+    create: async ({ data }: { data: Partial<StaffRow> }): Promise<StaffRow> => {
+      const row: StaffRow = {
+        id: nextId(),
+        userId: data.userId!,
+        counsellorId: data.counsellorId ?? null,
+        role: data.role!,
+        orgId: data.orgId ?? null,
+        districtScope: data.districtScope ?? [],
+        languages: data.languages ?? [],
+        caseloadCap: data.caseloadCap ?? null,
+        onCallSchedule: data.onCallSchedule ?? null,
+        createdAt: new Date(),
+      };
+      this.staffRows.push(row);
+      return row;
+    },
+  };
+
+  staffAuditLog = {
+    create: async ({ data }: { data: Partial<StaffAuditLogRow> }): Promise<StaffAuditLogRow> => {
+      const row: StaffAuditLogRow = {
+        id: nextId(),
+        staffId: data.staffId!,
+        action: data.action!,
+        resourceType: data.resourceType!,
+        resourceId: data.resourceId ?? null,
+        reason: data.reason ?? null,
+        createdAt: new Date(),
+      };
+      this.staffAuditLogRows.push(row);
       return row;
     },
   };

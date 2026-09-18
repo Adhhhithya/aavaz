@@ -18,6 +18,8 @@ function buildConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     victimSessionSecret: 'test-secret',
     victimSessionTtlSeconds: 86400,
     phoneVerifiedTokenTtlSeconds: 600,
+    staffSessionSecret: '',
+    staffSessionTtlSeconds: 28800,
     ...overrides,
   };
 }

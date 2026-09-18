@@ -39,6 +39,14 @@
 // consent/profile/safety domain extraction. See
 // docs/S6_ONBOARDING_MIGRATION.md for the full mapping and rationale. These
 // are three brand-new tables with no FastAPI equivalent to diverge from.
+//
+// S7 UPDATE: `Staff` and `StaffAuditLog` were added below via a FOURTH real
+// introspection pass (same technique, this time with
+// backend/migrations/0005_staff.sql also applied) for the staff + console
+// authorization foundation. `Staff` is an explicit BRIDGE row — it does
+// NOT replace or duplicate `Counsellor`; see docs/S7_STAFF_CONSOLE_AUDIT.md
+// and docs/S7_STAFF_CONSOLE_MIGRATION.md for the full identity-mapping
+// rationale (Decision 1) and the RLS-deferral rationale (Decision 2).
 
 generator client {
   provider = "prisma-client-js"
@@ -111,6 +119,11 @@ model User {
   consents          Consent[]
   victimProfile     VictimProfile?
   safetySettings    SafetySetting?
+  // Reverse side of Staff.user — added in S7. A `users` row is NOT
+  // automatically staff; the presence (or absence) of this relation is
+  // exactly the bridge Decision 1 establishes. Does not change any column
+  // on `users`.
+  staff             Staff?
 
   @@map("users")
 }
@@ -216,6 +229,11 @@ model Counsellor {
   currentCaseload  Int?    @default(0) @map("current_caseload")
   caseloadCap      Int     @default(80) @map("caseload_cap")
   cases            Case[]
+  // Reverse side of Staff.counsellor — added in S7 (Decision 1's bridge).
+  // A `counsellors` row is not required to have a linked staff row (it can
+  // exist purely as an assignment target, exactly as it always has since
+  // S5) — this relation is nullable-on-the-other-side, not required here.
+  staff            Staff[]
 
   @@index([district, currentCaseload], map: "idx_counsellors_district_caseload")
   @@map("counsellors")
@@ -273,4 +291,53 @@ model SafetySetting {
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("safety_settings")
+}
+
+// Maps to the new `staff` table (backend/migrations/0005_staff.sql, S7).
+// This is the Decision-1 bridge: `userId` links to the authenticated
+// identity (`users`, identity-owned since S4); `counsellorId` links to the
+// existing assignment identity (`counsellors`, S5-owned), NULLABLE because
+// not every staff role carries an assignable caseload. Application code
+// must resolve access through this bridge (userId -> staff ->
+// counsellorId) — never compare `userId` and `counsellorId` directly, and
+// never compare a `users.id` to a `counsellors.id`. See
+// apps/core-api/src/staff/staff.service.ts.
+model Staff {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId          String    @unique @map("user_id") @db.Uuid
+  counsellorId    String?   @map("counsellor_id") @db.Uuid
+  role            String
+  orgId           String?   @map("org_id")
+  districtScope   String[]  @map("district_scope")
+  languages       String[]
+  caseloadCap     Int?      @map("caseload_cap")
+  onCallSchedule  Json?     @map("on_call_schedule")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  counsellor      Counsellor? @relation(fields: [counsellorId], references: [id], onUpdate: NoAction)
+  auditLogs       StaffAuditLog[]
+
+  @@index([counsellorId], map: "idx_staff_counsellor_id")
+  @@map("staff")
+}
+
+// Maps to the new `staff_audit_log` table (S7). Minimal, append-only —
+// NOT v0.2's full hash-chained `audit_log` (no prev_hash/hash columns
+// exist; adding empty placeholders for them would itself be a false claim
+// of tamper-evidence). Only IDs and short action/resource-type codes are
+// ever written — see apps/core-api/src/staff/staff-audit.service.ts, the
+// only writer, whose interface has no parameter that could carry victim
+// content, a token, a PIN, or a secret.
+model StaffAuditLog {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  staffId      String   @map("staff_id") @db.Uuid
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id") @db.Uuid
+  reason       String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  staff        Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([staffId, createdAt(sort: Desc)], map: "idx_staff_audit_log_staff_created")
+  @@map("staff_audit_log")
 }
