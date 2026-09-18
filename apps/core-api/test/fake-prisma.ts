@@ -62,6 +62,36 @@ interface CaseRow {
   updatedAt: Date;
 }
 
+interface ConsentRow {
+  id: string;
+  userId: string;
+  scope: string;
+  granted: boolean;
+  textVersionHash: string;
+  channel: string;
+  capturedBy: string;
+  capturedAt: Date;
+}
+
+interface VictimProfileRow {
+  userId: string;
+  relationType: string | null;
+  preferredChannel: string | null;
+  safeWindows: unknown;
+  safeToCall: boolean | null;
+  updatedAt: Date;
+}
+
+interface SafetySettingRow {
+  userId: string;
+  duressPinHash: string | null;
+  disguiseEnabled: boolean;
+  safeWordHash: string | null;
+  trustedContactName: string | null;
+  trustedContactPhone: string | null;
+  updatedAt: Date;
+}
+
 let idCounter = 0;
 function nextId(): string {
   idCounter += 1;
@@ -73,6 +103,9 @@ export class FakePrismaService {
   userRows: UserRow[] = [];
   counsellorRows: CounsellorRow[] = [];
   caseRows: CaseRow[] = [];
+  consentRows: ConsentRow[] = [];
+  victimProfileRows: VictimProfileRow[] = [];
+  safetySettingRows: SafetySettingRow[] = [];
 
   otpCode = {
     create: async ({ data }: { data: Partial<OtpCodeRow> }): Promise<OtpCodeRow> => {
@@ -211,6 +244,101 @@ export class FakePrismaService {
         updatedAt: new Date(),
       };
       this.caseRows.push(row);
+      return row;
+    },
+  };
+
+  consent = {
+    create: async ({ data }: { data: Partial<ConsentRow> }): Promise<ConsentRow> => {
+      const row: ConsentRow = {
+        id: nextId(),
+        userId: data.userId!,
+        scope: data.scope!,
+        granted: data.granted!,
+        textVersionHash: data.textVersionHash!,
+        channel: data.channel!,
+        capturedBy: data.capturedBy ?? 'self',
+        capturedAt: new Date(),
+      };
+      this.consentRows.push(row);
+      return row;
+    },
+
+    findMany: async (args: {
+      where: { userId: string };
+      orderBy: { capturedAt: 'desc' | 'asc' };
+    }): Promise<ConsentRow[]> => {
+      const matches = this.consentRows.filter((r) => r.userId === args.where.userId);
+      matches.sort((a, b) =>
+        args.orderBy.capturedAt === 'desc'
+          ? b.capturedAt.getTime() - a.capturedAt.getTime()
+          : a.capturedAt.getTime() - b.capturedAt.getTime(),
+      );
+      return matches.map((r) => ({ ...r }));
+    },
+  };
+
+  victimProfile = {
+    findUnique: async ({ where }: { where: { userId: string } }): Promise<VictimProfileRow | null> => {
+      return this.victimProfileRows.find((r) => r.userId === where.userId) ?? null;
+    },
+
+    upsert: async ({
+      where,
+      create,
+      update,
+    }: {
+      where: { userId: string };
+      create: Partial<VictimProfileRow> & { userId: string };
+      update: Partial<VictimProfileRow>;
+    }): Promise<VictimProfileRow> => {
+      const existing = this.victimProfileRows.find((r) => r.userId === where.userId);
+      if (existing) {
+        Object.assign(existing, update, { updatedAt: new Date() });
+        return existing;
+      }
+      const row: VictimProfileRow = {
+        userId: create.userId,
+        relationType: create.relationType ?? null,
+        preferredChannel: create.preferredChannel ?? null,
+        safeWindows: create.safeWindows ?? null,
+        safeToCall: create.safeToCall ?? null,
+        updatedAt: new Date(),
+      };
+      this.victimProfileRows.push(row);
+      return row;
+    },
+  };
+
+  safetySetting = {
+    findUnique: async ({ where }: { where: { userId: string } }): Promise<SafetySettingRow | null> => {
+      return this.safetySettingRows.find((r) => r.userId === where.userId) ?? null;
+    },
+
+    upsert: async ({
+      where,
+      create,
+      update,
+    }: {
+      where: { userId: string };
+      create: Partial<SafetySettingRow> & { userId: string };
+      update: Partial<SafetySettingRow>;
+    }): Promise<SafetySettingRow> => {
+      const existing = this.safetySettingRows.find((r) => r.userId === where.userId);
+      if (existing) {
+        Object.assign(existing, update, { updatedAt: new Date() });
+        return existing;
+      }
+      const row: SafetySettingRow = {
+        userId: create.userId,
+        duressPinHash: create.duressPinHash ?? null,
+        disguiseEnabled: create.disguiseEnabled ?? false,
+        safeWordHash: create.safeWordHash ?? null,
+        trustedContactName: create.trustedContactName ?? null,
+        trustedContactPhone: create.trustedContactPhone ?? null,
+        updatedAt: new Date(),
+      };
+      this.safetySettingRows.push(row);
       return row;
     },
   };

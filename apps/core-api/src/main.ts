@@ -17,7 +17,7 @@ async function bootstrap(): Promise<void> {
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
   await app.listen(port);
   // eslint-disable-next-line no-console
-  console.log(`core-api (S4 identity slice) listening on port ${port}`);
+  console.log(`core-api listening on port ${port}`);
 }
 
 bootstrap();

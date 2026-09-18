@@ -22,6 +22,10 @@ import { VictimAuthGuard } from './victim-auth.guard';
   imports: [JwtModule.register({}), CasesModule],
   controllers: [IdentityController],
   providers: [OtpService, TokenService, IdentityService, RegistrationService, VictimAuthGuard, PhoneVerifiedGuard],
-  exports: [TokenService, OtpService],
+  // VictimAuthGuard is exported (new in S6) so the consent/profile/safety
+  // modules can authenticate their own endpoints without duplicating the
+  // victim-session token verification logic — see
+  // docs/S6_ONBOARDING_MIGRATION.md Phase 3.
+  exports: [TokenService, OtpService, VictimAuthGuard],
 })
 export class IdentityModule {}

@@ -2,7 +2,7 @@
   "name": "@aavaz/core-api",
   "version": "0.1.0",
   "private": true,
-  "description": "AAVAZ v0.2 Node core-api — S4 slice: identity + OTP + victim authentication only. See docs/S4_IDENTITY_MIGRATION.md.",
+  "description": "AAVAZ v0.2 Node core-api — identity, OTP, registration, and consent/profile/safety. See docs/S4_IDENTITY_MIGRATION.md, docs/S5_REGISTRATION_MIGRATION.md, docs/S6_ONBOARDING_MIGRATION.md.",
   "scripts": {
     "prisma:generate": "prisma generate",
     "build": "npm run prisma:generate && tsc -p tsconfig.build.json",
@@ -19,6 +19,7 @@
     "@nestjs/core": "11.2.5",
     "@nestjs/jwt": "11.0.2",
     "@nestjs/platform-express": "11.2.5",
+    "@node-rs/argon2": "2.2.1",
     "@prisma/client": "6.19.3",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
