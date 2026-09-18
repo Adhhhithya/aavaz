@@ -47,6 +47,18 @@
 // NOT replace or duplicate `Counsellor`; see docs/S7_STAFF_CONSOLE_AUDIT.md
 // and docs/S7_STAFF_CONSOLE_MIGRATION.md for the full identity-mapping
 // rationale (Decision 1) and the RLS-deferral rationale (Decision 2).
+//
+// S9 UPDATE: `Referral` was added below via
+// backend/migrations/0007_referrals.sql, applied against the real,
+// disposable-Postgres integration-test harness (test/pg-harness.ts) rather
+// than a separate standalone `prisma db pull` pass — the harness applies
+// this exact migration file to a real Postgres instance and Prisma Client
+// is generated from this same schema.prisma before any query runs, so a
+// mismatched column name/type would fail the integration suite loudly, the
+// same verification strength as introspection, just performed in one step.
+// Column types/naming follow the established pattern exactly (free TEXT
+// `status`, `db.Uuid` PKs/FKs, `Timestamptz(6)` for every timestamp) — see
+// docs/S9_REFERRAL_MIGRATION.md.
 
 generator client {
   provider = "prisma-client-js"
@@ -124,6 +136,8 @@ model User {
   // exactly the bridge Decision 1 establishes. Does not change any column
   // on `users`.
   staff             Staff?
+  // Reverse side of Referral.user — added in S9.
+  referrals         Referral[]
 
   @@map("users")
 }
@@ -212,6 +226,8 @@ model Case {
   lifecycleUpdatedAt   DateTime       @default(now()) @map("lifecycle_updated_at") @db.Timestamptz(6)
   user                 User?          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   counsellor           Counsellor?    @relation(fields: [assignedCounsellorId], references: [id], onUpdate: NoAction)
+  // Reverse side of Referral.case — added in S9.
+  referrals            Referral[]
 
   @@index([assignedCounsellorId], map: "idx_cases_assigned_counsellor_id")
   @@index([caseStage], map: "idx_cases_case_stage")
@@ -332,6 +348,8 @@ model Staff {
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   counsellor      Counsellor? @relation(fields: [counsellorId], references: [id], onUpdate: NoAction)
   auditLogs       StaffAuditLog[]
+  // Reverse side of Referral.createdByStaff — added in S9.
+  draftedReferrals Referral[]
 
   @@index([counsellorId], map: "idx_staff_counsellor_id")
   @@map("staff")
@@ -356,4 +374,42 @@ model StaffAuditLog {
 
   @@index([staffId, createdAt(sort: Desc)], map: "idx_staff_audit_log_staff_created")
   @@map("staff_audit_log")
+}
+
+// Maps to the new `referrals` table (backend/migrations/0007_referrals.sql,
+// S9). No FastAPI equivalent exists — this is entirely net-new capability
+// (v0.2 Workflow G). `packetData` stores the JSON packet built by
+// apps/core-api/src/referral/referral-packets.ts, already minimized to
+// exactly the fields v0.2's per-destination table allows — see that file's
+// header and docs/S9_REFERRAL_MIGRATION.md for the full accounting of what
+// each destination's packet can and cannot populate automatically today.
+// `status` is free TEXT for the same "avoid ALTER TYPE on a shared column
+// type" reason as `cases.lifecycle_state` — see
+// apps/core-api/src/referral/referral-states.ts for the actual enforcement.
+model Referral {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  caseId             String    @map("case_id") @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  destinationType    String    @map("destination_type")
+  status             String    @default("DRAFTED")
+  packetData         Json      @map("packet_data")
+  createdByStaffId   String    @map("created_by_staff_id") @db.Uuid
+  attemptCount       Int       @default(0) @map("attempt_count")
+  idempotencyKey     String?   @map("idempotency_key")
+  sentAt             DateTime? @map("sent_at") @db.Timestamptz(6)
+  ackDueAt           DateTime? @map("ack_due_at") @db.Timestamptz(6)
+  ackedAt            DateTime? @map("acked_at") @db.Timestamptz(6)
+  serviceDueAt       DateTime? @map("service_due_at") @db.Timestamptz(6)
+  deliveredAt        DateTime? @map("delivered_at") @db.Timestamptz(6)
+  verifiedAt         DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  case               Case      @relation(fields: [caseId], references: [id], onUpdate: NoAction)
+  user               User      @relation(fields: [userId], references: [id], onUpdate: NoAction)
+  createdByStaff     Staff     @relation(fields: [createdByStaffId], references: [id], onUpdate: NoAction)
+
+  @@index([caseId], map: "idx_referrals_case_id")
+  @@index([userId], map: "idx_referrals_user_id")
+  @@index([status], map: "idx_referrals_status")
+  @@map("referrals")
 }

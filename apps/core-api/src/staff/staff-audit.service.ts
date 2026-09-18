@@ -9,10 +9,18 @@ import { PrismaService } from '../prisma/prisma.service';
  * "Events carry IDs and codes, never free-text victim content").
  *
  * S8 adds `lifecycle.case.transition`/`case` — see
- * apps/core-api/src/lifecycle/lifecycle.service.ts.
+ * apps/core-api/src/lifecycle/lifecycle.service.ts. S9 adds
+ * `referral.drafted`/`referral.transition`/`referral.read`/`referral` —
+ * see apps/core-api/src/referral/referral.service.ts.
  */
-export type StaffAuditAction = 'console.queue.read' | 'console.victim.read' | 'lifecycle.case.transition';
-export type StaffAuditResourceType = 'queue' | 'victim' | 'case';
+export type StaffAuditAction =
+  | 'console.queue.read'
+  | 'console.victim.read'
+  | 'lifecycle.case.transition'
+  | 'referral.drafted'
+  | 'referral.transition'
+  | 'referral.read';
+export type StaffAuditResourceType = 'queue' | 'victim' | 'case' | 'referral';
 
 /** See assignment.service.ts's QueryClient for why this accepts either a
  * standalone PrismaService or an in-flight transaction client. */

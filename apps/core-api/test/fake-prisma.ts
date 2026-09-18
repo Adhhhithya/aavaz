@@ -118,6 +118,26 @@ interface StaffAuditLogRow {
   createdAt: Date;
 }
 
+interface ReferralRow {
+  id: string;
+  caseId: string;
+  userId: string;
+  destinationType: string;
+  status: string;
+  packetData: unknown;
+  createdByStaffId: string;
+  attemptCount: number;
+  idempotencyKey: string | null;
+  sentAt: Date | null;
+  ackDueAt: Date | null;
+  ackedAt: Date | null;
+  serviceDueAt: Date | null;
+  deliveredAt: Date | null;
+  verifiedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 let idCounter = 0;
 function nextId(): string {
   idCounter += 1;
@@ -134,6 +154,7 @@ export class FakePrismaService {
   safetySettingRows: SafetySettingRow[] = [];
   staffRows: StaffRow[] = [];
   staffAuditLogRows: StaffAuditLogRow[] = [];
+  referralRows: ReferralRow[] = [];
 
   otpCode = {
     create: async ({ data }: { data: Partial<OtpCodeRow> }): Promise<OtpCodeRow> => {
@@ -398,6 +419,26 @@ export class FakePrismaService {
       );
       return matches.map((r) => ({ ...r }));
     },
+
+    // Supports ReferralService's consent-gate check: the single
+    // most-recent row for (userId, scope), mirroring
+    // consent.service.ts::getCurrentConsents's own "latest row wins"
+    // semantics but scoped to one scope via a real SQL-shaped filter
+    // rather than filtering client-side across every scope.
+    findFirst: async (args: {
+      where: { userId: string; scope: string };
+      orderBy: { capturedAt: 'desc' | 'asc' };
+    }): Promise<ConsentRow | null> => {
+      const matches = this.consentRows.filter(
+        (r) => r.userId === args.where.userId && r.scope === args.where.scope,
+      );
+      matches.sort((a, b) =>
+        args.orderBy.capturedAt === 'desc'
+          ? b.capturedAt.getTime() - a.capturedAt.getTime()
+          : a.capturedAt.getTime() - b.capturedAt.getTime(),
+      );
+      return matches[0] ?? null;
+    },
   };
 
   victimProfile = {
@@ -502,6 +543,85 @@ export class FakePrismaService {
       };
       this.staffAuditLogRows.push(row);
       return row;
+    },
+  };
+
+  referral = {
+    create: async ({ data }: { data: Partial<ReferralRow> }): Promise<ReferralRow> => {
+      const row: ReferralRow = {
+        id: nextId(),
+        caseId: data.caseId!,
+        userId: data.userId!,
+        destinationType: data.destinationType!,
+        status: data.status ?? 'DRAFTED',
+        packetData: data.packetData!,
+        createdByStaffId: data.createdByStaffId!,
+        attemptCount: data.attemptCount ?? 0,
+        idempotencyKey: data.idempotencyKey ?? null,
+        sentAt: data.sentAt ?? null,
+        ackDueAt: data.ackDueAt ?? null,
+        ackedAt: data.ackedAt ?? null,
+        serviceDueAt: data.serviceDueAt ?? null,
+        deliveredAt: data.deliveredAt ?? null,
+        verifiedAt: data.verifiedAt ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.referralRows.push(row);
+      return row;
+    },
+
+    findUnique: async ({
+      where,
+      include,
+    }: {
+      where: { id: string };
+      include?: { case?: { include?: { user?: { select?: { locationDistrict?: boolean } } } } };
+    }): Promise<
+      | (ReferralRow & { case?: (CaseRow & { user?: { locationDistrict: string | null } | null }) | null })
+      | null
+    > => {
+      const row = this.referralRows.find((r) => r.id === where.id);
+      if (!row) return null;
+      const result: ReferralRow & { case?: (CaseRow & { user?: { locationDistrict: string | null } | null }) | null } = {
+        ...row,
+      };
+      if (include?.case) {
+        const caseRow = this.caseRows.find((c) => c.id === row.caseId);
+        if (caseRow) {
+          const caseResult: CaseRow & { user?: { locationDistrict: string | null } | null } = { ...caseRow };
+          if (include.case.include?.user) {
+            const owner = this.userRows.find((u) => u.id === caseRow.userId);
+            caseResult.user = owner ? { locationDistrict: owner.locationDistrict } : null;
+          }
+          result.case = caseResult;
+        } else {
+          result.case = null;
+        }
+      }
+      return result;
+    },
+
+    findUniqueOrThrow: async (args: { where: { id: string } }): Promise<ReferralRow> => {
+      const row = this.referralRows.find((r) => r.id === args.where.id);
+      if (!row) throw new Error('not found');
+      return { ...row };
+    },
+
+    // Mirrors the real atomic-conditional-update pattern used by
+    // referral.service.ts: only updates and reports success if the WHERE
+    // clause (id + still-matching status) still matches at the moment of
+    // the "write" — same technique as case.updateMany above (S8).
+    updateMany: async (args: {
+      where: { id: string; status: string };
+      data: Partial<ReferralRow>;
+    }): Promise<{ count: number }> => {
+      const row = this.referralRows.find((r) => r.id === args.where.id);
+      if (!row || row.status !== args.where.status) {
+        return { count: 0 };
+      }
+      Object.assign(row, args.data);
+      return { count: 1 };
     },
   };
 

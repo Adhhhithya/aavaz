@@ -1,0 +1,44 @@
+# MIGRATION_STATUS.md
+
+Living tracker of domain migration state. Updated at the end of each slice.
+Statuses: `NOT_STARTED`, `AUDITED`, `IN_PROGRESS`, `IMPLEMENTED`,
+`INTEGRATED`, `CUTOVER_READY`, `CUTOVER_COMPLETE`, `DEFERRED`, `BLOCKED`.
+"Cutover complete" is never claimed while a legacy FastAPI writer remains
+live on the same data unless explicitly noted as an intentional
+coexistence design (not this repository's current state for any domain).
+
+| Domain | Current owner | Target owner | Status | Legacy writer | Node API | DB state | Tests | Known gaps |
+|---|---|---|---|---|---|---|---|---|
+| Identity / OTP | Node (S4) | Node | INTEGRATED | None (Node sole writer of `otp_codes`; `users` still also written by inbound webhooks — see below) | `/api/v1/auth/otp/*`, `/api/v1/auth/register` | `users`, `otp_codes` (existing tables, Node-owned writes) | Unit + integration | FastAPI's `ivr_webhook.py`/`sms_webhook.py` still insert `users` rows directly for inbound calls/SMS — a live, pre-existing dual-writer not created by this migration (S8 audit §E) |
+| Registration / case creation / assignment | Node (S5) | Node | INTEGRATED | FastAPI still writes `cases.cnr`/`ecourts_data` (eCourts) and `cases.case_stage` (unvalidated) | Registration flow creates `cases` rows | `cases`, `counsellors` (existing tables) | Unit + integration + concurrency | Live dual-writer on `cases` (S8 audit §E, §P) — Node owns creation/assignment fields, FastAPI owns `cnr`/`ecourts_data`/`case_stage` |
+| Consent | Node (S6) | Node | INTEGRATED | Legacy `users.consent_given` boolean (FastAPI, captured once at registration) — not migrated/reconciled in this slice | `/v1/consent/*` | `consents` (new, append-only) | Unit + integration | Two competing consent "authorities" (`users.consent_given` vs. `consents` table) not yet reconciled |
+| Profile / preferences | Node (S6) | Node | INTEGRATED | None | `/v1/profile/*` | `victim_profiles` (new) | Unit + integration | — |
+| Safety (duress PIN, disguise, safe word, trusted contact) | Node (S6) | Node | INTEGRATED | None | `/v1/safety/*` | `safety_settings` (new) | Unit + integration | Trusted contact not KMS-encrypted (documented gap, no KMS integration exists) |
+| Staff identity / console authorization | Node (S7) | Node | INTEGRATED | None | `/v1/console/queue`, `/v1/console/victims/:id` | `staff`, `staff_audit_log` (new) | Unit + integration + security | Minimal audit only — no hash-chain/WORM; no break-glass |
+| Case/victim lifecycle | Node (S8) | Node | INTEGRATED (new write path only) | FastAPI's `lifecycle_routes.py` still writes unvalidated `cases.case_stage` | `PATCH /v1/console/cases/:caseId/lifecycle` | `cases.lifecycle_state`/`lifecycle_updated_at`, `victim_profiles.opted_out_at` (additive) | Unit + integration + concurrency + security | Two lifecycle-adjacent columns (`case_stage` legacy/unvalidated vs. `lifecycle_state` new/validated) not reconciled; opt-out is state-only, nothing reacts to it yet |
+| Referral | Node (S9) | Node | INTEGRATED | None (net-new capability, no FastAPI equivalent) | `POST /v1/console/cases/:caseId/referrals`, `GET`/`PATCH /v1/console/referrals/:id` | `referrals` (new) | Unit + integration + concurrency + security | No PDF rendering, no delivery adapter, no automated SLA-breach detection; `legal_aid`/`welfare` packets cannot auto-populate CNR/FIR (not modeled in Node yet) |
+| Audit (full hash-chain/WORM) | Node (S7 minimal only) | Node | DEFERRED | n/a | n/a | `staff_audit_log` (append-only, no `prev_hash`/`hash`) | Covered indirectly via every domain's own audit-hook tests | Full v0.2 `audit_log` shape (hash chain, WORM export, non-staff actors, break-glass) not built |
+| Oversight (aggregate, small-count-suppressed) | FastAPI (`national_routes.py` real+redacted, `district_routes.py` real+district-unscoped, `state_routes.py` 100% hardcoded mock) | Node | NOT_STARTED | FastAPI (as described) | None | n/a | None (Node side) | `state_routes.py` returns fabricated numbers presented as real (S8 audit §D) — a real, user-facing misrepresentation risk until replaced |
+| Triage-router | None real (a Python threshold function stands in) | Node | BLOCKED | FastAPI `rules_engine.py` (not versioned, not `json-rules-engine`, not admin-approval-gated) | None | n/a | None | Hard-blocked on real assessment output (`analysis-svc`/Python work, not a Node migration slice) — see S8 audit §G |
+| Scheduling / check-in / silence ladder / workers | FastAPI (`escalation.py`, in-process 10s poll, SOS-only) | Node `workers` | BLOCKED | FastAPI (as described) | None | No `checkins` table | None | Hard-blocked on a job-queue infrastructure decision (Redis/BullMQ) not yet made — S8 audit §F/I |
+| Court-sync | FastAPI (`ecourts_scraper.py`/`ecourts_parser.py`, real, request-triggered) | Node `workers` (orchestration) + Python (compute) | NOT_STARTED | FastAPI (as described) | None | Writes `cases.cnr`/`ecourts_data` (unmodeled in Node's Prisma schema) | None (Node side) | Live dual-writer on `cases` (S8 audit §D/E); needs a `milestones` table; needs the poll/diff/event model, none of which exist |
+| Channel-gateway / conversation agent / memory / assessment / legal detection | FastAPI (`chatbot_routes.py`, inline, direct LLM call, no crisis guard) | Node gateway + Python `agent-svc`/`memory-svc`/`analysis-svc` | NOT_STARTED | FastAPI (as described) | None | No `sessions`/`memory_chunks`/`assessments` tables | None | Largest remaining rebuild; explicitly out of scope for every S4-S9 slice; blocked on a session model + the crisis-guard design + the job-queue decision |
+| Tasks / SLA engine | None | Node | NOT_STARTED | None | None | No `tasks` table | None | Real trigger (`assessment.completed`) doesn't exist; a manual/console-driven creation path is buildable without it but not yet built |
+
+## Cross-cutting known gaps (not owned by any single domain row above)
+
+- **No job-queue infrastructure** (Redis/BullMQ) exists anywhere in this
+  repository — the single largest fork in the dependency graph (S8 audit
+  §F/M). Blocks: automated scheduling, automated court-sync, automated
+  referral-SLA escalation, post-session pipeline automation.
+- **No RLS enforcement** — every table has `ENABLE ROW LEVEL SECURITY`
+  with no permissive policy; the service-role connection bypasses RLS
+  entirely. All authorization is application-layer (S4-S9's consistent
+  pattern). Never claimed otherwise anywhere in this repository's docs.
+- **`fusion.py`'s distress scoring is a keyword-match simulation**,
+  presented identically to real model output in every API response and
+  stored field. S9's referral packets explicitly exclude this value from
+  any external-facing packet for exactly this reason (see
+  `docs/S9_REFERRAL_MIGRATION.md` §C).
+- **`state_routes.py` (FastAPI oversight) returns 100% hardcoded mock
+  data** with no indication to a caller that it is not live.
