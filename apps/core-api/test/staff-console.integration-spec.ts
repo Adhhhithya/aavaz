@@ -44,6 +44,7 @@ describeIfPostgres('Staff identity + console authorization — real PostgreSQL i
       '0004_consent_profile_safety.sql',
       '0005_staff.sql',
       '0006_lifecycle.sql',
+      '0009_audit_hash_chain.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';

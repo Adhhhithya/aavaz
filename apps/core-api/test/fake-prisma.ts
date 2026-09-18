@@ -10,6 +10,8 @@
  * the exact filter fields the identity module passes are implemented.
  */
 
+import { AUDIT_CHAIN_GENESIS_HASH } from '../src/staff/audit-chain';
+
 interface OtpCodeRow {
   id: string;
   phoneHash: string;
@@ -116,6 +118,8 @@ interface StaffAuditLogRow {
   resourceId: string | null;
   reason: string | null;
   createdAt: Date;
+  prevHash: string | null;
+  hash: string | null;
 }
 
 interface ReferralRow {
@@ -540,10 +544,46 @@ export class FakePrismaService {
         resourceType: data.resourceType!,
         resourceId: data.resourceId ?? null,
         reason: data.reason ?? null,
-        createdAt: new Date(),
+        // createdAt is caller-supplied by StaffAuditService.record (it
+        // generates the timestamp itself so it can be included in the
+        // hash computation BEFORE insert) — never silently regenerated
+        // here, which would make the fake's row content diverge from
+        // what was actually hashed.
+        createdAt: data.createdAt ?? new Date(),
+        prevHash: data.prevHash ?? null,
+        hash: data.hash ?? null,
       };
       this.staffAuditLogRows.push(row);
       return row;
+    },
+
+    findMany: async (): Promise<StaffAuditLogRow[]> => this.staffAuditLogRows.map((r) => ({ ...r })),
+  };
+
+  // Seeded with the real genesis value on every fresh FakePrismaService,
+  // mirroring backend/migrations/0009_audit_hash_chain.sql's
+  // ON CONFLICT DO NOTHING seed — a fresh fake instance is meant to
+  // behave like a fresh, just-migrated database, not an empty table.
+  staffAuditChainHeadRow: { id: 1; tipHash: string } = { id: 1, tipHash: AUDIT_CHAIN_GENESIS_HASH };
+
+  staffAuditChainHead = {
+    findUnique: async ({ where }: { where: { id: number } }): Promise<{ id: number; tipHash: string } | null> => {
+      return where.id === this.staffAuditChainHeadRow.id ? { ...this.staffAuditChainHeadRow } : null;
+    },
+
+    // Mirrors the real atomic-conditional-update pattern (S5/S8/S9/S11):
+    // only advances the tip and reports success if the WHERE clause
+    // (id + still-matching tipHash) still matches at the moment of the
+    // "write".
+    updateMany: async (args: {
+      where: { id: number; tipHash: string };
+      data: { tipHash: string };
+    }): Promise<{ count: number }> => {
+      if (this.staffAuditChainHeadRow.id !== args.where.id || this.staffAuditChainHeadRow.tipHash !== args.where.tipHash) {
+        return { count: 0 };
+      }
+      this.staffAuditChainHeadRow.tipHash = args.data.tipHash;
+      return { count: 1 };
     },
   };
 

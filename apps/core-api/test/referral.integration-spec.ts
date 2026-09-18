@@ -43,6 +43,7 @@ describeIfPostgres('Referral domain — real PostgreSQL integration', () => {
       '0006_lifecycle.sql',
       '0007_referrals.sql',
       '0008_referral_in_service_at.sql',
+      '0009_audit_hash_chain.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';

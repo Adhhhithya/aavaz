@@ -370,10 +370,32 @@ model StaffAuditLog {
   resourceId   String?  @map("resource_id") @db.Uuid
   reason       String?
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  // Added via backend/migrations/0009_audit_hash_chain.sql (S11).
+  // Nullable because a row written before this migration has neither —
+  // never backfilled with a fabricated value. See
+  // apps/core-api/src/staff/staff-audit.service.ts and
+  // docs/S11_AUDIT_HASH_CHAIN_MIGRATION.md.
+  prevHash     String?  @map("prev_hash")
+  hash         String?
   staff        Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([staffId, createdAt(sort: Desc)], map: "idx_staff_audit_log_staff_created")
   @@map("staff_audit_log")
+}
+
+// Maps to the new `staff_audit_chain_head` table
+// (backend/migrations/0009_audit_hash_chain.sql, S11) — a deliberate
+// singleton (`id` is always 1, enforced by a CHECK constraint) whose sole
+// purpose is to be the row every hash-chain append claims atomically via
+// the same conditional-UPDATE pattern already proven safe elsewhere in
+// this codebase (S5/S8/S9). See that migration file's header for the full
+// reasoning and apps/core-api/src/staff/staff-audit.service.ts for the
+// claim-with-retry logic this enables.
+model StaffAuditChainHead {
+  id      Int    @id @default(1)
+  tipHash String @map("tip_hash")
+
+  @@map("staff_audit_chain_head")
 }
 
 // Maps to the new `referrals` table (backend/migrations/0007_referrals.sql,
