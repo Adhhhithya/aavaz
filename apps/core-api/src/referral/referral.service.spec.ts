@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FakePrismaService } from '../../test/fake-prisma';
 import { StaffAuditService } from '../staff/staff-audit.service';
@@ -395,6 +395,100 @@ describe('ReferralService', () => {
       await referralService.transition(staff, referral.id, 'APPROVED');
 
       expect(fake.taskRows).toHaveLength(0);
+    });
+  });
+
+  describe('S16: one-time acknowledgement token', () => {
+    async function driveToSent(): Promise<{ referralId: string; rawAckToken: string }> {
+      const staff = await seedDistrictStaff('Pune');
+      const victim = seedUser({ locationDistrict: 'Pune' });
+      const kase = seedCase({ userId: victim.id });
+      seedConsent(victim.id, 'share_mental_health', true);
+      const referral = await referralService.draft(staff, kase.id, 'mental_health', { needSummary: 'x' });
+      await referralService.transition(staff, referral.id, 'APPROVED');
+      const sent = await referralService.transition(staff, referral.id, 'SENT');
+      expect(sent.rawAckToken).toBeDefined();
+      return { referralId: referral.id, rawAckToken: sent.rawAckToken! };
+    }
+
+    it('the SENT transition response carries a raw token not persisted anywhere in plaintext', async () => {
+      const { referralId, rawAckToken } = await driveToSent();
+      const row = fake.referralRows.find((r) => r.id === referralId)!;
+      expect(row.ackTokenHash).not.toBeNull();
+      expect(row.ackTokenHash).not.toBe(rawAckToken); // only the HASH is stored
+    });
+
+    it('a later SENT (bounce then retry) issues a NEW token that invalidates the old one', async () => {
+      const { referralId, rawAckToken: firstToken } = await driveToSent();
+      const staff = await seedDistrictStaff('Pune');
+      await referralService.transition(staff, referralId, 'BOUNCED');
+      const resent = await referralService.transition(staff, referralId, 'SENT');
+
+      expect(resent.rawAckToken).toBeDefined();
+      expect(resent.rawAckToken).not.toBe(firstToken);
+      // The OLD token must no longer work.
+      await expect(referralService.acknowledgeViaToken(firstToken)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('acknowledgeViaToken transitions SENT -> ACKNOWLEDGED and returns a reference number', async () => {
+      const { referralId, rawAckToken } = await driveToSent();
+      const result = await referralService.acknowledgeViaToken(rawAckToken);
+      expect(result.referenceNumber).toBe(referralId);
+
+      const row = fake.referralRows.find((r) => r.id === referralId)!;
+      expect(row.status).toBe('ACKNOWLEDGED');
+      expect(row.ackedAt).not.toBeNull();
+      expect(row.serviceDueAt).not.toBeNull();
+    });
+
+    it('the SAME token cannot be used twice — the second attempt gets the same generic error', async () => {
+      const { rawAckToken } = await driveToSent();
+      await referralService.acknowledgeViaToken(rawAckToken);
+
+      await expect(referralService.acknowledgeViaToken(rawAckToken)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('a wrong/guessed token gets the SAME generic error as an already-used one — no information leakage', async () => {
+      await expect(referralService.acknowledgeViaToken('completely-made-up-token-value')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('if a staff member manually acknowledges first, the token stops working — no separate bookkeeping needed', async () => {
+      const { referralId, rawAckToken } = await driveToSent();
+      const staff = await seedDistrictStaff('Pune');
+      await referralService.transition(staff, referralId, 'ACKNOWLEDGED');
+
+      await expect(referralService.acknowledgeViaToken(rawAckToken)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('getAckInfo returns ONLY a reference number — no victim content, no packet data', async () => {
+      const { referralId, rawAckToken } = await driveToSent();
+      const info = await referralService.getAckInfo(rawAckToken);
+      expect(Object.keys(info)).toEqual(['referenceNumber']);
+      expect(info.referenceNumber).toBe(referralId);
+    });
+
+    it('getAckInfo rejects a wrong token with the same generic error, and does not mutate state', async () => {
+      await expect(referralService.getAckInfo('not-a-real-token')).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('no audit row is written for a public token-based acknowledgement — there is no staff actor to attribute it to', async () => {
+      const { rawAckToken } = await driveToSent();
+      const auditRowsBefore = fake.staffAuditLogRows.length;
+      await referralService.acknowledgeViaToken(rawAckToken);
+      expect(fake.staffAuditLogRows).toHaveLength(auditRowsBefore);
+    });
+
+    it('get() and draft() responses never carry rawAckToken — it only ever appears on the SENT transition\'s own response', async () => {
+      const staff = await seedDistrictStaff('Pune');
+      const victim = seedUser({ locationDistrict: 'Pune' });
+      const kase = seedCase({ userId: victim.id });
+      const referral = await referralService.draft(staff, kase.id, 'mental_health', { needSummary: 'x' });
+      expect(referral.rawAckToken).toBeUndefined();
+
+      const fetched = await referralService.get(staff, referral.id);
+      expect(fetched.rawAckToken).toBeUndefined();
     });
   });
 

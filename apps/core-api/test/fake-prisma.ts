@@ -139,6 +139,7 @@ interface ReferralRow {
   inServiceAt: Date | null;
   deliveredAt: Date | null;
   verifiedAt: Date | null;
+  ackTokenHash: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -644,11 +645,23 @@ export class FakePrismaService {
         inServiceAt: data.inServiceAt ?? null,
         deliveredAt: data.deliveredAt ?? null,
         verifiedAt: data.verifiedAt ?? null,
+        ackTokenHash: data.ackTokenHash ?? null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       this.referralRows.push(row);
       return row;
+    },
+
+    // Supports ReferralService's S16 ack-token lookup: find the (at
+    // most one, by construction — a fresh token overwrites the old hash
+    // on every SENT transition) referral matching both the token hash
+    // AND still being in SENT — exactly mirrors the real Prisma query.
+    findFirst: async (args: { where: { ackTokenHash: string; status: string } }): Promise<ReferralRow | null> => {
+      const row = this.referralRows.find(
+        (r) => r.ackTokenHash === args.where.ackTokenHash && r.status === args.where.status,
+      );
+      return row ? { ...row } : null;
     },
 
     findUnique: async ({
@@ -690,14 +703,18 @@ export class FakePrismaService {
 
     // Mirrors the real atomic-conditional-update pattern used by
     // referral.service.ts: only updates and reports success if the WHERE
-    // clause (id + still-matching status) still matches at the moment of
-    // the "write" — same technique as case.updateMany above (S8).
+    // clause (id + still-matching status, and — for S16's ack-token claim
+    // — still-matching ackTokenHash) still matches at the moment of the
+    // "write" — same technique as case.updateMany above (S8).
     updateMany: async (args: {
-      where: { id: string; status: string };
+      where: { id: string; status: string; ackTokenHash?: string };
       data: Partial<ReferralRow>;
     }): Promise<{ count: number }> => {
       const row = this.referralRows.find((r) => r.id === args.where.id);
       if (!row || row.status !== args.where.status) {
+        return { count: 0 };
+      }
+      if (args.where.ackTokenHash !== undefined && row.ackTokenHash !== args.where.ackTokenHash) {
         return { count: 0 };
       }
       Object.assign(row, args.data);

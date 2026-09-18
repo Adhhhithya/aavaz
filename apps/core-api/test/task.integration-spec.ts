@@ -42,6 +42,7 @@ describeIfPostgres('Task domain — real PostgreSQL integration', () => {
       '0008_referral_in_service_at.sql',
       '0009_audit_hash_chain.sql',
       '0010_tasks.sql',
+      '0013_referral_ack_token.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';

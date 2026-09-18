@@ -1,10 +1,11 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StaffAuditService } from '../staff/staff-audit.service';
 import { ASSIGNMENT_SCOPED_ROLES, CONSOLE_INDIVIDUAL_RECORD_ROLES } from '../staff/staff-roles';
 import { ResolvedStaff } from '../staff/staff.service';
 import { TaskService } from '../task/task.service';
+import { generateAckToken, hashAckToken } from './referral-ack';
 import { CONSENT_SCOPE_BY_DESTINATION, DestinationType, StaffPacketInput } from './referral-destinations';
 import { buildReferralPacket } from './referral-packets';
 import { ACKNOWLEDGEMENT_SLA_WORKING_DAYS, addWorkingDays, SERVICE_START_SLA_WORKING_DAYS } from './referral-sla';
@@ -27,6 +28,17 @@ export interface ReferralView {
   deliveredAt: Date | null;
   verifiedAt: Date | null;
   createdAt: Date;
+  /** S16: the RAW (not hashed) one-time acknowledgement token — populated
+   * ONLY in the direct response to the transition call that just
+   * generated it (targetState === 'SENT'). Never persisted in plaintext
+   * anywhere, never present on any other response from this service
+   * (`get()`, a later `transition()` call, or any subsequent `SENT`
+   * response after a fresh token has already replaced it in memory —
+   * each call returns only the token IT just generated). Staff relay this
+   * to the destination via whatever channel is being used outside this
+   * system (email/SMS/phone) — this repository has no delivery adapter,
+   * per docs/S9_REFERRAL_MIGRATION.md's own "Out of scope" list. */
+  rawAckToken?: string;
 }
 
 type TxClient = Prisma.TransactionClient;
@@ -147,12 +159,20 @@ export class ReferralService {
       const now = new Date();
       const extra: Record<string, unknown> = {};
       let nextAttemptCount = referral.attemptCount;
+      let rawAckToken: string | undefined;
       if (targetState === 'SENT') {
         nextAttemptCount = referral.attemptCount + 1;
         extra.sentAt = now;
         extra.ackDueAt = addWorkingDays(now, ACKNOWLEDGEMENT_SLA_WORKING_DAYS);
         extra.attemptCount = nextAttemptCount;
         extra.idempotencyKey = `${referral.id}:${nextAttemptCount}`;
+        // S16: a fresh token every time a referral (re-)enters SENT —
+        // naturally invalidates any earlier, still-circulating link (a
+        // prior bounce-then-retry's token can no longer match once this
+        // one overwrites ack_token_hash).
+        const generated = generateAckToken();
+        extra.ackTokenHash = generated.tokenHash;
+        rawAckToken = generated.rawToken;
       } else if (targetState === 'ACKNOWLEDGED') {
         extra.ackedAt = now;
         extra.serviceDueAt = addWorkingDays(referral.sentAt ?? now, SERVICE_START_SLA_WORKING_DAYS);
@@ -200,8 +220,74 @@ export class ReferralService {
       }
 
       const updated = await tx.referral.findUniqueOrThrow({ where: { id: referralId } });
-      return this.toView(updated);
+      const view = this.toView(updated);
+      if (rawAckToken) {
+        view.rawAckToken = rawAckToken;
+      }
+      return view;
     });
+  }
+
+  /**
+   * S16: `POST /v1/ack/{token}` (v0.2 §14) — the receiver-facing, PUBLIC
+   * (no staff auth) counterpart to a case manager manually acknowledging
+   * a referral after a call. Deliberately returns the SAME generic error
+   * for every failure mode (token not found, referral not in SENT,
+   * concurrent double-use) — never distinguishing "wrong token" from
+   * "already used" from "expired," the same "consistent denial" pattern
+   * every staff-facing domain in this codebase already uses (S7-S15), so
+   * a caller probing this endpoint learns nothing about which failure
+   * occurred. No `ResolvedStaff` is involved and no `StaffAuditService`
+   * call is made — there is no staff actor to attribute this action to
+   * (the same system-actor reasoning `TaskService`'s own `...Tx` methods
+   * already document).
+   */
+  async acknowledgeViaToken(rawToken: string): Promise<{ referenceNumber: string }> {
+    const tokenHash = hashAckToken(rawToken);
+
+    return this.prisma.$transaction(async (tx) => {
+      const referral = await tx.referral.findFirst({ where: { ackTokenHash: tokenHash, status: 'SENT' } });
+      if (!referral) {
+        throw new NotFoundException('This acknowledgement link is invalid or has already been used.');
+      }
+
+      const now = new Date();
+      const claim = await tx.referral.updateMany({
+        where: { id: referral.id, status: 'SENT', ackTokenHash: tokenHash },
+        data: {
+          status: 'ACKNOWLEDGED',
+          ackedAt: now,
+          serviceDueAt: addWorkingDays(referral.sentAt ?? now, SERVICE_START_SLA_WORKING_DAYS),
+          updatedAt: now,
+        },
+      });
+      if (claim.count === 0) {
+        // Lost a race (a staff member or a concurrent use of this same
+        // link claimed it first) — same generic error, never a different
+        // one for this case.
+        throw new NotFoundException('This acknowledgement link is invalid or has already been used.');
+      }
+
+      return { referenceNumber: referral.id };
+    });
+  }
+
+  /**
+   * S16: read-only counterpart for the receiver's landing page — "shows
+   * nothing but an Acknowledge button and reference number" (Workflow H).
+   * Returns ONLY the reference number, structurally incapable of leaking
+   * any victim content (the return type has no other field) — matching
+   * this codebase's data-minimization discipline for every other
+   * externally-facing artifact (see docs/S9_REFERRAL_MIGRATION.md's
+   * packet-builder design).
+   */
+  async getAckInfo(rawToken: string): Promise<{ referenceNumber: string }> {
+    const tokenHash = hashAckToken(rawToken);
+    const referral = await this.prisma.referral.findFirst({ where: { ackTokenHash: tokenHash, status: 'SENT' } });
+    if (!referral) {
+      throw new NotFoundException('This acknowledgement link is invalid or has already been used.');
+    }
+    return { referenceNumber: referral.id };
   }
 
   async get(staff: ResolvedStaff, referralId: string): Promise<ReferralView> {

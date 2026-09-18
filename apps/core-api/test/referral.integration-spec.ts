@@ -44,6 +44,7 @@ describeIfPostgres('Referral domain — real PostgreSQL integration', () => {
       '0007_referrals.sql',
       '0008_referral_in_service_at.sql',
       '0009_audit_hash_chain.sql',
+      '0013_referral_ack_token.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';
@@ -407,6 +408,90 @@ describeIfPostgres('Referral domain — real PostgreSQL integration', () => {
 
       const rows = await prisma.staffAuditLog.findMany({ where: { resourceId: referralId } });
       expect(rows).toHaveLength(1); // only the draft's own entry
+    });
+  });
+
+  describe('S16: one-time acknowledgement link (real HTTP, PUBLIC — no staff auth)', () => {
+    it('0013_referral_ack_token.sql is additive only — no DROP/TRUNCATE/DELETE (comments excluded)', () => {
+      const raw = fs.readFileSync(
+        path.resolve(__dirname, '..', '..', '..', 'backend', 'migrations', '0013_referral_ack_token.sql'),
+        'utf-8',
+      );
+      const sqlOnly = raw
+        .split('\n')
+        .map((line) => line.replace(/--.*$/, ''))
+        .join('\n')
+        .toUpperCase();
+      expect(sqlOnly).not.toMatch(/\bDROP\b/);
+      expect(sqlOnly).not.toMatch(/\bTRUNCATE\b/);
+      expect(sqlOnly).not.toMatch(/\bDELETE\s+FROM\b/);
+    });
+
+    async function driveToSent(): Promise<{ referralId: string; rawAckToken: string }> {
+      const { token } = await createStaffAndToken('district_admin', { districtScope: ['Pune'] });
+      const { userId } = await registerVictim('Ack Token Victim', 'Pune');
+      const caseId = await createCase(userId, null);
+      await grantConsent(userId, 'share_mental_health');
+      const draft = await draftReferral(token, caseId, 'mental_health', { needSummary: 'x' }).expect(201);
+      const referralId = draft.body.referral.id;
+      await transitionReferral(token, referralId, 'APPROVED').expect(200);
+      const sent = await transitionReferral(token, referralId, 'SENT').expect(200);
+      expect(sent.body.referral.rawAckToken).toBeDefined();
+      return { referralId, rawAckToken: sent.body.referral.rawAckToken };
+    }
+
+    it('GET /v1/ack/:token with NO auth header returns only a reference number', async () => {
+      const { referralId, rawAckToken } = await driveToSent();
+
+      const res = await request(app.getHttpServer()).get(`/v1/ack/${rawAckToken}`).expect(200);
+      expect(res.body.referenceNumber).toBe(referralId);
+      expect(Object.keys(res.body)).toEqual(['result', 'referenceNumber']);
+    });
+
+    it('POST /v1/ack/:token with NO auth header acknowledges the referral', async () => {
+      const { referralId, rawAckToken } = await driveToSent();
+
+      await request(app.getHttpServer()).post(`/v1/ack/${rawAckToken}`).expect(201);
+
+      const row = await prisma.referral.findUnique({ where: { id: referralId } });
+      expect(row?.status).toBe('ACKNOWLEDGED');
+      expect(row?.ackedAt).not.toBeNull();
+    });
+
+    it('the same token cannot be used twice (404 on the second attempt)', async () => {
+      const { rawAckToken } = await driveToSent();
+      await request(app.getHttpServer()).post(`/v1/ack/${rawAckToken}`).expect(201);
+      await request(app.getHttpServer()).post(`/v1/ack/${rawAckToken}`).expect(404);
+    });
+
+    it('a made-up token gets the same 404 as an already-used one — no information leakage', async () => {
+      await request(app.getHttpServer()).post('/v1/ack/not-a-real-token-at-all').expect(404);
+      await request(app.getHttpServer()).get('/v1/ack/not-a-real-token-at-all').expect(404);
+    });
+
+    it('two genuinely concurrent uses of the same token: exactly one succeeds', async () => {
+      const { rawAckToken } = await driveToSent();
+
+      const [a, b] = await Promise.all([
+        request(app.getHttpServer()).post(`/v1/ack/${rawAckToken}`),
+        request(app.getHttpServer()).post(`/v1/ack/${rawAckToken}`),
+      ]);
+
+      const statuses = [a.status, b.status].sort();
+      expect(statuses).toEqual([201, 404]);
+    });
+
+    it('no audit row is created for a public token acknowledgement', async () => {
+      const { referralId, rawAckToken } = await driveToSent();
+      const before = await prisma.staffAuditLog.count();
+
+      await request(app.getHttpServer()).post(`/v1/ack/${rawAckToken}`).expect(201);
+
+      const after = await prisma.staffAuditLog.count();
+      expect(after).toBe(before);
+      // sanity: the referral itself really did change, just with no audit trail.
+      const row = await prisma.referral.findUnique({ where: { id: referralId } });
+      expect(row?.status).toBe('ACKNOWLEDGED');
     });
   });
 });

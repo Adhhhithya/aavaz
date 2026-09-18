@@ -69,6 +69,7 @@ describe('OversightService', () => {
       inServiceAt: over.inServiceAt ?? null,
       deliveredAt: null,
       verifiedAt: null,
+      ackTokenHash: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

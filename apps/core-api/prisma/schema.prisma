@@ -447,6 +447,10 @@ model Referral {
   inServiceAt        DateTime? @map("in_service_at") @db.Timestamptz(6)
   deliveredAt        DateTime? @map("delivered_at") @db.Timestamptz(6)
   verifiedAt         DateTime? @map("verified_at") @db.Timestamptz(6)
+  // Added via backend/migrations/0013_referral_ack_token.sql (S16) — a
+  // SHA-256 hash only, never the raw token. See
+  // apps/core-api/src/referral/referral-ack.ts.
+  ackTokenHash       String?   @map("ack_token_hash")
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
   case               Case      @relation(fields: [caseId], references: [id], onUpdate: NoAction)
@@ -459,6 +463,7 @@ model Referral {
   @@index([caseId], map: "idx_referrals_case_id")
   @@index([userId], map: "idx_referrals_user_id")
   @@index([status], map: "idx_referrals_status")
+  @@index([ackTokenHash], map: "idx_referrals_ack_token_hash")
   @@map("referrals")
 }
 
