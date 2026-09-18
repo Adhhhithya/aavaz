@@ -232,6 +232,8 @@ model Case {
   referrals            Referral[]
   // Reverse side of Task.case — added in S12.
   tasks                Task[]
+  // Reverse side of Milestone.case — added in S13.
+  milestones           Milestone[]
 
   @@index([assignedCounsellorId], map: "idx_cases_assigned_counsellor_id")
   @@index([caseStage], map: "idx_cases_case_stage")
@@ -361,6 +363,8 @@ model Staff {
   // counsellor).
   assignedTasks    Task[] @relation("TaskAssignee")
   createdTasks     Task[] @relation("TaskCreator")
+  // Reverse side of Milestone.enteredByStaff — added in S13.
+  enteredMilestones Milestone[]
 
   @@index([counsellorId], map: "idx_staff_counsellor_id")
   @@map("staff")
@@ -491,4 +495,29 @@ model Task {
   @@index([status], map: "idx_tasks_status")
   @@index([assigneeStaffId], map: "idx_tasks_assignee_staff_id")
   @@map("tasks")
+}
+
+// Maps to the new `milestones` table (backend/migrations/0011_milestones.sql,
+// S13). No FastAPI equivalent exists — net-new capability. `type` is free
+// TEXT for the same reason as every other domain's own state-shaped
+// column — see apps/core-api/src/milestone/milestone-types.ts for the
+// actual enforcement. See docs/S13_MILESTONE_MIGRATION.md for why
+// automated timer computation (v0.2 Workflow B "B5"'s "configurable
+// milestone timers from a legal-reviewed template") is explicitly NOT
+// implemented here — this table only captures the case-manager-entered
+// data half of B5.
+model Milestone {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  caseId            String    @map("case_id") @db.Uuid
+  type              String
+  dueAt             DateTime? @map("due_at") @db.Timestamptz(6)
+  metAt             DateTime? @map("met_at") @db.Timestamptz(6)
+  enteredByStaffId  String    @map("entered_by_staff_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  case              Case      @relation(fields: [caseId], references: [id], onUpdate: NoAction)
+  enteredByStaff    Staff     @relation(fields: [enteredByStaffId], references: [id], onUpdate: NoAction)
+
+  @@index([caseId], map: "idx_milestones_case_id")
+  @@map("milestones")
 }

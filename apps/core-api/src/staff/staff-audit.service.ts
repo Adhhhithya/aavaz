@@ -19,7 +19,9 @@ import { ChainVerificationResult, computeAuditHash, verifyChain } from './audit-
  * apps/core-api/src/task/task.service.ts. Note: the SYSTEM-created
  * `referral_stalled` task (TaskService.createStalledReferralTaskTx) is
  * NOT separately audited under a staff id — see that method's own
- * comment for why.
+ * comment for why. S13 adds
+ * `milestone.created`/`milestone.marked_met`/`milestone.list.read`/
+ * `milestone` — see apps/core-api/src/milestone/milestone.service.ts.
  */
 export type StaffAuditAction =
   | 'console.queue.read'
@@ -31,8 +33,11 @@ export type StaffAuditAction =
   | 'oversight.metrics.read'
   | 'task.created'
   | 'task.transition'
-  | 'task.list.read';
-export type StaffAuditResourceType = 'queue' | 'victim' | 'case' | 'referral' | 'district' | 'task';
+  | 'task.list.read'
+  | 'milestone.created'
+  | 'milestone.marked_met'
+  | 'milestone.list.read';
+export type StaffAuditResourceType = 'queue' | 'victim' | 'case' | 'referral' | 'district' | 'task' | 'milestone';
 
 /** See assignment.service.ts's QueryClient for why this accepts either a
  * standalone PrismaService or an in-flight transaction client. Extended

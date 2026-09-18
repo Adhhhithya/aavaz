@@ -160,6 +160,17 @@ interface TaskRow {
   updatedAt: Date;
 }
 
+interface MilestoneRow {
+  id: string;
+  caseId: string;
+  type: string;
+  dueAt: Date | null;
+  metAt: Date | null;
+  enteredByStaffId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 let idCounter = 0;
 function nextId(): string {
   idCounter += 1;
@@ -811,6 +822,84 @@ export class FakePrismaService {
         );
       }
       return matches.map((t) => ({ ...t }));
+    },
+  };
+
+  milestoneRows: MilestoneRow[] = [];
+
+  milestone = {
+    create: async ({ data }: { data: Partial<MilestoneRow> }): Promise<MilestoneRow> => {
+      const row: MilestoneRow = {
+        id: nextId(),
+        caseId: data.caseId!,
+        type: data.type!,
+        dueAt: data.dueAt ?? null,
+        metAt: data.metAt ?? null,
+        enteredByStaffId: data.enteredByStaffId!,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.milestoneRows.push(row);
+      return row;
+    },
+
+    findUnique: async ({
+      where,
+      include,
+    }: {
+      where: { id: string };
+      include?: { case?: { include?: { user?: { select?: { locationDistrict?: boolean } } } } };
+    }): Promise<
+      (MilestoneRow & { case?: (CaseRow & { user?: { locationDistrict: string | null } | null }) | null }) | null
+    > => {
+      const row = this.milestoneRows.find((m) => m.id === where.id);
+      if (!row) return null;
+      const result: MilestoneRow & {
+        case?: (CaseRow & { user?: { locationDistrict: string | null } | null }) | null;
+      } = { ...row };
+      if (include?.case) {
+        const caseRow = this.caseRows.find((c) => c.id === row.caseId);
+        if (caseRow) {
+          const caseResult: CaseRow & { user?: { locationDistrict: string | null } | null } = { ...caseRow };
+          if (include.case.include?.user) {
+            const owner = this.userRows.find((u) => u.id === caseRow.userId);
+            caseResult.user = owner ? { locationDistrict: owner.locationDistrict } : null;
+          }
+          result.case = caseResult;
+        } else {
+          result.case = null;
+        }
+      }
+      return result;
+    },
+
+    findUniqueOrThrow: async (args: { where: { id: string } }): Promise<MilestoneRow> => {
+      const row = this.milestoneRows.find((m) => m.id === args.where.id);
+      if (!row) throw new Error('not found');
+      return { ...row };
+    },
+
+    updateMany: async (args: {
+      where: { id: string; metAt: null };
+      data: Partial<MilestoneRow>;
+    }): Promise<{ count: number }> => {
+      const row = this.milestoneRows.find((m) => m.id === args.where.id);
+      if (!row || row.metAt !== null) {
+        return { count: 0 };
+      }
+      Object.assign(row, args.data);
+      return { count: 1 };
+    },
+
+    findMany: async (args: { where: { caseId: string }; orderBy?: { createdAt?: 'asc' | 'desc' } }): Promise<MilestoneRow[]> => {
+      let matches = this.milestoneRows.filter((m) => m.caseId === args.where.caseId);
+      if (args.orderBy?.createdAt) {
+        const dir = args.orderBy.createdAt;
+        matches = [...matches].sort((a, b) =>
+          dir === 'desc' ? b.createdAt.getTime() - a.createdAt.getTime() : a.createdAt.getTime() - b.createdAt.getTime(),
+        );
+      }
+      return matches.map((m) => ({ ...m }));
     },
   };
 

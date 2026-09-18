@@ -5,6 +5,7 @@ import { ConsentModule } from './consent/consent.module';
 import { ConsoleModule } from './console/console.module';
 import { IdentityModule } from './identity/identity.module';
 import { LifecycleModule } from './lifecycle/lifecycle.module';
+import { MilestoneModule } from './milestone/milestone.module';
 import { OversightModule } from './oversight/oversight.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
@@ -17,12 +18,12 @@ import { TaskModule } from './task/task.module';
  * S4 added PrismaModule + IdentityModule. S5 added CasesModule (imported by
  * IdentityModule). S6 added ConsentModule/ProfileModule/SafetyModule. S7
  * added StaffModule + ConsoleModule. S8 added LifecycleModule. S9 added
- * ReferralModule. S10 added OversightModule. S12 adds TaskModule (also
+ * ReferralModule. S10 added OversightModule. S12 added TaskModule (also
  * imported directly by ReferralModule, for the referral-stalled ->
- * task-created hook). Per the task's explicit instruction, no placeholder
- * modules were created for channel-gateway/workers/agent-svc/memory-svc/
- * analysis-svc/speech-svc, and no full React `console` app migration was
- * attempted — those remain later milestones.
+ * task-created hook). S13 adds MilestoneModule. Per the task's explicit
+ * instruction, no placeholder modules were created for channel-gateway/
+ * workers/agent-svc/memory-svc/analysis-svc/speech-svc, and no full React
+ * `console` app migration was attempted — those remain later milestones.
  */
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { TaskModule } from './task/task.module';
     ReferralModule,
     OversightModule,
     TaskModule,
+    MilestoneModule,
   ],
 })
 export class AppModule {}
