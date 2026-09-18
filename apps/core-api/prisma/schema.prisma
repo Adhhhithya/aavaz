@@ -138,6 +138,8 @@ model User {
   staff             Staff?
   // Reverse side of Referral.user — added in S9.
   referrals         Referral[]
+  // Reverse side of Task.user — added in S12.
+  tasks             Task[]
 
   @@map("users")
 }
@@ -228,6 +230,8 @@ model Case {
   counsellor           Counsellor?    @relation(fields: [assignedCounsellorId], references: [id], onUpdate: NoAction)
   // Reverse side of Referral.case — added in S9.
   referrals            Referral[]
+  // Reverse side of Task.case — added in S12.
+  tasks                Task[]
 
   @@index([assignedCounsellorId], map: "idx_cases_assigned_counsellor_id")
   @@index([caseStage], map: "idx_cases_case_stage")
@@ -350,6 +354,13 @@ model Staff {
   auditLogs       StaffAuditLog[]
   // Reverse side of Referral.createdByStaff — added in S9.
   draftedReferrals Referral[]
+  // Reverse sides of Task.assigneeStaff/Task.createdByStaff — added in
+  // S12. Two distinct relations (named, since both point Staff -> Task)
+  // because a task's assignee and its creator are different people in
+  // the common case (a supervisor creates a task and assigns it to a
+  // counsellor).
+  assignedTasks    Task[] @relation("TaskAssignee")
+  createdTasks     Task[] @relation("TaskCreator")
 
   @@index([counsellorId], map: "idx_staff_counsellor_id")
   @@map("staff")
@@ -434,8 +445,50 @@ model Referral {
   user               User      @relation(fields: [userId], references: [id], onUpdate: NoAction)
   createdByStaff     Staff     @relation(fields: [createdByStaffId], references: [id], onUpdate: NoAction)
 
+  // Reverse side of Task.referral — added in S12.
+  tasks              Task[]
+
   @@index([caseId], map: "idx_referrals_case_id")
   @@index([userId], map: "idx_referrals_user_id")
   @@index([status], map: "idx_referrals_status")
   @@map("referrals")
+}
+
+// Maps to the new `tasks` table (backend/migrations/0010_tasks.sql, S12).
+// No FastAPI equivalent exists — net-new capability. `type`/`priority`/
+// `status` are free TEXT for the same reason as every other domain's own
+// state-shaped column (avoid ALTER TYPE on a shared column type) — see
+// apps/core-api/src/task/task-states.ts for the actual enforcement. See
+// docs/S12_TASK_MIGRATION.md for which task types have a real, evidenced
+// automatic trigger (referral_stalled) versus which are manually created
+// by staff as a stopgap for a trigger this repository doesn't have yet
+// (referral_review — v0.2 "H2" describes it as system-created from a
+// check-in response, which needs scheduling infrastructure this
+// repository does not have).
+model Task {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId           String?   @map("user_id") @db.Uuid
+  caseId           String?   @map("case_id") @db.Uuid
+  referralId       String?   @map("referral_id") @db.Uuid
+  type             String
+  priority         String
+  status           String    @default("OPEN")
+  assigneeStaffId  String?   @map("assignee_staff_id") @db.Uuid
+  createdByStaffId String?   @map("created_by_staff_id") @db.Uuid
+  slaDueAt         DateTime? @map("sla_due_at") @db.Timestamptz(6)
+  ackedAt          DateTime? @map("acked_at") @db.Timestamptz(6)
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  user             User?     @relation(fields: [userId], references: [id], onUpdate: NoAction)
+  case             Case?     @relation(fields: [caseId], references: [id], onUpdate: NoAction)
+  referral         Referral? @relation(fields: [referralId], references: [id], onUpdate: NoAction)
+  assigneeStaff    Staff?    @relation("TaskAssignee", fields: [assigneeStaffId], references: [id], onUpdate: NoAction)
+  createdByStaff   Staff?    @relation("TaskCreator", fields: [createdByStaffId], references: [id], onUpdate: NoAction)
+
+  @@index([caseId], map: "idx_tasks_case_id")
+  @@index([referralId], map: "idx_tasks_referral_id")
+  @@index([status], map: "idx_tasks_status")
+  @@index([assigneeStaffId], map: "idx_tasks_assignee_staff_id")
+  @@map("tasks")
 }

@@ -11,15 +11,18 @@ import { ProfileModule } from './profile/profile.module';
 import { ReferralModule } from './referral/referral.module';
 import { SafetyModule } from './safety/safety.module';
 import { StaffModule } from './staff/staff.module';
+import { TaskModule } from './task/task.module';
 
 /**
  * S4 added PrismaModule + IdentityModule. S5 added CasesModule (imported by
  * IdentityModule). S6 added ConsentModule/ProfileModule/SafetyModule. S7
  * added StaffModule + ConsoleModule. S8 added LifecycleModule. S9 added
- * ReferralModule. S10 adds OversightModule. Per the task's explicit
- * instruction, no placeholder modules were created for channel-gateway/
- * workers/agent-svc/memory-svc/analysis-svc/speech-svc, and no full React
- * `console` app migration was attempted — those remain later milestones.
+ * ReferralModule. S10 added OversightModule. S12 adds TaskModule (also
+ * imported directly by ReferralModule, for the referral-stalled ->
+ * task-created hook). Per the task's explicit instruction, no placeholder
+ * modules were created for channel-gateway/workers/agent-svc/memory-svc/
+ * analysis-svc/speech-svc, and no full React `console` app migration was
+ * attempted — those remain later milestones.
  */
 @Module({
   imports: [
@@ -34,6 +37,7 @@ import { StaffModule } from './staff/staff.module';
     LifecycleModule,
     ReferralModule,
     OversightModule,
+    TaskModule,
   ],
 })
 export class AppModule {}

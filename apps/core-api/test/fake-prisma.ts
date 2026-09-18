@@ -143,6 +143,23 @@ interface ReferralRow {
   updatedAt: Date;
 }
 
+interface TaskRow {
+  id: string;
+  userId: string | null;
+  caseId: string | null;
+  referralId: string | null;
+  type: string;
+  priority: string;
+  status: string;
+  assigneeStaffId: string | null;
+  createdByStaffId: string | null;
+  slaDueAt: Date | null;
+  ackedAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 let idCounter = 0;
 function nextId(): string {
   idCounter += 1;
@@ -686,6 +703,114 @@ export class FakePrismaService {
         }
         return projected;
       });
+    },
+  };
+
+  taskRows: TaskRow[] = [];
+
+  task = {
+    create: async ({ data }: { data: Partial<TaskRow> }): Promise<TaskRow> => {
+      const row: TaskRow = {
+        id: nextId(),
+        userId: data.userId ?? null,
+        caseId: data.caseId ?? null,
+        referralId: data.referralId ?? null,
+        type: data.type!,
+        priority: data.priority!,
+        status: data.status ?? 'OPEN',
+        assigneeStaffId: data.assigneeStaffId ?? null,
+        createdByStaffId: data.createdByStaffId ?? null,
+        slaDueAt: data.slaDueAt ?? null,
+        ackedAt: data.ackedAt ?? null,
+        completedAt: data.completedAt ?? null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.taskRows.push(row);
+      return row;
+    },
+
+    findUnique: async ({
+      where,
+      include,
+    }: {
+      where: { id: string };
+      include?: { case?: { include?: { user?: { select?: { locationDistrict?: boolean } } } } };
+    }): Promise<
+      (TaskRow & { case?: (CaseRow & { user?: { locationDistrict: string | null } | null }) | null }) | null
+    > => {
+      const row = this.taskRows.find((t) => t.id === where.id);
+      if (!row) return null;
+      const result: TaskRow & { case?: (CaseRow & { user?: { locationDistrict: string | null } | null }) | null } = {
+        ...row,
+      };
+      if (include?.case) {
+        const caseRow = row.caseId ? this.caseRows.find((c) => c.id === row.caseId) : undefined;
+        if (caseRow) {
+          const caseResult: CaseRow & { user?: { locationDistrict: string | null } | null } = { ...caseRow };
+          if (include.case.include?.user) {
+            const owner = this.userRows.find((u) => u.id === caseRow.userId);
+            caseResult.user = owner ? { locationDistrict: owner.locationDistrict } : null;
+          }
+          result.case = caseResult;
+        } else {
+          result.case = null;
+        }
+      }
+      return result;
+    },
+
+    findUniqueOrThrow: async (args: { where: { id: string } }): Promise<TaskRow> => {
+      const row = this.taskRows.find((t) => t.id === args.where.id);
+      if (!row) throw new Error('not found');
+      return { ...row };
+    },
+
+    updateMany: async (args: {
+      where: { id: string; status: string };
+      data: Partial<TaskRow>;
+    }): Promise<{ count: number }> => {
+      const row = this.taskRows.find((t) => t.id === args.where.id);
+      if (!row || row.status !== args.where.status) {
+        return { count: 0 };
+      }
+      Object.assign(row, args.data);
+      return { count: 1 };
+    },
+
+    // Supports TaskService.listTasks's two shapes: an
+    // assignedCounsellorId match via `case`, or a
+    // case.user.locationDistrict-in-list match — mirrors
+    // console's own case.findMany fake.
+    findMany: async (args: {
+      where?: {
+        case?: { assignedCounsellorId?: string; user?: { locationDistrict?: { in: string[] } } };
+      };
+      orderBy?: { createdAt?: 'asc' | 'desc' };
+    }): Promise<TaskRow[]> => {
+      let matches = [...this.taskRows];
+      const caseFilter = args.where?.case;
+      if (caseFilter?.assignedCounsellorId !== undefined) {
+        matches = matches.filter((t) => {
+          const caseRow = t.caseId ? this.caseRows.find((c) => c.id === t.caseId) : undefined;
+          return caseRow?.assignedCounsellorId === caseFilter.assignedCounsellorId;
+        });
+      }
+      if (caseFilter?.user?.locationDistrict?.in) {
+        const allowed = caseFilter.user.locationDistrict.in;
+        matches = matches.filter((t) => {
+          const caseRow = t.caseId ? this.caseRows.find((c) => c.id === t.caseId) : undefined;
+          const owner = caseRow?.userId ? this.userRows.find((u) => u.id === caseRow.userId) : undefined;
+          return owner?.locationDistrict != null && allowed.includes(owner.locationDistrict);
+        });
+      }
+      if (args.orderBy?.createdAt) {
+        const dir = args.orderBy.createdAt;
+        matches.sort((a, b) =>
+          dir === 'desc' ? b.createdAt.getTime() - a.createdAt.getTime() : a.createdAt.getTime() - b.createdAt.getTime(),
+        );
+      }
+      return matches.map((t) => ({ ...t }));
     },
   };
 

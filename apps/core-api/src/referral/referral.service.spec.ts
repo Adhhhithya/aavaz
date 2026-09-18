@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FakePrismaService } from '../../test/fake-prisma';
 import { StaffAuditService } from '../staff/staff-audit.service';
 import { StaffService } from '../staff/staff.service';
+import { TaskService } from '../task/task.service';
 import { ReferralService } from './referral.service';
 
 let seq = 0;
@@ -15,13 +16,15 @@ describe('ReferralService', () => {
   let fake: FakePrismaService;
   let staffService: StaffService;
   let auditService: StaffAuditService;
+  let taskService: TaskService;
   let referralService: ReferralService;
 
   beforeEach(() => {
     fake = new FakePrismaService();
     staffService = new StaffService(fake as unknown as PrismaService);
     auditService = new StaffAuditService(fake as unknown as PrismaService);
-    referralService = new ReferralService(fake as unknown as PrismaService, auditService);
+    taskService = new TaskService(fake as unknown as PrismaService, auditService);
+    referralService = new ReferralService(fake as unknown as PrismaService, auditService, taskService);
   });
 
   function seedUser(over: Partial<{ id: string; locationDistrict: string | null; name: string }> = {}) {
@@ -360,6 +363,38 @@ describe('ReferralService', () => {
         ConflictException,
       );
       expect(fake.referralRows.find((r) => r.id === referral.id)?.status).toBe('CLOSED_UNRESOLVED');
+    });
+  });
+
+  describe('S12: STALLED transition creates a follow-up task', () => {
+    it('reaching STALLED creates a referral_stalled task in the same case, via TaskService', async () => {
+      const staff = await seedDistrictStaff('Pune');
+      const victim = seedUser({ locationDistrict: 'Pune' });
+      const kase = seedCase({ userId: victim.id });
+      seedConsent(victim.id, 'share_mental_health', true);
+      const referral = await referralService.draft(staff, kase.id, 'mental_health', { needSummary: 'x' });
+      await referralService.transition(staff, referral.id, 'APPROVED');
+      await referralService.transition(staff, referral.id, 'SENT');
+
+      await referralService.transition(staff, referral.id, 'STALLED');
+
+      expect(fake.taskRows).toHaveLength(1);
+      const task = fake.taskRows[0];
+      expect(task.type).toBe('referral_stalled');
+      expect(task.referralId).toBe(referral.id);
+      expect(task.caseId).toBe(kase.id);
+      expect(task.createdByStaffId).toBeNull();
+    });
+
+    it('a transition that does NOT reach STALLED never creates a task', async () => {
+      const staff = await seedDistrictStaff('Pune');
+      const victim = seedUser({ locationDistrict: 'Pune' });
+      const kase = seedCase({ userId: victim.id });
+      const referral = await referralService.draft(staff, kase.id, 'mental_health', { needSummary: 'x' });
+
+      await referralService.transition(staff, referral.id, 'APPROVED');
+
+      expect(fake.taskRows).toHaveLength(0);
     });
   });
 

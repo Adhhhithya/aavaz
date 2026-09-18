@@ -14,7 +14,12 @@ import { ChainVerificationResult, computeAuditHash, verifyChain } from './audit-
  * `referral.drafted`/`referral.transition`/`referral.read`/`referral` —
  * see apps/core-api/src/referral/referral.service.ts. S10 adds
  * `oversight.metrics.read`/`district` — see
- * apps/core-api/src/oversight/oversight.service.ts.
+ * apps/core-api/src/oversight/oversight.service.ts. S12 adds
+ * `task.created`/`task.transition`/`task.list.read`/`task` — see
+ * apps/core-api/src/task/task.service.ts. Note: the SYSTEM-created
+ * `referral_stalled` task (TaskService.createStalledReferralTaskTx) is
+ * NOT separately audited under a staff id — see that method's own
+ * comment for why.
  */
 export type StaffAuditAction =
   | 'console.queue.read'
@@ -23,8 +28,11 @@ export type StaffAuditAction =
   | 'referral.drafted'
   | 'referral.transition'
   | 'referral.read'
-  | 'oversight.metrics.read';
-export type StaffAuditResourceType = 'queue' | 'victim' | 'case' | 'referral' | 'district';
+  | 'oversight.metrics.read'
+  | 'task.created'
+  | 'task.transition'
+  | 'task.list.read';
+export type StaffAuditResourceType = 'queue' | 'victim' | 'case' | 'referral' | 'district' | 'task';
 
 /** See assignment.service.ts's QueryClient for why this accepts either a
  * standalone PrismaService or an in-flight transaction client. Extended

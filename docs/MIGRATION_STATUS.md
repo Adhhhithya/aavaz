@@ -23,7 +23,7 @@ coexistence design (not this repository's current state for any domain).
 | Scheduling / check-in / silence ladder / workers | FastAPI (`escalation.py`, in-process 10s poll, SOS-only) | Node `workers` | BLOCKED | FastAPI (as described) | None | No `checkins` table | None | Hard-blocked on a job-queue infrastructure decision (Redis/BullMQ) not yet made — S8 audit §F/I |
 | Court-sync | FastAPI (`ecourts_scraper.py`/`ecourts_parser.py`, real, request-triggered) | Node `workers` (orchestration) + Python (compute) | NOT_STARTED | FastAPI (as described) | None | Writes `cases.cnr`/`ecourts_data` (unmodeled in Node's Prisma schema) | None (Node side) | Live dual-writer on `cases` (S8 audit §D/E); needs a `milestones` table; needs the poll/diff/event model, none of which exist |
 | Channel-gateway / conversation agent / memory / assessment / legal detection | FastAPI (`chatbot_routes.py`, inline, direct LLM call, no crisis guard) | Node gateway + Python `agent-svc`/`memory-svc`/`analysis-svc` | NOT_STARTED | FastAPI (as described) | None | No `sessions`/`memory_chunks`/`assessments` tables | None | Largest remaining rebuild; explicitly out of scope for every S4-S9 slice; blocked on a session model + the crisis-guard design + the job-queue decision |
-| Tasks / SLA engine | None | Node | NOT_STARTED | None | None | No `tasks` table | None | Real trigger (`assessment.completed`) doesn't exist; a manual/console-driven creation path is buildable without it but not yet built |
+| Tasks / SLA engine | Node (S12) | Node | INTEGRATED (partial trigger coverage) | None (net-new capability, no FastAPI equivalent) | `GET /v1/console/tasks`, `POST /v1/console/referrals/:referralId/tasks`, `PATCH /v1/console/tasks/:taskId` | `tasks` (new) | Unit + integration + concurrency + security | Real automatic trigger for `referral_stalled` only; `unassigned_case`/`court_sync_stale`/`silence` are evidenced but not wired (the first needs an S5 `RegistrationService` change deliberately deferred, the other two need infrastructure this repo lacks); no SLA-breach automation — see `docs/S12_TASK_MIGRATION.md` §A/G |
 
 ## Cross-cutting known gaps (not owned by any single domain row above)
 
@@ -33,7 +33,7 @@ coexistence design (not this repository's current state for any domain).
   referral-SLA escalation, post-session pipeline automation.
 - **No RLS enforcement** — every table has `ENABLE ROW LEVEL SECURITY`
   with no permissive policy; the service-role connection bypasses RLS
-  entirely. All authorization is application-layer (S4-S11's consistent
+  entirely. All authorization is application-layer (S4-S12's consistent
   pattern). Never claimed otherwise anywhere in this repository's docs.
 - **`fusion.py`'s distress scoring is a keyword-match simulation**,
   presented identically to real model output in every API response and

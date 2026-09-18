@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StaffAuditService } from '../staff/staff-audit.service';
 import { ASSIGNMENT_SCOPED_ROLES, CONSOLE_INDIVIDUAL_RECORD_ROLES } from '../staff/staff-roles';
 import { ResolvedStaff } from '../staff/staff.service';
+import { TaskService } from '../task/task.service';
 import { CONSENT_SCOPE_BY_DESTINATION, DestinationType, StaffPacketInput } from './referral-destinations';
 import { buildReferralPacket } from './referral-packets';
 import { ACKNOWLEDGEMENT_SLA_WORKING_DAYS, addWorkingDays, SERVICE_START_SLA_WORKING_DAYS } from './referral-sla';
@@ -55,6 +56,7 @@ export class ReferralService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: StaffAuditService,
+    private readonly taskService: TaskService,
   ) {}
 
   async draft(staff: ResolvedStaff, caseId: string, destinationType: DestinationType, fields: Record<string, unknown>): Promise<ReferralView> {
@@ -181,6 +183,21 @@ export class ReferralService {
       }
 
       await this.auditService.record(staff.id, 'referral.transition', 'referral', referralId, tx);
+
+      // S12: v0.2 Workflow H "H3" — a stalled referral gets a case-manager
+      // follow-up task, escalating to a supervisor after 5 working days.
+      // Created in the SAME transaction as this transition (atomic — a
+      // referral never reaches STALLED without its follow-up task also
+      // existing). See TaskService.createStalledReferralTaskTx's own
+      // comment for why this is not separately staff-attributed in the
+      // audit log.
+      if (targetState === 'STALLED') {
+        await this.taskService.createStalledReferralTaskTx(tx, {
+          id: referral.id,
+          caseId: referral.caseId,
+          userId: referral.userId,
+        });
+      }
 
       const updated = await tx.referral.findUniqueOrThrow({ where: { id: referralId } });
       return this.toView(updated);
