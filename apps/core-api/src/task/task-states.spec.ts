@@ -59,15 +59,14 @@ describe('task-states', () => {
     }
   });
 
-  it('has exactly the 2 evidenced task types this slice creates', () => {
-    expect(TASK_TYPES).toEqual(expect.arrayContaining(['referral_stalled', 'referral_review']));
-    expect(TASK_TYPES).toHaveLength(2);
+  it('has exactly the 3 evidenced, wired task types (S12: referral_stalled/referral_review; S14: unassigned_case)', () => {
+    expect(TASK_TYPES).toEqual(expect.arrayContaining(['referral_stalled', 'referral_review', 'unassigned_case']));
+    expect(TASK_TYPES).toHaveLength(3);
   });
 
-  it('isTaskType rejects a plausible-but-unwired type (e.g. from an evidenced-but-deferred trigger)', () => {
-    expect(isTaskType('unassigned_case')).toBe(false); // evidenced (A7) but deliberately not wired this slice
-    expect(isTaskType('court_sync_stale')).toBe(false); // evidenced (B4) but deliberately not wired this slice
-    expect(isTaskType('silence')).toBe(false); // evidenced (silence-ladder sample) but deliberately not wired this slice
+  it('isTaskType rejects a plausible-but-still-unwired type (e.g. from an evidenced-but-deferred trigger)', () => {
+    expect(isTaskType('court_sync_stale')).toBe(false); // evidenced (B4) but deliberately not wired — needs infra
+    expect(isTaskType('silence')).toBe(false); // evidenced (silence-ladder sample) but deliberately not wired — needs infra
   });
 
   it('has exactly the 4 evidenced task priorities, excluding good', () => {

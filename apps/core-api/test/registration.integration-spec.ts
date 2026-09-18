@@ -4,11 +4,20 @@
  * instance (see test/pg-harness.ts, factored out of S4's
  * identity.integration-spec.ts). Runs the full Nest app over real HTTP
  * (supertest), with backend/schema.sql plus every migration through
- * backend/migrations/0006_lifecycle.sql applied — the same files a real
- * deployment would apply, since the shared Prisma schema (and therefore
- * every Case insert) now depends on later milestones' additive columns
- * regardless of which milestone this suite itself exercises. No real
- * victim data anywhere — only synthetic, clearly-fake identifiers.
+ * backend/migrations/0008_referral_in_service_at.sql and
+ * 0010_tasks.sql applied — the same files a real deployment would apply,
+ * since the shared Prisma schema (and therefore every Case insert) now
+ * depends on later milestones' additive columns regardless of which
+ * milestone this suite itself exercises. 0007/0008 (referrals) are
+ * required here even though this suite never creates one, because
+ * `tasks.referral_id` has a real foreign key to `referrals` (S14 wired
+ * RegistrationService to create a `tasks` row on the unassigned-case
+ * path) — the referenced table must exist for that FK constraint to be
+ * creatable at all. 0009 (audit hash-chain) is NOT needed: the
+ * unassigned-case task creation path deliberately never calls
+ * StaffAuditService.record (see task.service.ts's own comment for why).
+ * No real victim data anywhere — only synthetic, clearly-fake
+ * identifiers.
  */
 
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
@@ -35,6 +44,9 @@ describeIfPostgres('Registration module — real PostgreSQL integration', () => 
       '0004_consent_profile_safety.sql',
       '0005_staff.sql',
       '0006_lifecycle.sql',
+      '0007_referrals.sql',
+      '0008_referral_in_service_at.sql',
+      '0010_tasks.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';
@@ -55,6 +67,10 @@ describeIfPostgres('Registration module — real PostgreSQL integration', () => 
   afterEach(async () => {
     // Keep each test's data isolated without tearing down the whole cluster
     // between tests (that would defeat the point of one shared instance).
+    // tasks must be deleted before cases (S14: tasks.case_id has a real FK
+    // to cases — deleting a case with an unassigned_case task still
+    // pointing to it violates that constraint).
+    await prisma.task.deleteMany({});
     await prisma.case.deleteMany({});
     await prisma.user.deleteMany({});
     await prisma.counsellor.deleteMany({});

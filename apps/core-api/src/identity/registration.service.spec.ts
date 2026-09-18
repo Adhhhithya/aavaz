@@ -4,6 +4,8 @@ import { FakePrismaService } from '../../test/fake-prisma';
 import { AssignmentService } from '../cases/assignment.service';
 import { LocationService } from '../cases/location.service';
 import { AppConfig } from '../config/configuration';
+import { StaffAuditService } from '../staff/staff-audit.service';
+import { TaskService } from '../task/task.service';
 import { IdentityService } from './identity.service';
 import { RegistrationService } from './registration.service';
 import { RegisterDto, RoleTypeInput, PreferredLanguageInput } from './dto/register.dto';
@@ -32,13 +34,16 @@ function build(fake: FakePrismaService) {
   const identityService = new IdentityService(fake as unknown as PrismaService);
   const assignmentService = new AssignmentService();
   const locationService = new LocationService();
+  const auditService = new StaffAuditService(fake as unknown as PrismaService);
+  const taskService = new TaskService(fake as unknown as PrismaService, auditService);
   const registrationService = new RegistrationService(
     fake as unknown as PrismaService,
     identityService,
     assignmentService,
     locationService,
+    taskService,
   );
-  return { identityService, assignmentService, locationService, registrationService };
+  return { identityService, assignmentService, locationService, taskService, registrationService };
 }
 
 const dtoWithLocation: RegisterDto = {
@@ -117,6 +122,10 @@ describe('RegistrationService', () => {
 
     const { case: caseRow } = await registrationService.register('+910000000004', dtoWithoutLocation);
     expect(caseRow.assignedCounsellorId).toBeNull();
+    // S14: no district at all is NOT the "no match" case A7 describes —
+    // no district-scoped supervisor queue could ever show a task for a
+    // districtless case, so none is created.
+    expect(fake.taskRows).toHaveLength(0);
   });
 
   it('creates an unassigned case (no error) when the resolved district has no counsellors', async () => {
@@ -125,6 +134,44 @@ describe('RegistrationService', () => {
     const { case: caseRow } = await registrationService.register('+910000000005', dtoWithLocation);
     expect(caseRow.assignedCounsellorId).toBeNull();
     expect(fake.caseRows).toHaveLength(1); // still created, just unassigned
+  });
+
+  describe('S14: unassigned_case task trigger (v0.2 Workflow A "A7")', () => {
+    it('a resolved district with no eligible counsellor creates a real unassigned_case task', async () => {
+      const { registrationService } = build(fake);
+      // no counsellors seeded — the genuine "no match" case
+      const { user, case: caseRow } = await registrationService.register('+910000000010', dtoWithLocation);
+
+      expect(fake.taskRows).toHaveLength(1);
+      const task = fake.taskRows[0];
+      expect(task.type).toBe('unassigned_case');
+      expect(task.caseId).toBe(caseRow.id);
+      expect(task.userId).toBe(user.id);
+      expect(task.priority).toBe('bad');
+      expect(task.status).toBe('OPEN');
+      expect(task.createdByStaffId).toBeNull(); // system-created
+    });
+
+    it('a successful assignment never creates an unassigned_case task', async () => {
+      const { registrationService } = build(fake);
+      fake.counsellorRows.push({
+        id: 'c-3',
+        name: 'Dr. Test',
+        district: 'Mock District',
+        languages: ['en'],
+        currentCaseload: 0,
+        caseloadCap: 80,
+      });
+
+      await registrationService.register('+910000000011', dtoWithLocation);
+      expect(fake.taskRows).toHaveLength(0);
+    });
+
+    it('no district at all never creates an unassigned_case task, even with zero counsellors anywhere', async () => {
+      const { registrationService } = build(fake);
+      await registrationService.register('+910000000012', dtoWithoutLocation);
+      expect(fake.taskRows).toHaveLength(0);
+    });
   });
 
   it('rejects a duplicate phone number without creating a second user or case', async () => {

@@ -3,6 +3,7 @@ import { Case, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AssignmentService } from '../cases/assignment.service';
 import { LocationService } from '../cases/location.service';
+import { TaskService } from '../task/task.service';
 import { IdentityService } from './identity.service';
 import { RegisterDto } from './dto/register.dto';
 
@@ -43,6 +44,7 @@ export class RegistrationService {
     private readonly identityService: IdentityService,
     private readonly assignmentService: AssignmentService,
     private readonly locationService: LocationService,
+    private readonly taskService: TaskService,
   ) {}
 
   async register(phoneNumber: string, dto: RegisterDto): Promise<RegistrationResult> {
@@ -78,6 +80,19 @@ export class RegistrationService {
         `Registered user ${user.id} with case ${caseRow.id}` +
           (counsellor ? ` assigned to counsellor ${counsellor.id}` : ' (unassigned — no eligible counsellor)'),
       );
+
+      // S14 (v0.2 Workflow A "A7": "No match creates an unassigned task
+      // for the district supervisor"). Only the genuine "no match" case —
+      // a district WAS resolved, but AssignmentService found no eligible
+      // counsellor in it — gets this task. A case with no district at
+      // all is deliberately excluded: no district supervisor's
+      // district-scoped queue could ever show a task for a districtless
+      // case (TaskService.listTasks filters on the case's own
+      // user.locationDistrict), so creating one there would just be a
+      // permanently-invisible row, not a real notification to anyone.
+      if (location.district && !counsellor) {
+        await this.taskService.createUnassignedCaseTaskTx(tx, { id: caseRow.id, userId: user.id });
+      }
 
       return { user, case: caseRow };
     });

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { CasesModule } from '../cases/cases.module';
+import { TaskModule } from '../task/task.module';
 import { IdentityController } from './identity.controller';
 import { IdentityService } from './identity.service';
 import { OtpService } from './otp.service';
@@ -19,7 +20,9 @@ import { VictimAuthGuard } from './victim-auth.guard';
   // CasesModule is imported here (rather than the other way around) because
   // registration is what needs case creation + assignment — see
   // registration.service.ts and docs/S5_REGISTRATION_MIGRATION.md.
-  imports: [JwtModule.register({}), CasesModule],
+  // TaskModule added in S14 — RegistrationService calls
+  // TaskService.createUnassignedCaseTaskTx in its own transaction.
+  imports: [JwtModule.register({}), CasesModule, TaskModule],
   controllers: [IdentityController],
   providers: [OtpService, TokenService, IdentityService, RegistrationService, VictimAuthGuard, PhoneVerifiedGuard],
   // VictimAuthGuard is exported (new in S6) so the consent/profile/safety

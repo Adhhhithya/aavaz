@@ -10,7 +10,7 @@ coexistence design (not this repository's current state for any domain).
 | Domain | Current owner | Target owner | Status | Legacy writer | Node API | DB state | Tests | Known gaps |
 |---|---|---|---|---|---|---|---|---|
 | Identity / OTP | Node (S4) | Node | INTEGRATED | None (Node sole writer of `otp_codes`; `users` still also written by inbound webhooks — see below) | `/api/v1/auth/otp/*`, `/api/v1/auth/register` | `users`, `otp_codes` (existing tables, Node-owned writes) | Unit + integration | FastAPI's `ivr_webhook.py`/`sms_webhook.py` still insert `users` rows directly for inbound calls/SMS — a live, pre-existing dual-writer not created by this migration (S8 audit §E) |
-| Registration / case creation / assignment | Node (S5) | Node | INTEGRATED | FastAPI still writes `cases.cnr`/`ecourts_data` (eCourts) and `cases.case_stage` (unvalidated) | Registration flow creates `cases` rows | `cases`, `counsellors` (existing tables) | Unit + integration + concurrency | Live dual-writer on `cases` (S8 audit §E, §P) — Node owns creation/assignment fields, FastAPI owns `cnr`/`ecourts_data`/`case_stage` |
+| Registration / case creation / assignment | Node (S5, extended S14) | Node | INTEGRATED | FastAPI still writes `cases.cnr`/`ecourts_data` (eCourts) and `cases.case_stage` (unvalidated) | Registration flow creates `cases` rows | `cases`, `counsellors` (existing tables) | Unit + integration + concurrency | Live dual-writer on `cases` (S8 audit §E, §P) — Node owns creation/assignment fields, FastAPI owns `cnr`/`ecourts_data`/`case_stage`. S14 added a real `unassigned_case` task trigger on the no-eligible-counsellor path — see `docs/S14_TASK_TRIGGER_EXTENSION.md` |
 | Consent | Node (S6) | Node | INTEGRATED | Legacy `users.consent_given` boolean (FastAPI, captured once at registration) — not migrated/reconciled in this slice | `/v1/consent/*` | `consents` (new, append-only) | Unit + integration | Two competing consent "authorities" (`users.consent_given` vs. `consents` table) not yet reconciled |
 | Profile / preferences | Node (S6) | Node | INTEGRATED | None | `/v1/profile/*` | `victim_profiles` (new) | Unit + integration | — |
 | Safety (duress PIN, disguise, safe word, trusted contact) | Node (S6) | Node | INTEGRATED | None | `/v1/safety/*` | `safety_settings` (new) | Unit + integration | Trusted contact not KMS-encrypted (documented gap, no KMS integration exists) |
@@ -24,7 +24,7 @@ coexistence design (not this repository's current state for any domain).
 | Court-sync (automated poll/diff) | FastAPI (`ecourts_scraper.py`/`ecourts_parser.py`, real, request-triggered) | Node `workers` (orchestration) + Python (compute) | NOT_STARTED | FastAPI (as described) | None | Writes `cases.cnr`/`ecourts_data` (unmodeled in Node's Prisma schema) | None (Node side) | Live dual-writer on `cases` (S8 audit §D/E); needs the poll/diff/event model; the `milestones` table itself now exists (S13) for the manual half of Workflow B, but the automated-poll half remains blocked on a job-queue decision |
 | Milestones (case-manager data entry) | Node (S13) | Node | INTEGRATED | None (net-new capability, no FastAPI equivalent) | `POST`/`GET /v1/console/cases/:caseId/milestones`, `PATCH /v1/console/milestones/:milestoneId/met` | `milestones` (new) | Unit + integration + concurrency + security | No automated timer computation (needs a legal-reviewed template this repo has no sign-off for) or expiry handling (needs the job queue); no correction/deletion path — see `docs/S13_MILESTONE_MIGRATION.md` §A |
 | Channel-gateway / conversation agent / memory / assessment / legal detection | FastAPI (`chatbot_routes.py`, inline, direct LLM call, no crisis guard) | Node gateway + Python `agent-svc`/`memory-svc`/`analysis-svc` | NOT_STARTED | FastAPI (as described) | None | No `sessions`/`memory_chunks`/`assessments` tables | None | Largest remaining rebuild; explicitly out of scope for every S4-S9 slice; blocked on a session model + the crisis-guard design + the job-queue decision |
-| Tasks / SLA engine | Node (S12) | Node | INTEGRATED (partial trigger coverage) | None (net-new capability, no FastAPI equivalent) | `GET /v1/console/tasks`, `POST /v1/console/referrals/:referralId/tasks`, `PATCH /v1/console/tasks/:taskId` | `tasks` (new) | Unit + integration + concurrency + security | Real automatic trigger for `referral_stalled` only; `unassigned_case`/`court_sync_stale`/`silence` are evidenced but not wired (the first needs an S5 `RegistrationService` change deliberately deferred, the other two need infrastructure this repo lacks); no SLA-breach automation — see `docs/S12_TASK_MIGRATION.md` §A/G |
+| Tasks / SLA engine | Node (S12, extended S14) | Node | INTEGRATED (partial trigger coverage) | None (net-new capability, no FastAPI equivalent) | `GET /v1/console/tasks`, `POST /v1/console/referrals/:referralId/tasks`, `PATCH /v1/console/tasks/:taskId` | `tasks` (new) | Unit + integration + concurrency + security | Real automatic triggers for `referral_stalled` (S12) and `unassigned_case` (S14, wired into S5's `RegistrationService`); `court_sync_stale`/`silence` remain unwired — both need infrastructure this repo lacks; no SLA-breach automation — see `docs/S12_TASK_MIGRATION.md` §A/G and `docs/S14_TASK_TRIGGER_EXTENSION.md` |
 
 ## Cross-cutting known gaps (not owned by any single domain row above)
 
@@ -34,7 +34,7 @@ coexistence design (not this repository's current state for any domain).
   referral-SLA escalation, post-session pipeline automation.
 - **No RLS enforcement** — every table has `ENABLE ROW LEVEL SECURITY`
   with no permissive policy; the service-role connection bypasses RLS
-  entirely. All authorization is application-layer (S4-S13's consistent
+  entirely. All authorization is application-layer (S4-S14's consistent
   pattern). Never claimed otherwise anywhere in this repository's docs.
 - **`fusion.py`'s distress scoring is a keyword-match simulation**,
   presented identically to real model output in every API response and
@@ -43,3 +43,10 @@ coexistence design (not this repository's current state for any domain).
   `docs/S9_REFERRAL_MIGRATION.md` §C).
 - **`state_routes.py` (FastAPI oversight) returns 100% hardcoded mock
   data** with no indication to a caller that it is not live.
+- **`AAVAZ_MIGRATION_PLAN.md`'s Decision 5 (removing the fabricated CNR
+  `DLCT110011162019` and its downstream fabricated legal facts from the
+  FastAPI eCourts parser) is CONFIRMED DONE**, verified during S14's own
+  re-audit by running `backend/tests/test_ecourts_fabrication_removed.py`
+  directly (6/6 passing) — this was completed in an earlier session, not
+  this one, and is recorded here so it stops appearing as open work in
+  future audits of this document.

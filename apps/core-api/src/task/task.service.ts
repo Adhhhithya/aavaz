@@ -106,6 +106,31 @@ export class TaskService {
     });
   }
 
+  /**
+   * S14: called from RegistrationService's own transaction (v0.2
+   * Workflow A "A7": "No match creates an unassigned task for the
+   * district supervisor") whenever a district was resolved but no
+   * eligible counsellor was found. `createdByStaffId` is null for the
+   * same system-actor reason `createStalledReferralTaskTx` documents.
+   * `priority: 'bad'` is a considered default, NOT spec-evidenced — A7
+   * names no priority for this task type; `bad` was chosen because a
+   * newly-registered victim with literally no assigned support is a
+   * more consequential gap than `okay`'s routine connotation elsewhere
+   * in v0.2's own vocabulary (Workflow F's table). See
+   * docs/S14_TASK_TRIGGER_EXTENSION.md.
+   */
+  async createUnassignedCaseTaskTx(tx: TxClient, kase: { id: string; userId: string }): Promise<void> {
+    await tx.task.create({
+      data: {
+        userId: kase.userId,
+        caseId: kase.id,
+        type: 'unassigned_case',
+        priority: 'bad',
+        status: 'OPEN',
+      },
+    });
+  }
+
   async transition(staff: ResolvedStaff, taskId: string, targetState: TaskState): Promise<TaskView> {
     if (!CONSOLE_INDIVIDUAL_RECORD_ROLES.includes(staff.role)) {
       throw new ForbiddenException('This staff role does not have access to tasks');

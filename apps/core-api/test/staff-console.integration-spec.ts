@@ -2,10 +2,16 @@
  * S7 integration test: staff identity + console authorization, against a
  * REAL, isolated, throwaway PostgreSQL instance (test/pg-harness.ts). Runs
  * the full Nest app over real HTTP (supertest), with backend/schema.sql
- * plus every migration through backend/migrations/0006_lifecycle.sql
- * applied (S8's additive columns are also required here — the shared
- * Prisma schema affects every Case insert regardless of milestone). No
- * real staff or victim data anywhere — only synthetic, clearly-fake
+ * plus every migration through backend/migrations/0006_lifecycle.sql,
+ * 0009_audit_hash_chain.sql, and (S14) 0007/0008/0010 applied. The
+ * referral/task migrations are required here even though this suite
+ * never touches referrals directly: `registerVictim` passes real
+ * location coordinates (resolving to the LocationService mock's "Mock
+ * District") with no counsellor seeded there, so every real-HTTP
+ * registration in this suite hits the genuine "no match" path S14 wired
+ * to RegistrationService — which needs `tasks` (and, transitively,
+ * `referrals`, since `tasks.referral_id` has a real FK to it) to exist.
+ * No real staff or victim data anywhere — only synthetic, clearly-fake
  * identifiers.
  *
  * This file proves, against real Postgres and real HTTP, every scenario
@@ -44,7 +50,10 @@ describeIfPostgres('Staff identity + console authorization — real PostgreSQL i
       '0004_consent_profile_safety.sql',
       '0005_staff.sql',
       '0006_lifecycle.sql',
+      '0007_referrals.sql',
+      '0008_referral_in_service_at.sql',
       '0009_audit_hash_chain.sql',
+      '0010_tasks.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';
@@ -70,9 +79,13 @@ describeIfPostgres('Staff identity + console authorization — real PostgreSQL i
     // a later test's district/queue check would see leftover cases from
     // every earlier test (all seeded into the same 'Pune'/'Mumbai'
     // district values), making "the queue is empty" or "only N cases"
-    // assertions meaningless. FK-safe order: audit log -> staff -> case ->
-    // counsellor -> user.
+    // assertions meaningless. FK-safe order: audit log -> task (S14:
+    // registerVictim's "Mock District" resolves to no eligible
+    // counsellor, so every real registration here creates an
+    // unassigned_case task whose FK must be cleared before its case) ->
+    // staff -> case -> counsellor -> user.
     await prisma.staffAuditLog.deleteMany({});
+    await prisma.task.deleteMany({});
     await prisma.staff.deleteMany({});
     await prisma.case.deleteMany({});
     await prisma.counsellor.deleteMany({});

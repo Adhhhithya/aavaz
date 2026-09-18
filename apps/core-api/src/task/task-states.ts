@@ -51,16 +51,24 @@ export function isValidTaskTransition(from: TaskState, to: TaskState): boolean {
  *     once the infrastructure exists" pattern every prior slice's own
  *     deferred-automation items use.
  *
- * Other task-shaped mentions found in v0.2's text (`unassigned_case`,
- * Workflow A "A7"; `court_sync_stale`, Workflow B "B4"; `silence`, the
- * silence-ladder code sample) are real, evidenced, but NOT wired to an
- * automatic trigger in this slice — see docs/S12_TASK_MIGRATION.md
- * section C for why each one specifically was left out (not because it
- * isn't real, but because wiring it touches a different, already-tested
- * domain's own code, or needs infrastructure this repository doesn't
- * have).
+ *   - `unassigned_case`: Workflow A "A7" — "No match creates an
+ *     unassigned task for the district supervisor." Added in S14, wired
+ *     from apps/core-api/src/identity/registration.service.ts's own
+ *     transaction whenever a district was resolved but
+ *     AssignmentService.assign() found no eligible counsellor (the exact
+ *     "no match" case A7 describes — a case with no district at all is
+ *     deliberately NOT given this task, since no district supervisor's
+ *     queue could ever show it; see docs/S14_TASK_TRIGGER_EXTENSION.md).
+ *
+ * Other task-shaped mentions found in v0.2's text (`court_sync_stale`,
+ * Workflow B "B4"; `silence`, the silence-ladder code sample) are real,
+ * evidenced, but NOT wired to an automatic trigger yet — see
+ * docs/S12_TASK_MIGRATION.md section C for why: both need infrastructure
+ * (automated court-sync polling, a job queue) this repository still does
+ * not have, unlike `unassigned_case`, whose trigger condition S5's own
+ * `RegistrationService` already detects and logs today.
  */
-export const TASK_TYPES = ['referral_stalled', 'referral_review'] as const;
+export const TASK_TYPES = ['referral_stalled', 'referral_review', 'unassigned_case'] as const;
 export type TaskType = (typeof TASK_TYPES)[number];
 
 export function isTaskType(value: string): value is TaskType {
