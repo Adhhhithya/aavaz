@@ -22,6 +22,7 @@ export interface ReferralView {
   ackDueAt: Date | null;
   ackedAt: Date | null;
   serviceDueAt: Date | null;
+  inServiceAt: Date | null;
   deliveredAt: Date | null;
   verifiedAt: Date | null;
   createdAt: Date;
@@ -153,6 +154,14 @@ export class ReferralService {
       } else if (targetState === 'ACKNOWLEDGED') {
         extra.ackedAt = now;
         extra.serviceDueAt = addWorkingDays(referral.sentAt ?? now, SERVICE_START_SLA_WORKING_DAYS);
+      } else if (targetState === 'IN_SERVICE') {
+        // Added for S10 (oversight): v0.2 Workflow H "H4"'s "median time to
+        // service" aggregate needs to know WHEN service actually started,
+        // not just that it eventually did — sentAt alone can't answer
+        // that. Not present in S9's original migration; added here as a
+        // small, additive follow-up rather than silently approximating the
+        // metric from a timestamp that doesn't represent the real event.
+        extra.inServiceAt = now;
       } else if (targetState === 'DELIVERED') {
         extra.deliveredAt = now;
       } else if (targetState === 'VERIFIED') {
@@ -248,6 +257,7 @@ export class ReferralService {
     ackDueAt: Date | null;
     ackedAt: Date | null;
     serviceDueAt: Date | null;
+    inServiceAt: Date | null;
     deliveredAt: Date | null;
     verifiedAt: Date | null;
     createdAt: Date;
@@ -265,6 +275,7 @@ export class ReferralService {
       ackDueAt: referral.ackDueAt,
       ackedAt: referral.ackedAt,
       serviceDueAt: referral.serviceDueAt,
+      inServiceAt: referral.inServiceAt,
       deliveredAt: referral.deliveredAt,
       verifiedAt: referral.verifiedAt,
       createdAt: referral.createdAt,

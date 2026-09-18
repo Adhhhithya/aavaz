@@ -54,3 +54,15 @@ export const CONSOLE_INDIVIDUAL_RECORD_ROLES: readonly StaffRole[] = [
  * "Supervisor: District queue, SLA breaches, overrides."
  */
 export const ASSIGNMENT_SCOPED_ROLES: readonly StaffRole[] = ['counsellor'];
+
+/**
+ * The complementary set to CONSOLE_INDIVIDUAL_RECORD_ROLES — v0.2's own
+ * "District oversight" role tier (§15's access-by-role table), which "Can
+ * see: Aggregates with small-count suppression" and explicitly "Cannot
+ * see: Any individual record." Added in S10 for the oversight domain
+ * (`GET /v1/oversight/districts/:code/metrics`, v0.2 §14). Disjoint from
+ * CONSOLE_INDIVIDUAL_RECORD_ROLES by construction — no role appears in
+ * both sets, matching v0.2's own two-tier split (case-management tier vs.
+ * oversight tier) rather than inventing a third access class.
+ */
+export const OVERSIGHT_ROLES: readonly StaffRole[] = ['state_admin', 'national_admin'];

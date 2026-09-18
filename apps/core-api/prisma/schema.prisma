@@ -400,6 +400,10 @@ model Referral {
   ackDueAt           DateTime? @map("ack_due_at") @db.Timestamptz(6)
   ackedAt            DateTime? @map("acked_at") @db.Timestamptz(6)
   serviceDueAt       DateTime? @map("service_due_at") @db.Timestamptz(6)
+  // Added via backend/migrations/0008_referral_in_service_at.sql (S10) —
+  // see that file's header for why this was missing from S9's original
+  // 0007_referrals.sql.
+  inServiceAt        DateTime? @map("in_service_at") @db.Timestamptz(6)
   deliveredAt        DateTime? @map("delivered_at") @db.Timestamptz(6)
   verifiedAt         DateTime? @map("verified_at") @db.Timestamptz(6)
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

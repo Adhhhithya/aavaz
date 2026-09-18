@@ -3,8 +3,11 @@
  * SLA/concurrency), against a REAL, isolated, throwaway PostgreSQL instance
  * (test/pg-harness.ts). Runs the full Nest app over real HTTP (supertest),
  * with backend/schema.sql plus every migration through
- * backend/migrations/0007_referrals.sql applied. No real victim data
- * anywhere — only synthetic, clearly-fake identifiers.
+ * backend/migrations/0008_referral_in_service_at.sql applied (S10 added
+ * `in_service_at` to the same `referrals` table S9 created — every suite
+ * that writes a Referral row needs it applied, the same lesson S8's own
+ * "Known limitations" section documented for `0006_lifecycle.sql`). No
+ * real victim data anywhere — only synthetic, clearly-fake identifiers.
  */
 
 import * as fs from 'fs';
@@ -39,6 +42,7 @@ describeIfPostgres('Referral domain — real PostgreSQL integration', () => {
       '0005_staff.sql',
       '0006_lifecycle.sql',
       '0007_referrals.sql',
+      '0008_referral_in_service_at.sql',
     ]);
     process.env.DATABASE_URL = pgInstance.databaseUrl;
     process.env.NODE_ENV = 'development';

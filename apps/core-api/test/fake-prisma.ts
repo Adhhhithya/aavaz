@@ -132,6 +132,7 @@ interface ReferralRow {
   ackDueAt: Date | null;
   ackedAt: Date | null;
   serviceDueAt: Date | null;
+  inServiceAt: Date | null;
   deliveredAt: Date | null;
   verifiedAt: Date | null;
   createdAt: Date;
@@ -562,6 +563,7 @@ export class FakePrismaService {
         ackDueAt: data.ackDueAt ?? null,
         ackedAt: data.ackedAt ?? null,
         serviceDueAt: data.serviceDueAt ?? null,
+        inServiceAt: data.inServiceAt ?? null,
         deliveredAt: data.deliveredAt ?? null,
         verifiedAt: data.verifiedAt ?? null,
         createdAt: new Date(),
@@ -622,6 +624,28 @@ export class FakePrismaService {
       }
       Object.assign(row, args.data);
       return { count: 1 };
+    },
+
+    // Supports OversightService's district-metrics query: a
+    // user.locationDistrict relation filter plus a `select` projection.
+    // `select` is honored (not just accepted and ignored) so a unit test
+    // asserting on the returned shape reflects reality.
+    findMany: async (args: {
+      where: { user: { locationDistrict: string } };
+      select?: Record<string, true>;
+    }): Promise<Array<Partial<ReferralRow>>> => {
+      const matches = this.referralRows.filter((r) => {
+        const owner = this.userRows.find((u) => u.id === r.userId);
+        return owner?.locationDistrict === args.where.user.locationDistrict;
+      });
+      if (!args.select) return matches.map((r) => ({ ...r }));
+      return matches.map((r) => {
+        const projected: Partial<ReferralRow> = {};
+        for (const key of Object.keys(args.select!)) {
+          (projected as Record<string, unknown>)[key] = (r as unknown as Record<string, unknown>)[key];
+        }
+        return projected;
+      });
     },
   };
 

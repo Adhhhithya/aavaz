@@ -11,7 +11,9 @@ import { PrismaService } from '../prisma/prisma.service';
  * S8 adds `lifecycle.case.transition`/`case` — see
  * apps/core-api/src/lifecycle/lifecycle.service.ts. S9 adds
  * `referral.drafted`/`referral.transition`/`referral.read`/`referral` —
- * see apps/core-api/src/referral/referral.service.ts.
+ * see apps/core-api/src/referral/referral.service.ts. S10 adds
+ * `oversight.metrics.read`/`district` — see
+ * apps/core-api/src/oversight/oversight.service.ts.
  */
 export type StaffAuditAction =
   | 'console.queue.read'
@@ -19,8 +21,9 @@ export type StaffAuditAction =
   | 'lifecycle.case.transition'
   | 'referral.drafted'
   | 'referral.transition'
-  | 'referral.read';
-export type StaffAuditResourceType = 'queue' | 'victim' | 'case' | 'referral';
+  | 'referral.read'
+  | 'oversight.metrics.read';
+export type StaffAuditResourceType = 'queue' | 'victim' | 'case' | 'referral' | 'district';
 
 /** See assignment.service.ts's QueryClient for why this accepts either a
  * standalone PrismaService or an in-flight transaction client. */
