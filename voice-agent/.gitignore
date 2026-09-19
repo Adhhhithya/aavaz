@@ -1,0 +1,29 @@
+# Secrets — never commit. Use .env.example as the template.
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+build/
+dist/
+wheels/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Models and vendored binaries — fetched by scripts/fetch_models.py.
+models/*
+!models/.gitkeep
+piper/
+piper.zip
+
+# Runtime artifacts
+*.wav
+*.log
+llm/history.json

@@ -15,7 +15,7 @@ class ChatMessage(BaseModel):
     message: str
 
 from datetime import datetime, timezone
-from services.llm_parser import generate_chat_response
+from services.llm_parser import generate_chat_response, build_system_prompt
 from api.scoring.fusion import calculate_dynamic_score
 
 @router.post("/message")
@@ -134,6 +134,45 @@ async def handle_chatbot_message(
         "reply": reply,
         "emotion_flagged": emotion
     }
+
+@router.get("/voice-context")
+async def get_voice_context(
+    current_victim: CurrentVictim = Depends(get_current_victim),
+):
+    """
+    Composes the grounded AAVAZ system prompt (same domain knowledge/crisis
+    rules as the text chatbot, see services/llm_parser.build_system_prompt)
+    for the authenticated victim's current case, for the voice agent
+    integration to use. The mobile app fetches this once when opening the
+    voice screen and sends it to the voice-agent WS as a "context" message
+    right after connecting (see voice-agent/app/ws.py's "context" handler).
+    """
+    try:
+        from services.supabase_client import get_supabase
+        supabase = await get_supabase()
+
+        cases_resp = await supabase.table("cases").select("*").eq("user_id", current_victim.id).order("created_at", desc=True).limit(1).execute()
+        case_data = cases_resp.data[0] if cases_resp.data else None
+
+        user_resp = await supabase.table("users").select("name, preferred_language, role_type").eq("id", current_victim.id).execute()
+        user_data = user_resp.data[0] if user_resp.data else None
+
+        case_context = None
+        if case_data and user_data:
+            case_context = {
+                "user_name": user_data.get("name"),
+                "role_type": user_data.get("role_type"),
+                "preferred_language": user_data.get("preferred_language"),
+                "case_type": case_data.get("case_type"),
+                "case_stage": case_data.get("case_stage"),
+                "current_distress_score": case_data.get("current_distress_score"),
+            }
+
+        return {"system_prompt": build_system_prompt(case_context, voice=True)}
+    except Exception as e:
+        logger.error(f"Failed to build voice context: {e}")
+        return {"system_prompt": build_system_prompt(None, voice=True)}
+
 
 @router.get("/history/{user_id}")
 async def get_chat_history(

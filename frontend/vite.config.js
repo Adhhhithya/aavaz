@@ -15,6 +15,14 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true
+      },
+      // Voice agent (separate service, see /voice-agent) — proxied so the
+      // browser talks to one origin, same pattern as /api above.
+      '/voice-ws': {
+        target: 'http://localhost:8090',
+        ws: true,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/voice-ws/, '/ws')
       }
     }
   }

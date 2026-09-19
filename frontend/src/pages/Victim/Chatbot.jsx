@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Bot, Send, Sparkles, RefreshCw } from 'lucide-react';
+import { Bot, Send, Sparkles, RefreshCw, Mic, MicOff } from 'lucide-react';
+import { useVoiceAgent } from '../../hooks/useVoiceAgent';
 
 const PROMPT_CHIPS = [
   'I feel anxious',
@@ -89,6 +90,65 @@ export default function VictimChatbot() {
     setMessages([{ id: 'init', sender: 'bot', text: 'Hello. I am here to support you. How are you feeling today?' }]);
   };
 
+  // --- Voice mode --------------------------------------------------------
+  // Same conversation, same message list — voice just adds a second way to
+  // produce/consume turns. The grounded system prompt is fetched fresh per
+  // session from the backend (not hardcoded here) so it stays in sync with
+  // whatever this victim's actual case context is.
+  const streamingBotIdRef = useRef(null);
+
+  const getSystemPrompt = useCallback(async () => {
+    const res = await authFetch('/api/v1/intake/chatbot/voice-context');
+    const data = await res.json();
+    return data.system_prompt;
+  }, [authFetch]);
+
+  const handleUserTranscript = useCallback((text) => {
+    setMessages((prev) => [...prev, { id: `v-user-${Date.now()}`, sender: 'user', text }]);
+  }, []);
+
+  const handleAssistantStart = useCallback(() => {
+    const id = `v-bot-${Date.now()}`;
+    streamingBotIdRef.current = id;
+    setMessages((prev) => [...prev, { id, sender: 'bot', text: '' }]);
+  }, []);
+
+  const handleAssistantToken = useCallback((_delta, fullText) => {
+    const id = streamingBotIdRef.current;
+    if (!id) return;
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text: fullText } : m)));
+  }, []);
+
+  const handleVoiceError = useCallback((message) => {
+    console.error('Voice agent error:', message);
+  }, []);
+
+  const { status: voiceStatus, start: startVoice, stop: stopVoice } = useVoiceAgent({
+    getSystemPrompt,
+    onUserTranscript: handleUserTranscript,
+    onAssistantStart: handleAssistantStart,
+    onAssistantToken: handleAssistantToken,
+    onError: handleVoiceError,
+  });
+
+  const voiceActive = voiceStatus !== 'idle' && voiceStatus !== 'error';
+
+  const toggleVoice = () => {
+    if (voiceActive) {
+      stopVoice();
+    } else {
+      startVoice();
+    }
+  };
+
+  const voiceStatusLabel = {
+    connecting: 'Connecting…',
+    listening: 'Listening…',
+    thinking: 'Thinking…',
+    speaking: 'Speaking…',
+    error: 'Voice error',
+  }[voiceStatus];
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] md:h-screen bg-canvas-base animate-in fade-in duration-300">
       
@@ -100,16 +160,31 @@ export default function VictimChatbot() {
           </div>
           <div>
             <h2 className="font-bold text-text-primary">Support Assistant</h2>
-            <p className="text-xs font-semibold text-accent-sage">Always here to listen</p>
+            <p className="text-xs font-semibold text-accent-sage">
+              {voiceStatusLabel || 'Always here to listen'}
+            </p>
           </div>
         </div>
-        <button 
-          onClick={handleClear}
-          className="p-2 text-text-muted hover:text-text-primary hover:bg-canvas-base rounded-full transition-colors"
-          title="Clear Conversation"
-        >
-          <RefreshCw size={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={toggleVoice}
+            className={`p-2 rounded-full transition-colors ${
+              voiceActive
+                ? 'text-white bg-primary-main animate-pulse'
+                : 'text-text-muted hover:text-text-primary hover:bg-canvas-base'
+            }`}
+            title={voiceActive ? 'Stop voice mode' : 'Talk instead of type'}
+          >
+            {voiceActive ? <Mic size={18} /> : <MicOff size={18} />}
+          </button>
+          <button
+            onClick={handleClear}
+            className="p-2 text-text-muted hover:text-text-primary hover:bg-canvas-base rounded-full transition-colors"
+            title="Clear Conversation"
+          >
+            <RefreshCw size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Messages Area */}
