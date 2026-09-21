@@ -20,20 +20,20 @@ import {
   HeartPulse,
 } from 'lucide-react-native';
 import { DS } from '../theme/designSystem';
+import { useWarningModal } from '../context/WarningModalContext';
 
 export default function ProfileScreen({
   user = {
-    name: '',
-    phone: '',
+    name: 'Anonymous',
+    phone: '+91 ••••• •••••',
+    preferred_language: 'en',
     age: '',
-    emergencyContact: {
-      name: '',
-      phone: '',
-    },
+    emergencyContact: { name: '', phone: '' },
   },
   onLogout,
   onSaveProfile,
 }) {
+  const { showWarning } = useWarningModal();
   const [name, setName] = useState(user.name || '');
   const [age, setAge] = useState(user.age || '');
   const [emergencyName, setEmergencyName] = useState(
@@ -42,6 +42,7 @@ export default function ProfileScreen({
   const [emergencyPhone, setEmergencyPhone] = useState(
     user.emergencyContact?.phone || ''
   );
+  const [language, setLanguage] = useState(user.preferred_language || 'en');
   const [isSavedNotice, setIsSavedNotice] = useState(false);
 
   const handleSave = () => {
@@ -57,14 +58,14 @@ export default function ProfileScreen({
   };
 
   const confirmLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out? You will need to enter your phone number to sign in again.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign Out', style: 'destructive', onPress: onLogout },
-      ]
-    );
+    showWarning({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out? You will need to enter your phone number to sign in again.',
+      type: 'warning',
+      buttonText: 'Sign Out',
+      onConfirm: onLogout,
+      secondaryText: 'Cancel',
+    });
   };
 
   return (

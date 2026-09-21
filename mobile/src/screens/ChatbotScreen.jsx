@@ -21,8 +21,8 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 import { DS } from '../theme/designSystem';
-
 import { api } from '../services/api';
+import { useWarningModal } from '../context/WarningModalContext';
 
 const PROMPT_CHIPS = [
   'I feel anxious',
@@ -32,6 +32,7 @@ const PROMPT_CHIPS = [
 ];
 
 export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
+  const { showWarning, showError } = useWarningModal();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -105,6 +106,11 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
       }
     } catch (e) {
       console.error("Chat error", e);
+      showWarning({
+        title: 'Connection Notice',
+        message: 'Unable to reach the assistant right now. Please check your connection and try again.',
+        type: 'warning',
+      });
     } finally {
       setIsTyping(false);
     }

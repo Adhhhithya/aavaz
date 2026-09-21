@@ -41,7 +41,7 @@ from models.contracts import ConversationState, RiskLevel, TriageResult
 logger = logging.getLogger(__name__)
 
 _groq = AsyncGroq(api_key=settings.GROQ_API_KEY)
-_LLM_MODEL = "llama-3.3-70b-versatile"  # fast model for triage
+_LLM_MODEL = "qwen/qwen3.8-27b"  # fast supported model for triage
 
 # ---------------------------------------------------------------------------
 # Rule-based crisis keyword sets (multilingual, common transliterations)

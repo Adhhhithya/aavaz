@@ -74,3 +74,28 @@ class BolnaPreCallPayload(BaseModel):
             or ""
         ).strip()
 
+
+class GrievanceRegistrationPayload(BaseModel):
+    # Case fields
+    grievance_related_to: str
+    has_fir: bool
+    submitter_role: str
+    cnr_number: Optional[str] = None
+    grievance_description: Optional[str] = None
+    
+    # Personal Info fields
+    first_name: str
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+    father_name: Optional[str] = None
+    dob: Optional[str] = None
+    category: str
+    nationality: str = "Indian"
+    aadhaar_number: str
+    
+    # Address Info fields
+    pincode: str
+    state: str
+    district: str
+    taluka: Optional[str] = None
+    full_address: str

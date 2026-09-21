@@ -78,15 +78,17 @@ def run_gate():
     assert res.status_code == 200, f"Registration failed: {res.text}"
     reg_data = res.json()
     victim_token = reg_data.get("token")
-    victim_id = reg_data.get("userProfile", {}).get("id")
-    logger.info(f" ✓ Registration complete. Victim ID: {victim_id}")
+    victim_id = reg_data.get("user_id") or reg_data.get("userProfile", {}).get("id")
+    case_id = reg_data.get("case_id")
+    logger.info(f" ✓ Registration complete. Victim ID: {victim_id}, Case ID: {case_id}")
 
     # 4. Trigger SOS
     logger.info("[App] Triggering SOS Distress Signal...")
     res = client.post("/api/v1/intake/app/sos", headers={"Authorization": f"Bearer {victim_token}"})
     assert res.status_code == 200, f"SOS trigger failed: {res.text}"
     sos_data = res.json()
-    case_id = sos_data.get("case_id")
+    if sos_data.get("case_id"):
+        case_id = sos_data.get("case_id")
     logger.info(f" ✓ SOS triggered successfully. Assigned Case ID: {case_id}")
 
     # 5. Simulate Bolna Voice Webhook (Distressed call)
@@ -128,8 +130,7 @@ def run_gate():
         escalations = esc_res.data
         return scores, escalations
 
-    loop = asyncio.get_event_loop()
-    scores, escalations = loop.run_until_complete(verify_state())
+    scores, escalations = asyncio.run(verify_state())
 
     if scores:
         logger.info(f" ✓ Detected Distress Score: {scores[0]['score']} | Risk Level: {scores[0]['risk_level']}")
@@ -165,9 +166,9 @@ def run_gate():
     async def teardown():
         sb_client = await get_supabase()
         if victim_id:
-            await sb_client.table("victim_profiles").delete().eq("id", victim_id).execute()
             await sb_client.table("cases").delete().eq("user_id", victim_id).execute()
-    loop.run_until_complete(teardown())
+            await sb_client.table("users").delete().eq("id", victim_id).execute()
+    asyncio.run(teardown())
     logger.info(" ✓ Cleanup successful.")
 
     logger.info("=============================================")

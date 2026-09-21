@@ -14,8 +14,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Calendar, PhoneCall, ShieldCheck, Heart } from 'lucide-react-native';
 import { DS } from '../theme/designSystem';
 import { api } from '../services/api';
+import { useWarningModal } from '../context/WarningModalContext';
 
 export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onCompleteSetup }) {
+  const { showWarning, showError } = useWarningModal();
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [emergencyName, setEmergencyName] = useState('');
@@ -25,9 +27,20 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
   const isValid = fullName.trim() && age.trim() && emergencyName.trim() && emergencyPhone.trim();
 
   const handleSubmit = async () => {
-    if (!isValid) return;
+    if (!isValid) {
+      showWarning({
+        title: 'Incomplete Details',
+        message: 'Please fill in all details including your display name, age, and emergency contact.',
+        type: 'warning',
+      });
+      return;
+    }
     if (!phoneVerifiedToken) {
-      alert('Your phone verification has expired. Please start over.');
+      showWarning({
+        title: 'Session Notice',
+        message: 'Your phone verification has expired. Please restart sign-in to continue.',
+        type: 'warning',
+      });
       return;
     }
     try {
@@ -58,7 +71,7 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
         token: res?.token,
       });
     } catch (e) {
-      alert("Registration failed: " + e.message);
+      showError(e, 'Registration Notice');
     } finally {
       setLoading(false);
     }

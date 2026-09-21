@@ -8,7 +8,6 @@ async def analyze_sentiment_and_emotion(transcript: str, language: str = 'en') -
     MVP Mock for IndicBERT + LLM emotion classification.
     """
     logger.info(f"Running sentiment and emotion analysis on transcript length {len(transcript)}")
-    await asyncio.sleep(0.5) # Simulate LLM API latency
     
     transcript_lower = transcript.lower()
     

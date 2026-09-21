@@ -30,12 +30,16 @@ import {
 } from 'lucide-react-native';
 import { DS } from '../theme/designSystem';
 import { api, API_BASE_URL } from '../services/api';
+import { useWarningModal } from '../context/WarningModalContext';
 
 export default function CaseLifecycleScreen({ userProfile, onContactCounselor }) {
+  const { showWarning, showError, showSuccess } = useWarningModal();
   const [cases, setCases] = useState([]);
   const [expandedCaseId, setExpandedCaseId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [cnrNumber, setCnrNumber] = useState('');
+  const [cnrModalVisible, setCnrModalVisible] = useState(false);
+  const [cnrInput, setCnrInput] = useState('');
   const [pdfModalVisible, setPdfModalVisible] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
 
@@ -65,7 +69,12 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
   };
 
   const handleDownloadDoc = (docName) => {
-    Alert.alert('Download Document', `Downloading ${docName} to your local device secure storage.`);
+    showWarning({
+      title: 'Download Document',
+      message: `Downloading ${docName} to your local device secure storage.`,
+      type: 'info',
+      buttonText: 'OK',
+    });
   };
 
   const handleDownloadReport = (caseId) => {
@@ -100,39 +109,41 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
   };
 
   const handleFileNewComplaint = () => {
-    Alert.prompt(
-      'Search Case via CNR',
-      'Enter your 16-character eCourts CNR number:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Search',
-          onPress: async (cnr) => {
-            if (!cnr || cnr.length < 10) {
-              Alert.alert('Error', 'Please enter a valid CNR number.');
-              return;
-            }
-            try {
-              setIsLoading(true);
-              setCnrNumber(cnr);
-              // Call the new single synchronous API to auto-solve and scrape.
-              // S2: user_id is no longer sent — the backend attaches the result
-              // to the authenticated victim's own account.
-              const res = await api.post('/api/v1/ecourts/search', { cnr });
-              
-              if (res.success) {
-                Alert.alert('Success', 'Case fetched and parsed successfully!');
-                await fetchCases();
-              }
-            } catch (e) {
-              Alert.alert("Failed to search case", e.message || 'Error occurred while scraping eCourts.');
-            } finally {
-              setIsLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    setCnrInput('');
+    setCnrModalVisible(true);
+  };
+
+  const handleSearchCnrSubmit = async () => {
+    const trimmed = cnrInput.trim();
+    if (!trimmed || trimmed.length < 10) {
+      showWarning({
+        title: 'Invalid CNR',
+        message: 'Please enter a valid eCourts CNR number (at least 10 characters).',
+        type: 'warning',
+      });
+      return;
+    }
+    try {
+      setIsLoading(true);
+      setCnrModalVisible(false);
+      setCnrNumber(trimmed);
+      const res = await api.post('/api/v1/ecourts/search', { cnr: trimmed });
+      
+      if (res.success) {
+        showSuccess('Case fetched and parsed successfully!');
+        await fetchCases();
+      } else {
+        showWarning({
+          title: 'Case Search',
+          message: res.message || 'No matching case records found for this CNR.',
+          type: 'warning',
+        });
+      }
+    } catch (e) {
+      showError(e, 'Failed to Search Case');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -374,11 +385,12 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
                       <TouchableOpacity
                         style={styles.counselorButton}
                         onPress={() => {
-                          Alert.alert(
-                            'Connect with Counselor',
-                            `Dialing assigned counselor for Case #${c.id}...`,
-                            [{ text: 'OK' }]
-                          );
+                          showWarning({
+                            title: 'Connect with Counselor',
+                            message: `Dialing assigned counselor for Case #${c.id}...`,
+                            type: 'info',
+                            buttonText: 'OK',
+                          });
                         }}
                         activeOpacity={0.8}
                       >
@@ -443,6 +455,56 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
             />
           ) : null}
         </SafeAreaView>
+      </Modal>
+
+      {/* Search CNR Modal (Cross-platform Android & iOS) */}
+      <Modal
+        visible={cnrModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCnrModalVisible(false)}
+      >
+        <View style={styles.cnrModalOverlay}>
+          <View style={styles.cnrModalCard}>
+            <View style={styles.cnrModalHeader}>
+              <View style={styles.cnrIconCircle}>
+                <Search size={22} color={DS.primary.main} />
+              </View>
+              <Text style={styles.cnrModalTitle}>Search Case via CNR</Text>
+              <Text style={styles.cnrModalSubtitle}>
+                Enter your 16-character eCourts CNR number to sync case records directly from the judiciary database.
+              </Text>
+            </View>
+
+            <TextInput
+              style={styles.cnrTextInput}
+              placeholder="e.g. DLHC010012342023"
+              placeholderTextColor={DS.text.muted}
+              value={cnrInput}
+              onChangeText={setCnrInput}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={24}
+            />
+
+            <View style={styles.cnrModalActions}>
+              <TouchableOpacity
+                style={[styles.cnrActionBtn, styles.cnrCancelBtn]}
+                onPress={() => setCnrModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cnrCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.cnrActionBtn, styles.cnrSearchBtn]}
+                onPress={handleSearchCnrSubmit}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cnrSearchBtnText}>Search</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -773,5 +835,94 @@ const styles = StyleSheet.create({
     color: DS.primary.main,
     fontSize: 15,
     fontWeight: '600',
+  },
+  cnrModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(30, 31, 36, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: DS.spacing.lg,
+  },
+  cnrModalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: DS.canvas.surface,
+    borderRadius: DS.radius.xl,
+    padding: DS.spacing.xl,
+    borderWidth: 1,
+    borderColor: DS.canvas.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  cnrModalHeader: {
+    alignItems: 'center',
+    marginBottom: DS.spacing.lg,
+  },
+  cnrIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: DS.primary.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: DS.spacing.sm,
+  },
+  cnrModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: DS.text.primary,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  cnrModalSubtitle: {
+    fontSize: 12,
+    color: DS.text.muted,
+    textAlign: 'center',
+    lineHeight: 17,
+  },
+  cnrTextInput: {
+    backgroundColor: DS.canvas.surfaceSubtle,
+    borderWidth: 1.5,
+    borderColor: DS.canvas.border,
+    borderRadius: DS.radius.md,
+    paddingHorizontal: DS.spacing.md,
+    height: 48,
+    fontSize: 14,
+    fontWeight: '600',
+    color: DS.text.primary,
+    letterSpacing: 0.5,
+    marginBottom: DS.spacing.lg,
+  },
+  cnrModalActions: {
+    flexDirection: 'row',
+    gap: DS.spacing.sm,
+  },
+  cnrActionBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: DS.radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cnrCancelBtn: {
+    backgroundColor: DS.canvas.surfaceSubtle,
+    borderWidth: 1,
+    borderColor: DS.canvas.border,
+  },
+  cnrCancelBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DS.text.secondary,
+  },
+  cnrSearchBtn: {
+    backgroundColor: DS.primary.main,
+  },
+  cnrSearchBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DS.text.light,
   },
 });

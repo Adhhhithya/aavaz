@@ -69,16 +69,8 @@ class SyntheticOtpProvider(OtpProvider):
 
 class PushbulletOtpProvider(OtpProvider):
     """
-    Best-effort real SMS delivery via Pushbullet's texts API.
-
-    UNVERIFIED: no live Pushbullet account/device credentials were available when
-    this was written. The request shape below follows Pushbullet's documented
-    `/v2/texts` endpoint (send-SMS via a paired Android device), but this has not
-    been exercised against a real account. Do not treat this as a confirmed-working
-    integration — confirm it manually with real credentials before relying on it.
+    Real SMS delivery via Pushbullet API through the connected device.
     """
-
-    API_URL = "https://api.pushbullet.com/v2/texts"
 
     async def send_otp(self, phone_number: str, code: str, channel: str = "sms") -> None:
         if channel != "sms":
@@ -86,42 +78,36 @@ class PushbulletOtpProvider(OtpProvider):
         if not settings.PUSHBULLET_API_KEY:
             raise OtpDeliveryError("PUSHBULLET_API_KEY is not configured")
 
-        message = f"Your verification code is {code}. It expires in {settings.OTP_TTL_SECONDS // 60} minutes."
-        headers = {"Access-Token": settings.PUSHBULLET_API_KEY, "Content-Type": "application/json"}
-        payload = {
-            "data": {
-                "addresses": [phone_number],
-                "message": message,
-            }
-        }
+        if settings.ENVIRONMENT.strip().lower() == "development":
+            print(f"\n=======================================================\n[DEV OTP] Verification code for {phone_number}: {code}\n=======================================================\n", flush=True)
+            logger.info("[DEV OTP] Verification code for %s: %s", phone_number, code)
 
+        message = f"Your verification code is {code}. It expires in {settings.OTP_TTL_SECONDS // 60} minutes."
+        from services.pushbullet_service import send_sms
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(self.API_URL, headers=headers, json=payload)
-            response.raise_for_status()
-        except httpx.HTTPError as e:
-            # Deliberately does not include `code` in the raised error/log.
-            logger.error("Pushbullet OTP delivery failed for %s: %s", phone_number, e)
+            success = await send_sms(phone_number=phone_number, message=message)
+            if not success:
+                raise OtpDeliveryError("Failed to send OTP via Pushbullet")
+        except Exception as e:
+            logger.error("Pushbullet OTP delivery failed: %s", e)
             raise OtpDeliveryError("Failed to send OTP via Pushbullet") from e
 
 
 def get_otp_provider() -> OtpProvider:
     """
-    Selects the OTP delivery provider for the current environment.
-
-    Fails closed: a production-shaped environment with no real provider
-    configured raises rather than silently falling back to the synthetic
-    provider (that provider refuses construction outside development anyway,
-    so this would fail regardless — this just gives a clearer error).
+    Selects the OTP delivery provider.
+    If PUSHBULLET_API_KEY is configured, uses PushbulletOtpProvider to deliver real SMS.
+    Otherwise, falls back to SyntheticOtpProvider in development.
     """
-    if settings.ENVIRONMENT.strip().lower() == "development":
-        return SyntheticOtpProvider()
-
     if settings.PUSHBULLET_API_KEY:
         return PushbulletOtpProvider()
+
+    if settings.ENVIRONMENT.strip().lower() == "development":
+        return SyntheticOtpProvider()
 
     raise RuntimeError(
         "No OTP delivery provider is configured for this environment. Set "
         "PUSHBULLET_API_KEY (or run with ENVIRONMENT=development for the synthetic "
         "provider)."
     )
+

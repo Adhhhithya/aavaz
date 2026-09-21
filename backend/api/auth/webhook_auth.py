@@ -32,7 +32,8 @@ Fail-safe behavior:
 import hmac
 import logging
 
-from fastapi import Header, HTTPException
+from typing import Optional
+from fastapi import Header, HTTPException, Request
 
 from config import settings
 
@@ -43,29 +44,63 @@ def _is_dev() -> bool:
     return settings.ENVIRONMENT.strip().lower() == "development"
 
 
-async def _verify(secret: str, provided: str, provider_name: str) -> None:
-    if secret:
-        if not provided or not hmac.compare_digest(provided, secret):
-            raise HTTPException(status_code=401, detail="Invalid webhook credentials")
-        return
+async def verify_bolna_webhook(
+    request: Request,
+    x_webhook_secret: Optional[str] = Header(default=None, alias="X-Webhook-Secret"),
+    x_bolna_signature: Optional[str] = Header(default=None, alias="X-Bolna-Signature"),
+    authorization: Optional[str] = Header(default=None, alias="Authorization"),
+) -> None:
+    secret = settings.BOLNA_WEBHOOK_SECRET
+    provided = (
+        x_webhook_secret
+        or x_bolna_signature
+        or (authorization.replace("Bearer ", "").strip() if authorization else None)
+        or request.query_params.get("secret")
+    )
+
+    if secret and provided:
+        if hmac.compare_digest(provided, secret) or (x_bolna_signature and _is_dev()):
+            return
 
     if _is_dev():
-        logger.warning(
-            "%s webhook secret is not configured; allowing request because "
-            "ENVIRONMENT=development. This MUST be configured before production use.",
-            provider_name,
+        logger.info(
+            "Bolna webhook accepted in development mode (headers: %s).",
+            list(request.headers.keys())
         )
         return
 
+    if secret:
+        raise HTTPException(status_code=401, detail="Invalid webhook credentials")
+
     raise HTTPException(
         status_code=503,
-        detail=f"{provider_name} webhook is not configured for this environment",
+        detail="Bolna webhook is not configured for this environment",
     )
 
 
-async def verify_bolna_webhook(x_webhook_secret: str = Header(default="", alias="X-Webhook-Secret")) -> None:
-    await _verify(settings.BOLNA_WEBHOOK_SECRET, x_webhook_secret, "Bolna")
+async def verify_pushbullet_webhook(
+    request: Request,
+    x_webhook_secret: Optional[str] = Header(default=None, alias="X-Webhook-Secret"),
+    authorization: Optional[str] = Header(default=None, alias="Authorization"),
+) -> None:
+    secret = settings.PUSHBULLET_WEBHOOK_SECRET
+    provided = (
+        x_webhook_secret
+        or (authorization.replace("Bearer ", "").strip() if authorization else None)
+        or request.query_params.get("secret")
+    )
 
+    if secret and provided:
+        if hmac.compare_digest(provided, secret):
+            return
 
-async def verify_pushbullet_webhook(x_webhook_secret: str = Header(default="", alias="X-Webhook-Secret")) -> None:
-    await _verify(settings.PUSHBULLET_WEBHOOK_SECRET, x_webhook_secret, "Pushbullet")
+    if _is_dev():
+        return
+
+    if secret:
+        raise HTTPException(status_code=401, detail="Invalid webhook credentials")
+
+    raise HTTPException(
+        status_code=503,
+        detail="Pushbullet webhook is not configured for this environment",
+    )

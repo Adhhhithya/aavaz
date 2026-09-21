@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Filter, ArrowRight, Clock, ShieldCheck } from 'lucide-react';
+import { LogOut, Filter, ArrowRight, Clock, ShieldCheck, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import NumberFlow from 'number-flow';
 import RiskBadge from '../../components/ui/RiskBadge';
@@ -137,7 +137,7 @@ export default function CounsellorQueue() {
           </div>
         ) : filteredCases.length === 0 ? (
           <div className="text-center py-20 bg-canvas-surfaceSubtle rounded-2xl border border-canvas-border border-dashed">
-            <div className="text-4xl mb-2">🎉</div>
+            <div className="flex justify-center text-primary-main mb-3"><CheckCircle size={40} strokeWidth={1.5} /></div>
             <h3 className="text-xl font-bold text-text-primary mb-1">Queue is Clear</h3>
             <p className="text-text-secondary font-medium">No cases match the current filter.</p>
           </div>

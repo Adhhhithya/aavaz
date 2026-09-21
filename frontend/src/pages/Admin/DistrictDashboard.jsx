@@ -9,7 +9,7 @@ import RiskBadge from '../../components/ui/RiskBadge';
 import PageHeader from '../../components/ui/PageHeader';
 
 export default function DistrictDashboard() {
-  const { user, authFetch } = useAuth();
+  const { user, logout, authFetch } = useAuth();
   
   const [stats, setStats] = useState(null);
   const [sosAlerts, setSosAlerts] = useState([]);
@@ -21,14 +21,26 @@ export default function DistrictDashboard() {
   useEffect(() => {
     const districtName = user?.district || 'unassigned';
     
+    const handleResponse = async (res) => {
+      if (res.status === 401) {
+        logout();
+        return null;
+      }
+      if (res.status === 403) {
+        setError('You do not have permission to view this district dashboard.');
+        return null;
+      }
+      return res.ok ? res.json() : null;
+    };
+
     Promise.all([
-      authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/stats`, { headers: { 'ngrok-skip-browser-warning': '1' } }).then(res => res.ok ? res.json() : null),
-      authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/queue`, { headers: { 'ngrok-skip-browser-warning': '1' } }).then(res => res.ok ? res.json() : null),
-      authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/sos`, { headers: { 'ngrok-skip-browser-warning': '1' } }).then(res => res.ok ? res.json() : null),
-      authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/roster`, { headers: { 'ngrok-skip-browser-warning': '1' } }).then(res => res.ok ? res.json() : null)
+      authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/stats`, { headers: { 'ngrok-skip-browser-warning': '1' } }).then(handleResponse),
+      authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/queue`, { headers: { 'ngrok-skip-browser-warning': '1' } }).then(handleResponse),
+      authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/sos`, { headers: { 'ngrok-skip-browser-warning': '1' } }).then(handleResponse),
+      authFetch(`/api/v1/dashboards/district/${encodeURIComponent(districtName)}/roster`, { headers: { 'ngrok-skip-browser-warning': '1' } }).then(handleResponse)
     ])
     .then(([s, q, sos, r]) => {
-      setStats(s || { active_cases: 2, critical_alerts: 5, totalCases: 120 });
+      setStats(s || { active_cases: 0, critical_alerts: 0, totalCases: 0 });
       setQueue(q?.queue || []);
       setSosAlerts(sos?.alerts || []);
       setRoster(r?.roster || []);
@@ -36,8 +48,8 @@ export default function DistrictDashboard() {
     .catch(err => {
       console.error(err);
       setError('Failed to load district data. Some features may be unavailable.');
-    })
-  }, [authFetch, user]);
+    });
+  }, [authFetch, user, logout]);
 
   return (
     <AdminLayout level="district">
