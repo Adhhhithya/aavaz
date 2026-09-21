@@ -44,6 +44,10 @@ class ConnectionHandler:
         self._session = sessions.create()
         self._send_lock = asyncio.Lock()
         self._turn: asyncio.Task | None = None
+        # AAVAZ identity context (populated from the "context" message)
+        self._victim_id: str | None = None
+        self._case_id: str | None = None
+        self._language: str = "en"
 
         self._segmenter = UtteranceSegmenter(
             sample_rate=settings.input_sample_rate,
@@ -54,7 +58,8 @@ class ConnectionHandler:
             preroll_ms=settings.vad_preroll_ms,
         )
         self._pipeline = ConversationPipeline(
-            asr=asr, llm=llm, tts=tts, emit=self._send_json, emit_audio=self._send_bytes
+            asr=asr, llm=llm, tts=tts, emit=self._send_json, emit_audio=self._send_bytes,
+            victim_id=self._victim_id, case_id=self._case_id,
         )
 
     # ---- transport helpers ------------------------------------------------
@@ -145,14 +150,18 @@ class ConnectionHandler:
 
         elif kind == "context":
             # AAVAZ integration point: the caller (our backend, via the mobile
-            # app) composes the full grounded system prompt server-side —
-            # same prompt-building logic as the text chatbot — and hands it
-            # over as one string right after "ready", before any audio. This
-            # keeps AAVAZ-specific domain knowledge in one place (our
-            # backend) rather than duplicating it into this repo.
+            # app) composes the full grounded system prompt server-side and
+            # hands it over as one string right after "ready", before any audio.
+            # Also accepts victim_id, case_id, and language for bridge routing.
             prompt = (message.get("system_prompt") or "").strip()
             if prompt:
                 self._session.system_prompt = prompt
+                # Thread AAVAZ identity into the pipeline for bridge calls
+                self._victim_id = message.get("victim_id") or None
+                self._case_id = message.get("case_id") or None
+                self._language = message.get("language") or "en"
+                self._pipeline._victim_id = self._victim_id
+                self._pipeline._case_id = self._case_id
                 await self._send_json({"type": "context_ok"})
             else:
                 await self._send_json({"type": "error", "message": "context requires non-empty system_prompt"})
@@ -188,7 +197,7 @@ class ConnectionHandler:
         await self._cancel_turn()
         self._turn = asyncio.create_task(self._run_turn(pcm))
 
-    async def _run_turn(self, pcm) -> None:
+    async def _run_turn(self, pcm: bytes) -> None:
         try:
             text = await self._pipeline.transcribe(pcm)
         except asyncio.CancelledError:
@@ -203,7 +212,8 @@ class ConnectionHandler:
             return
 
         await self._send_json({"type": "transcript", "text": text})
-        await self._pipeline.respond(self._session, text)
+        # Pass raw PCM to respond() so the bridge can run acoustic analysis
+        await self._pipeline.respond(self._session, text, audio_bytes=pcm)
 
     def _turn_active(self) -> bool:
         return self._turn is not None and not self._turn.done()

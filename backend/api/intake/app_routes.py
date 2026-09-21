@@ -9,6 +9,7 @@ from api.auth.victim_dependencies import (
     get_phone_verified_number,
     issue_victim_session_token,
 )
+from services.pushbullet_service import send_push_notification
 import logging
 from datetime import datetime, timezone
 
@@ -136,6 +137,57 @@ async def quick_checkin(
         logger.error(f"Checkin error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/sos")
+async def trigger_sos(
+    current_victim: CurrentVictim = Depends(get_current_victim),
+):
+    """
+    Triggers an immediate SOS for the victim's active case.
+    Updates the case to high priority and creates a critical interaction.
+    """
+    try:
+        supabase = await get_supabase()
+
+        # Get active case
+        cases_resp = await supabase.table("cases").select("id").eq("user_id", current_victim.id).order("created_at", desc=True).limit(1).execute()
+        case_id = cases_resp.data[0]["id"] if cases_resp.data else None
+
+        if not case_id:
+            raise HTTPException(status_code=400, detail="No active case found for SOS")
+
+        # Flag the case
+        await supabase.table("cases").update({
+            "current_distress_score": 90, # Force high risk
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }).eq("id", case_id).execute()
+
+        # Log the SOS interaction
+        interaction = {
+            "case_id": case_id,
+            "channel": "app",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "transcript_ref": "VICTIM TRIGGERED SOS BUTTON IN APP",
+            "emotion_tag": "fear",
+            "sentiment_score": 1.0,
+            "engagement_score": 1.0,
+            "history_score": 1.0,
+            "final_score": 0.95,
+            "score_breakdown": {"sentiment": 1.0, "engagement": 1.0, "history": 1.0}
+        }
+        await supabase.table("interactions").insert(interaction).execute()
+
+        # Fire push notification to Counsellor
+        await send_push_notification(
+            title="CRITICAL: SOS Activated",
+            body=f"Victim {current_victim.id} has triggered an SOS alert in the mobile app. Immediate action required. Case ID: {case_id}"
+        )
+
+        return {"status": "success", "message": "SOS Activated. Authorities notified."}
+    except Exception as e:
+        logger.error(f"SOS error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class NewCaseRequest(BaseModel):
     description: str
 
@@ -148,12 +200,24 @@ async def create_case(
     try:
         supabase = await get_supabase()
 
+        # Fetch victim data for assignment
+        victim_resp = await supabase.table("users").select("location_district, preferred_language").eq("id", current_victim.id).execute()
+        if not victim_resp.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        victim_data = victim_resp.data[0]
+
+        from api.assignment.auto_assign import assign_counsellor
+        counsellor_id = await assign_counsellor(
+            district=victim_data.get("location_district"),
+            language=victim_data.get("preferred_language", "en")
+        )
+
         case_data = {
             "user_id": current_victim.id,
             "case_type": "app_filed",
             "intake_channel": "app",
             "case_stage": "registered",
-            "assigned_counsellor_id": "11111111-1111-1111-1111-111111111111" # Assign dummy counsellor for MVP
+            "assigned_counsellor_id": counsellor_id
         }
         case_resp = await supabase.table("cases").insert(case_data).execute()
 

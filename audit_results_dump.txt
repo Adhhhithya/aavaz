@@ -1,0 +1,676 @@
+d:/SIH\AGENTS.md:33 -> - Webhook handlers require a mocked-payload test before integration testing
+d:/SIH\COMPLIANCE_AND_PRIVACY.md:39 -> 1. **Active Cases:** All interaction data, acoustic samples, and distress scores are retained in hot storage (Supabase) while the `case_stage` is anything prior to `closed`.
+d:/SIH\README.md:21 -> 5. **eCourts Integration (Mocked)**: Simulates case stage progressions (FIR, Trial, Verdict) to proactively anticipate distress spikes.
+d:/SIH\README.md:43 -> cp .env.example .env      # Add your Supabase and API keys here
+d:/SIH\SETUP_AND_MOBILE.md:64 -> | **Domain/hosting (optional)** | If dashboards need a public URL for judges rather than localhost demo | Web dashboard hosting (Vercel/Netlify are fastest for React) |
+d:/SIH\SETUP_AND_MOBILE.md:77 -> - Final wording of the consent message (app first-login prompt + non-app channel opt-out line) — legal/ethical tone matters, should be reviewed by a person, not left as placeholder LLM output
+d:/SIH\SETUP_AND_MOBILE.md:85 -> 2. Supabase schema + RLS setup, test with dummy role logins
+d:/SIH\SETUP_AND_MOBILE.md:88 -> 5. Wire scoring pipeline, test with a handful of real recorded sample calls (not just synthetic text)
+d:/SIH\SYSTEM_SPEC.md:153 -> │   │   │   └── simulated_nhaa_fir.py # mocked intake endpoints
+d:/SIH\SYSTEM_SPEC.md:232 -> - Webhook handlers require a mocked-payload test before integration testing
+d:/SIH\SYSTEM_SPEC.md:471 -> | Simulated CCTNS/eCourts | Mocked internal endpoint | Case-stage update feed (stand-in for real future integration) |
+d:/SIH\SYSTEM_SPEC.md:526 -> - Simulated NHAA/FIR mock endpoints
+d:/SIH\SYSTEM_SPEC.md:574 -> | Manual/qualitative | Emotion tag and score sanity review on sample transcripts before demo day |
+d:/SIH\SYSTEM_SPEC.md:593 -> - Replaces mock audio heuristics with digital signal processing using `librosa`, `scipy`, and `numpy`.
+d:/SIH\SYSTEM_SPEC.md:603 -> - Vector dimension: 1024 (`BAAI/bge-m3` dense embeddings, with deterministic unit-normalized mock provider fallback for offline/test environments).
+d:/SIH\.agent\skills\animation-vocabulary\SKILL.md:37 -> ## Examples
+d:/SIH\.agent\skills\animation-vocabulary\SKILL.md:39 -> **Example 1 — feel-based**
+d:/SIH\.agent\skills\animation-vocabulary\SKILL.md:46 -> **Example 2 — disambiguation**
+d:/SIH\.agent\skills\animation-vocabulary\SKILL.md:57 -> **Example 3 — physics feel**
+d:/SIH\.agent\skills\animation-vocabulary\SKILL.md:98 -> - **Continuity transition** — A change that keeps the user oriented by visually connecting before and after. For example, making the same rectangle bigger and smaller.
+d:/SIH\.agent\skills\animation-vocabulary\SKILL.md:159 -> - **Skeleton / Shimmer** — A placeholder with a moving sheen shown while content loads.
+d:/SIH\.agent\skills\apple-design\SKILL.md:126 -> Apple's exact projection function (from the *Designing Fluid Interfaces* sample code):
+d:/SIH\apps\core-api\jest.config.js:13 -> clearMocks: true,
+d:/SIH\apps\core-api\package-lock.json:815 -> "@jest/fake-timers": "30.5.1",
+d:/SIH\apps\core-api\package-lock.json:818 -> "jest-mock": "30.5.1"
+d:/SIH\apps\core-api\package-lock.json:851 -> "node_modules/@jest/fake-timers": {
+d:/SIH\apps\core-api\package-lock.json:853 -> "resolved": "https://registry.npmjs.org/@jest/fake-timers/-/fake-timers-30.5.1.tgz",
+d:/SIH\apps\core-api\package-lock.json:859 -> "@sinonjs/fake-timers": "^15.4.0",
+d:/SIH\apps\core-api\package-lock.json:862 -> "jest-mock": "30.5.1",
+d:/SIH\apps\core-api\package-lock.json:889 -> "jest-mock": "30.5.1"
+d:/SIH\apps\core-api\package-lock.json:1986 -> "node_modules/@sinonjs/fake-timers": {
+d:/SIH\apps\core-api\package-lock.json:1988 -> "resolved": "https://registry.npmjs.org/@sinonjs/fake-timers/-/fake-timers-15.4.0.tgz",
+d:/SIH\apps\core-api\package-lock.json:3876 -> "jest-mock": "30.5.1",
+d:/SIH\apps\core-api\package-lock.json:4904 -> "@jest/fake-timers": "30.5.1",
+d:/SIH\apps\core-api\package-lock.json:4907 -> "jest-mock": "30.5.1",
+d:/SIH\apps\core-api\package-lock.json:4990 -> "node_modules/jest-mock": {
+d:/SIH\apps\core-api\package-lock.json:4992 -> "resolved": "https://registry.npmjs.org/jest-mock/-/jest-mock-30.5.1.tgz",
+d:/SIH\apps\core-api\package-lock.json:5091 -> "@jest/fake-timers": "30.5.1",
+d:/SIH\apps\core-api\package-lock.json:5106 -> "jest-mock": "30.5.1",
+d:/SIH\apps\core-api\src\app.module.ts:26 -> * BreakGlassModule. Per the task's explicit instruction, no placeholder
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:16 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:23 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:24 -> staffService = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:25 -> auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:26 -> taskService = new TaskService(fake as unknown as PrismaService, auditService);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:27 -> breakGlassService = new BreakGlassService(fake as unknown as PrismaService, auditService, taskService);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:46 -> fake.userRows.push(row);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:65 -> fake.caseRows.push(row);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:120 -> expect(fake.taskRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:121 -> const task = fake.taskRows[0];
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:135 -> expect(fake.staffAuditLogRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:136 -> const entry = fake.staffAuditLogRows[0];
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:149 -> expect(fake.breakGlassGrantRows[0].reason).toBe(REASON);
+d:/SIH\apps\core-api\src\break-glass\break-glass.service.spec.ts:170 -> fake.breakGlassGrantRows[0].expiresAt = new Date(Date.now() - 1000);
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:1 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:7 -> * in-memory fake — the direct TypeScript equivalent of what a
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:15 -> fake: FakePrismaService,
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:27 -> fake.counsellorRows.push(row);
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:32 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:36 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:41 -> counsellor(fake, { languages: ['hi'], currentCaseload: 0 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:42 -> const taMatch = counsellor(fake, { languages: ['ta'], currentCaseload: 3 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:43 -> counsellor(fake, { languages: ['ta'], currentCaseload: 5 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:45 -> const result = await service.assign(fake as never, 'Test District', 'ta');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:50 -> const lowest = counsellor(fake, { languages: ['hi'], currentCaseload: 1 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:51 -> counsellor(fake, { languages: ['en'], currentCaseload: 4 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:53 -> const result = await service.assign(fake as never, 'Test District', 'ta');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:58 -> const c = counsellor(fake, { currentCaseload: 2 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:59 -> await service.assign(fake as never, 'Test District', 'en');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:60 -> expect(fake.counsellorRows.find((r) => r.id === c.id)?.currentCaseload).toBe(3);
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:64 -> const result = await service.assign(fake as never, 'Nowhere District', 'en');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:69 -> counsellor(fake, { currentCaseload: 80, caseloadCap: 80 }); // at their own cap, excluded
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:70 -> const underCap = counsellor(fake, { currentCaseload: 79, caseloadCap: 80 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:72 -> const result = await service.assign(fake as never, 'Test District', 'en');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:77 -> counsellor(fake, { currentCaseload: 80, caseloadCap: 80 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:78 -> counsellor(fake, { currentCaseload: 95, caseloadCap: 80 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:80 -> const result = await service.assign(fake as never, 'Test District', 'en');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:85 -> const tightlyCapped = counsellor(fake, { currentCaseload: 2, caseloadCap: 2 }); // at their tight cap, excluded
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:86 -> const looselyCapped = counsellor(fake, { currentCaseload: 2, caseloadCap: 80 }); // same caseload, plenty of room
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:88 -> const result = await service.assign(fake as never, 'Test District', 'en');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:95 -> // (backend/migrations/0003_counsellor_caseload_cap.sql) — the fake
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:97 -> const c = counsellor(fake, { currentCaseload: 79 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:99 -> const result = await service.assign(fake as never, 'Test District', 'en');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:104 -> counsellor(fake, { district: 'Test District' });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:105 -> const result = await service.assign(fake as never, 'test district', 'en');
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:110 -> const first = counsellor(fake, { currentCaseload: 0, caseloadCap: 80 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:111 -> const second = counsellor(fake, { currentCaseload: 1, caseloadCap: 80 });
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:117 -> const originalFindMany = fake.counsellor.findMany.bind(fake.counsellor);
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:118 -> fake.counsellor.findMany = (async (args: Parameters<typeof originalFindMany>[0]) => {
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:120 -> const target = fake.counsellorRows.find((r) => r.id === first.id)!;
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:123 -> }) as typeof fake.counsellor.findMany;
+d:/SIH\apps\core-api\src\cases\assignment.service.spec.ts:125 -> const result = await service.assign(fake as never, 'Test District', 'en');
+d:/SIH\apps\core-api\src\cases\location.service.ts:11 -> * This is a MOCK, not real reverse geocoding — exactly like the Python
+d:/SIH\apps\core-api\src\cases\location.service.ts:13 -> * a real geocoding API... For now, we simulate this with a mock
+d:/SIH\apps\core-api\src\cases\location.service.ts:14 -> * implementation." Porting the mock (rather than skipping location
+d:/SIH\apps\core-api\src\cases\location.service.ts:18 -> * NOT new fabrication: it reproduces an existing, already-labeled-as-mock
+d:/SIH\apps\core-api\src\cases\location.service.ts:20 -> * "Mock District"/"Mock State" strings are transparently placeholder-shaped
+d:/SIH\apps\core-api\src\cases\location.service.ts:32 -> this.logger.log(`Resolving location for lat=${lat}, lng=${lng} (MOCK — not real geocoding)`);
+d:/SIH\apps\core-api\src\cases\location.service.ts:34 -> return { district: 'Mock District', state: 'Mock State' };
+d:/SIH\apps\core-api\src\config\configuration.ts:9 -> * placeholder" pattern already established in the Python implementation).
+d:/SIH\apps\core-api\src\consent\consent-copy.ts:30 -> * PLACEHOLDER APPLICATION COPY — NOT REVIEWED LEGAL LANGUAGE.
+d:/SIH\apps\core-api\src\consent\consent-copy.ts:34 -> * own cover page says statutory references are placeholders pending legal
+d:/SIH\apps\core-api\src\consent\consent-copy.ts:36 -> * consent language, every value below is a clearly-labeled placeholder,
+d:/SIH\apps\core-api\src\consent\consent-copy.ts:50 -> text: 'PLACEHOLDER COPY v1 (monitoring): I agree that Aavaz may check in with me periodically about my wellbeing and case progress. This is a placeholder pending legal review.',
+d:/SIH\apps\core-api\src\consent\consent-copy.ts:54 -> text: 'PLACEHOLDER COPY v1 (store_transcripts): I agree that Aavaz may keep a record of my conversations with the support service. This is a placeholder pending legal review.',
+d:/SIH\apps\core-api\src\consent\consent-copy.ts:58 -> text: 'PLACEHOLDER COPY v1 (voice_recording): I agree that Aavaz may record my voice during phone calls with the support service. This is a placeholder pending legal review.',
+d:/SIH\apps\core-api\src\consent\consent-copy.ts:66 -> text: 'PLACEHOLDER COPY v1 (share_legal_aid): I agree that Aavaz may share relevant information with legal aid services on my behalf. This is a placeholder pending legal review.',
+d:/SIH\apps\core-api\src\consent\consent-copy.ts:70 -> text: 'PLACEHOLDER COPY v1 (share_welfare): I agree that Aavaz may share relevant information with welfare/relief schemes on my behalf. This is a placeholder pending legal review.',
+d:/SIH\apps\core-api\src\consent\consent.service.spec.ts:2 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\consent\consent.service.spec.ts:8 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\consent\consent.service.spec.ts:12 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\consent\consent.service.spec.ts:13 -> service = new ConsentService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\consent\consent.service.spec.ts:35 -> expect(fake.consentRows).toHaveLength(2);
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:15 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:21 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:22 -> staffService = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:23 -> auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:24 -> consoleService = new ConsoleService(fake as unknown as PrismaService, auditService);
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:43 -> fake.userRows.push(row);
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:62 -> fake.caseRows.push(row);
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:232 -> expect(fake.staffAuditLogRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:233 -> const entry = fake.staffAuditLogRows[0];
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:250 -> expect(fake.staffAuditLogRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:251 -> const entry = fake.staffAuditLogRows[0];
+d:/SIH\apps\core-api\src\console\console.service.spec.ts:267 -> expect(fake.staffAuditLogRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\identity\identity.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\identity\identity.service.spec.ts:8 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\identity\identity.service.spec.ts:12 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\identity\identity.service.spec.ts:13 -> service = new IdentityService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\identity\identity.service.spec.ts:27 -> expect(fake.userRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\identity\identity.service.spec.ts:32 -> // FakePrismaService has no `cases` delegate at all — if registerVictim
+d:/SIH\apps\core-api\src\identity\identity.service.spec.ts:36 -> expect((fake as unknown as { cases?: unknown }).cases).toBeUndefined();
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:9 -> * rate limiting) against the in-memory fake Prisma store — the direct
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:36 -> function buildService(fake: FakePrismaService, config: AppConfig = buildConfig()): OtpService {
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:37 -> return new OtpService(fake as unknown as PrismaService, config);
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:48 -> jest.spyOn(otpProviderModule, 'getOtpProvider').mockReturnValue({
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:58 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:62 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:63 -> service = buildService(fake);
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:67 -> jest.restoreAllMocks();
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:78 -> it('uses crypto.randomInt, not Math.random', () => {
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:81 -> expect(source).not.toContain('Math.random');
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:97 -> fake.otpRows[fake.otpRows.length - 1].expiresAt = new Date(Date.now() - 1000);
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:112 -> expect(fake.otpRows[fake.otpRows.length - 1].attempts).toBe(3);
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:121 -> const limited = buildService(fake, buildConfig({ otpRateLimitPerPhone: 2 }));
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:128 -> const limited = buildService(fake, buildConfig({ otpRateLimitPerIp: 2 }));
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:129 -> jest.spyOn(otpProviderModule, 'getOtpProvider').mockReturnValue({ sendOtp: async () => undefined });
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:136 -> const limited = buildService(fake, buildConfig({ otpRateLimitPerPhone: 1 }));
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:138 -> fake.otpRows[fake.otpRows.length - 1].createdAt = new Date(Date.now() - 3600 * 1000);
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:144 -> const row = fake.otpRows[fake.otpRows.length - 1];
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:150 -> jest.spyOn(otpProviderModule, 'getOtpProvider').mockReturnValue({ sendOtp: async () => undefined });
+d:/SIH\apps\core-api\src\identity\otp.service.spec.ts:162 -> const prodService = buildService(fake, prodConfig);
+d:/SIH\apps\core-api\src\identity\otp.service.ts:63 -> * not Math.random). */
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:33 -> function build(fake: FakePrismaService) {
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:34 -> const identityService = new IdentityService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:37 -> const auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:38 -> const taskService = new TaskService(fake as unknown as PrismaService, auditService);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:40 -> fake as unknown as PrismaService,
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:65 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:68 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:71 -> it('creates a user and a case in one call, and assigns a counsellor when the mock-resolved district has one', async () => {
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:72 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:73 -> fake.counsellorRows.push({
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:76 -> district: 'Mock District',
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:84 -> expect(fake.userRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:85 -> expect(fake.caseRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:93 -> it('persists the resolved location onto the user row (mock district/state), matching Python\'s register_user', async () => {
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:94 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:97 -> const row = fake.userRows.find((u) => u.id === user.id)!;
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:98 -> expect(row.locationDistrict).toBe('Mock District');
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:99 -> expect(row.locationState).toBe('Mock State');
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:104 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:107 -> const row = fake.userRows.find((u) => u.id === user.id)!;
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:113 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:114 -> fake.counsellorRows.push({
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:117 -> district: 'Mock District',
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:128 -> expect(fake.taskRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:132 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:136 -> expect(fake.caseRows).toHaveLength(1); // still created, just unassigned
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:141 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:145 -> expect(fake.taskRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:146 -> const task = fake.taskRows[0];
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:156 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:157 -> fake.counsellorRows.push({
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:160 -> district: 'Mock District',
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:167 -> expect(fake.taskRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:171 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:173 -> expect(fake.taskRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:178 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:183 -> expect(fake.userRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:184 -> expect(fake.caseRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:188 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\identity\registration.service.spec.ts:195 -> const { registrationService } = build(fake);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:15 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:21 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:22 -> staffService = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:23 -> auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:24 -> lifecycleService = new LifecycleService(fake as unknown as PrismaService, auditService);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:43 -> fake.userRows.push(row);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:62 -> fake.caseRows.push(row);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:212 -> expect(fake.caseRows.find((c) => c.id === kase.id)?.lifecycleState).toBe('REGISTERED');
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:243 -> const originalFindUnique = fake.case.findUnique.bind(fake.case);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:244 -> fake.case.findUnique = (async (args: Parameters<typeof originalFindUnique>[0]) => {
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:247 -> const row = fake.caseRows.find((c) => c.id === kase.id)!;
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:250 -> }) as typeof fake.case.findUnique;
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:257 -> expect(fake.caseRows.find((c) => c.id === kase.id)?.lifecycleState).toBe('PAUSED');
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:273 -> const profile = fake.victimProfileRows.find((p) => p.userId === victim.id);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:288 -> expect(fake.victimProfileRows.find((p) => p.userId === victim.id)).toBeUndefined();
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:304 -> expect(fake.staffAuditLogRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:305 -> const entry = fake.staffAuditLogRows[0];
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:325 -> expect(fake.staffAuditLogRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\lifecycle\lifecycle.service.spec.ts:340 -> expect(fake.staffAuditLogRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:15 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:21 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:22 -> staffService = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:23 -> auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:24 -> milestoneService = new MilestoneService(fake as unknown as PrismaService, auditService);
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:43 -> fake.userRows.push(row);
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:62 -> fake.caseRows.push(row);
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:157 -> const originalFindUnique = fake.milestone.findUnique.bind(fake.milestone);
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:158 -> fake.milestone.findUnique = (async (args: Parameters<typeof originalFindUnique>[0]) => {
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:160 -> const row = fake.milestoneRows.find((m) => m.id === milestone.id)!;
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:163 -> }) as typeof fake.milestone.findUnique;
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:166 -> expect(fake.milestoneRows.find((m) => m.id === milestone.id)?.metAt?.toISOString()).toBe(
+d:/SIH\apps\core-api\src\milestone\milestone.service.spec.ts:209 -> expect(fake.staffAuditLogRows.map((r) => r.action)).toEqual([
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.spec.ts:32 -> it('suppresses both the median AND the sample size when the sample is below 5', () => {
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.spec.ts:34 -> expect(result).toEqual({ medianDays: null, sampleSize: null, suppressed: true });
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.spec.ts:37 -> it('reveals the median and sample size once the sample reaches 5', () => {
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.spec.ts:39 -> expect(result).toEqual({ medianDays: 3, sampleSize: 5, suppressed: false });
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.spec.ts:42 -> it('an empty sample is suppressed, not a fabricated zero', () => {
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.ts:7 -> * statistic's SAMPLE SIZE, not only a raw count field.
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.ts:22 -> // Sample size is itself withheld when suppressed — exposing the exact
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.ts:27 -> sampleSize: number | null;
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.ts:39 -> return { medianDays: null, sampleSize: null, suppressed: true };
+d:/SIH\apps\core-api\src\oversight\oversight-suppression.ts:41 -> return { medianDays: medianOf(values), sampleSize: values.length, suppressed: false };
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:15 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:21 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:22 -> staffService = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:23 -> auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:24 -> oversightService = new OversightService(fake as unknown as PrismaService, auditService);
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:43 -> fake.userRows.push(row);
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:76 -> fake.referralRows.push(row);
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:159 -> it('median time to service is suppressed below the sample threshold', async () => {
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:211 -> // the sample or be treated as 0 days to service.
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:215 -> expect(metrics.medianDaysToService.sampleSize).toBe(5);
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:263 -> expect(fake.staffAuditLogRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:264 -> expect(fake.staffAuditLogRows[0].action).toBe('oversight.metrics.read');
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:265 -> expect(fake.staffAuditLogRows[0].resourceType).toBe('district');
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:266 -> expect(fake.staffAuditLogRows[0].resourceId).toBeNull();
+d:/SIH\apps\core-api\src\oversight\oversight.service.spec.ts:272 -> expect(fake.staffAuditLogRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\oversight\oversight.service.ts:20 -> * (`backend/api/dashboards/state_routes.py`) returns 100% hardcoded mock
+d:/SIH\apps\core-api\src\profile\profile.controller.ts:10 -> * API-shape example — Phase 10). "me" resolves the authenticated victim
+d:/SIH\apps\core-api\src\profile\profile.service.spec.ts:2 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\profile\profile.service.spec.ts:7 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\profile\profile.service.spec.ts:11 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\profile\profile.service.spec.ts:12 -> service = new ProfileService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\profile\profile.service.spec.ts:27 -> expect(fake.victimProfileRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\referral\referral-destinations.ts:42 -> * fields are always `null` in the packets below, NEVER a placeholder or
+d:/SIH\apps\core-api\src\referral\referral-destinations.ts:46 -> * documented placeholder is acceptable; a fabricated fact is not."
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:16 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:23 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:24 -> staffService = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:25 -> auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:26 -> taskService = new TaskService(fake as unknown as PrismaService, auditService);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:27 -> referralService = new ReferralService(fake as unknown as PrismaService, auditService, taskService);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:46 -> fake.userRows.push(row);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:67 -> fake.caseRows.push(row);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:77 -> fake.consentRows.push({
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:351 -> const originalFindUnique = fake.referral.findUnique.bind(fake.referral);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:352 -> fake.referral.findUnique = (async (args: Parameters<typeof originalFindUnique>[0]) => {
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:354 -> const row = fake.referralRows.find((r) => r.id === referral.id)!;
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:360 -> }) as typeof fake.referral.findUnique;
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:365 -> expect(fake.referralRows.find((r) => r.id === referral.id)?.status).toBe('CLOSED_UNRESOLVED');
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:381 -> expect(fake.taskRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:382 -> const task = fake.taskRows[0];
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:397 -> expect(fake.taskRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:416 -> const row = fake.referralRows.find((r) => r.id === referralId)!;
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:438 -> const row = fake.referralRows.find((r) => r.id === referralId)!;
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:478 -> const auditRowsBefore = fake.staffAuditLogRows.length;
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:480 -> expect(fake.staffAuditLogRows).toHaveLength(auditRowsBefore);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:505 -> expect(fake.staffAuditLogRows).toHaveLength(2);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:506 -> expect(fake.staffAuditLogRows[0].action).toBe('referral.drafted');
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:507 -> expect(fake.staffAuditLogRows[0].resourceType).toBe('referral');
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:508 -> expect(fake.staffAuditLogRows[1].action).toBe('referral.transition');
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:509 -> for (const entry of fake.staffAuditLogRows) {
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:522 -> expect(fake.staffAuditLogRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\referral\referral.service.spec.ts:534 -> expect(fake.staffAuditLogRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:7 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:11 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:12 -> service = new SafetyService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:28 -> const row = fake.safetySettingRows.find((r) => r.userId === 'user-1')!;
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:35 -> const row = fake.safetySettingRows.find((r) => r.userId === 'user-1')!;
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:66 -> const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:67 -> const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:68 -> const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:69 -> const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:74 -> const allLoggedText = [...logSpy.mock.calls, ...warnSpy.mock.calls, ...errorSpy.mock.calls, ...debugSpy.mock.calls]
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:81 -> logSpy.mockRestore();
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:82 -> warnSpy.mockRestore();
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:83 -> errorSpy.mockRestore();
+d:/SIH\apps\core-api\src\safety\safety.service.spec.ts:84 -> debugSpy.mockRestore();
+d:/SIH\apps\core-api\src\safety\safety.service.ts:32 -> * silently ignored or satisfied by inventing a fake login-PIN field.
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:8 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:12 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:13 -> auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:25 -> expect(fake.staffAuditLogRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:26 -> const row = fake.staffAuditLogRows[0];
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:29 -> expect(fake.staffAuditChainHeadRow.tipHash).toBe(row.hash);
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:36 -> const [first, second] = fake.staffAuditLogRows;
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:54 -> fake.staffAuditLogRows[0].action = 'lifecycle.case.transition'; // simulated tamper
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:69 -> const originalUpdateMany = fake.staffAuditChainHead.updateMany.bind(fake.staffAuditChainHead);
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:71 -> fake.staffAuditChainHead.updateMany = (async (args: Parameters<typeof originalUpdateMany>[0]) => {
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:77 -> fake.staffAuditChainHeadRow.tipHash = 'a-hash-from-a-concurrent-winner';
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:81 -> }) as typeof fake.staffAuditChainHead.updateMany;
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:86 -> expect(fake.staffAuditLogRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:89 -> expect(fake.staffAuditLogRows[0].prevHash).toBe('a-hash-from-a-concurrent-winner');
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:93 -> fake.staffAuditChainHead.updateMany = (async () => ({ count: 0 })) as typeof fake.staffAuditChainHead.updateMany;
+d:/SIH\apps\core-api\src\staff\staff-audit.service.spec.ts:98 -> expect(fake.staffAuditLogRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\staff\staff-audit.service.ts:85 -> return Math.random() * base;
+d:/SIH\apps\core-api\src\staff\staff-auth.guard.spec.ts:5 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\staff\staff-auth.guard.spec.ts:36 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\staff\staff-auth.guard.spec.ts:42 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\staff\staff-auth.guard.spec.ts:44 -> staffService = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\staff\staff-auth.guard.spec.ts:94 -> fake.staffRows = fake.staffRows.filter((s) => s.userId !== 'user-2');
+d:/SIH\apps\core-api\src\staff\staff.service.spec.ts:2 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\staff\staff.service.spec.ts:6 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\staff\staff.service.spec.ts:10 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\staff\staff.service.spec.ts:11 -> service = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\staff\staff.service.spec.ts:40 -> expect(fake.staffRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\staff\staff.service.spec.ts:44 -> fake.staffRows.push({
+d:/SIH\apps\core-api\src\task\task-states.spec.ts:71 -> expect(isTaskType('silence')).toBe(false); // evidenced (silence-ladder sample) but deliberately not wired — needs infra
+d:/SIH\apps\core-api\src\task\task-states.ts:73 -> * Workflow B "B4"; `silence`, the silence-ladder code sample) are real,
+d:/SIH\apps\core-api\src\task\task-states.ts:90 -> * scale — directly evidenced by the silence-ladder code sample (PDF page
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:3 -> import { FakePrismaService } from '../../test/fake-prisma';
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:15 -> let fake: FakePrismaService;
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:21 -> fake = new FakePrismaService();
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:22 -> staffService = new StaffService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:23 -> auditService = new StaffAuditService(fake as unknown as PrismaService);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:24 -> taskService = new TaskService(fake as unknown as PrismaService, auditService);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:43 -> fake.userRows.push(row);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:62 -> fake.caseRows.push(row);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:88 -> fake.referralRows.push(row);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:141 -> await taskService.createStalledReferralTaskTx(fake as unknown as PrismaService, {
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:147 -> expect(fake.taskRows).toHaveLength(1);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:148 -> const task = fake.taskRows[0];
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:162 -> await taskService.createStalledReferralTaskTx(fake as unknown as PrismaService, {
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:168 -> expect(fake.staffAuditLogRows).toHaveLength(0);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:219 -> const originalFindUnique = fake.task.findUnique.bind(fake.task);
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:220 -> fake.task.findUnique = (async (args: Parameters<typeof originalFindUnique>[0]) => {
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:222 -> const row = fake.taskRows.find((t) => t.id === task.id)!;
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:225 -> }) as typeof fake.task.findUnique;
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:228 -> expect(fake.taskRows.find((t) => t.id === task.id)?.status).toBe('CANCELLED');
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:244 -> await taskService.createStalledReferralTaskTx(fake as unknown as PrismaService, {
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:249 -> await taskService.createStalledReferralTaskTx(fake as unknown as PrismaService, {
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:285 -> expect(fake.staffAuditLogRows).toHaveLength(2); // create + one successful transition, not the denied one
+d:/SIH\apps\core-api\src\task\task.service.spec.ts:286 -> expect(fake.staffAuditLogRows.map((r) => r.action)).toEqual(['task.created', 'task.transition']);
+d:/SIH\apps\core-api\test\audit-chain.integration-spec.ts:7 -> * (which only simulates concurrency against a synchronous in-memory fake)
+d:/SIH\apps\core-api\test\audit-chain.integration-spec.ts:11 -> * anywhere — only synthetic, clearly-fake identifiers.
+d:/SIH\apps\core-api\test\break-glass.integration-spec.ts:7 -> * data anywhere — only synthetic, clearly-fake identifiers.
+d:/SIH\apps\core-api\test\fake-prisma.ts:2 -> * Minimal in-memory fake of the subset of PrismaClient's `otpCode`/`user`
+d:/SIH\apps\core-api\test\fake-prisma.ts:6 -> * the direct TypeScript equivalent of backend/tests/fake_supabase.py.
+d:/SIH\apps\core-api\test\fake-prisma.ts:8 -> * This does not attempt to be a general-purpose Prisma mock — only the exact
+d:/SIH\apps\core-api\test\fake-prisma.ts:188 -> return `fake-id-${idCounter}`;
+d:/SIH\apps\core-api\test\fake-prisma.ts:191 -> export class FakePrismaService {
+d:/SIH\apps\core-api\test\fake-prisma.ts:321 -> // the "write" — the fake applies this synchronously, which is enough to
+d:/SIH\apps\core-api\test\fake-prisma.ts:589 -> // here, which would make the fake's row content diverge from
+d:/SIH\apps\core-api\test\fake-prisma.ts:602 -> // Seeded with the real genesis value on every fresh FakePrismaService,
+d:/SIH\apps\core-api\test\fake-prisma.ts:604 -> // ON CONFLICT DO NOTHING seed — a fresh fake instance is meant to
+d:/SIH\apps\core-api\test\fake-prisma.ts:822 -> // console's own case.findMany fake.
+d:/SIH\apps\core-api\test\fake-prisma.ts:971 -> * callback against this same fake instance. Enough to unit-test
+d:/SIH\apps\core-api\test\identity.integration-spec.ts:10 -> * synthetic, clearly-fake identifiers.
+d:/SIH\apps\core-api\test\identity.integration-spec.ts:60 -> const env = { ...process.env, PGHOST: 'localhost', PGPORT: String(PORT), PGUSER: 'verify_user' };
+d:/SIH\apps\core-api\test\identity.integration-spec.ts:87 -> process.env.DATABASE_URL = `postgresql://verify_user@localhost:${PORT}/aavaz_core_api_test?schema=public`;
+d:/SIH\apps\core-api\test\identity.integration-spec.ts:109 -> const spy = jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
+d:/SIH\apps\core-api\test\identity.integration-spec.ts:117 -> spy.mockRestore();
+d:/SIH\apps\core-api\test\lifecycle.integration-spec.ts:6 -> * No real victim data anywhere — only synthetic, clearly-fake identifiers.
+d:/SIH\apps\core-api\test\lifecycle.integration-spec.ts:73 -> const spy = jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
+d:/SIH\apps\core-api\test\lifecycle.integration-spec.ts:81 -> spy.mockRestore();
+d:/SIH\apps\core-api\test\milestone.integration-spec.ts:11 -> * No real victim data anywhere — only synthetic, clearly-fake
+d:/SIH\apps\core-api\test\onboarding.integration-spec.ts:9 -> * clearly-fake identifiers.
+d:/SIH\apps\core-api\test\onboarding.integration-spec.ts:59 -> const spy = jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
+d:/SIH\apps\core-api\test\onboarding.integration-spec.ts:67 -> spy.mockRestore();
+d:/SIH\apps\core-api\test\oversight.integration-spec.ts:8 -> * victim data anywhere — only synthetic, clearly-fake identifiers.
+d:/SIH\apps\core-api\test\pg-harness.ts:9 -> * data — synthetic, clearly-fake identifiers only.
+d:/SIH\apps\core-api\test\pg-harness.ts:64 -> const env = { ...process.env, PGHOST: 'localhost', PGPORT: String(port), PGUSER: 'verify_user' };
+d:/SIH\apps\core-api\test\pg-harness.ts:85 -> databaseUrl: `postgresql://verify_user@localhost:${port}/${dbName}?schema=public`,
+d:/SIH\apps\core-api\test\referral.integration-spec.ts:10 -> * real victim data anywhere — only synthetic, clearly-fake identifiers.
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:19 -> * No real victim data anywhere — only synthetic, clearly-fake
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:81 -> const spy = jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:89 -> spy.mockRestore();
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:112 -> location: { lat: 18.5204, lng: 73.8567 }, // resolves to the mock "Mock District"
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:117 -> data: { name: 'Dr. High Load', district: 'Mock District', languages: ['en'], currentCaseload: 5, caseloadCap: 80 },
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:120 -> data: { name: 'Dr. Low Load', district: 'Mock District', languages: ['en'], currentCaseload: 1, caseloadCap: 80 },
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:138 -> expect(userRow?.locationDistrict).toBe('Mock District');
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:158 -> const liveSpy = jest.spyOn(liveAssignmentService, 'assign').mockImplementation(async () => {
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:170 -> liveSpy.mockRestore();
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:248 -> // No counsellors seeded at all in "Mock District".
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:263 -> data: { name: 'Dr. At Cap', district: 'Mock District', languages: ['en'], currentCaseload: 2, caseloadCap: 2 },
+d:/SIH\apps\core-api\test\registration.integration-spec.ts:266 -> data: { name: 'Dr. Under Cap', district: 'Mock District', languages: ['en'], currentCaseload: 10, caseloadCap: 80 },
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:9 -> * location coordinates (resolving to the LocationService mock's "Mock
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:14 -> * No real staff or victim data anywhere — only synthetic, clearly-fake
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:83 -> // registerVictim's "Mock District" resolves to no eligible
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:103 -> const spy = jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:111 -> spy.mockRestore();
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:143 -> location: { lat: 18.5204, lng: 73.8567 }, // resolves to the mock "Mock District" via LocationService
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:146 -> // registration's own district resolution is a mock (S5) that always
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:147 -> // returns "Mock District" — override it directly so this suite can
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:149 -> // depending on that mock's fixed output.
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:454 -> const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:455 -> const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:456 -> const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:457 -> const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:461 -> const allLoggedText = [...logSpy.mock.calls, ...warnSpy.mock.calls, ...errorSpy.mock.calls, ...debugSpy.mock.calls]
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:467 -> logSpy.mockRestore();
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:468 -> warnSpy.mockRestore();
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:469 -> errorSpy.mockRestore();
+d:/SIH\apps\core-api\test\staff-console.integration-spec.ts:470 -> debugSpy.mockRestore();
+d:/SIH\apps\core-api\test\task.integration-spec.ts:7 -> * No real victim data anywhere — only synthetic, clearly-fake identifiers.
+d:/SIH\backend\api\cases\report_routes.py:8 -> from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+d:/SIH\backend\api\cases\report_routes.py:38 -> styles = getSampleStyleSheet()
+d:/SIH\backend\api\cases\sos_routes.py:58 -> # 3. Schedule 30-minute escalation (Mocked)
+d:/SIH\backend\api\dashboards\district_routes.py:93 -> # Mock logic to get SOS events for this district
+d:/SIH\backend\api\dashboards\national_routes.py:65 -> "avg_sla": "24h", # Placeholder until SLA tracking is implemented
+d:/SIH\backend\api\dashboards\national_routes.py:66 -> "resource_utilization": "76%", # Placeholder until counsellor loads are summed
+d:/SIH\backend\api\dashboards\state_routes.py:20 -> # Mock aggregation for MVP
+d:/SIH\backend\api\intake\app_routes.py:209 -> "assigned_counsellor_id": "11111111-1111-1111-1111-111111111111" # Assign dummy counsellor for MVP
+d:/SIH\backend\api\intake\ivr_webhook.py:77 -> # --- Legacy Mock Engine ---
+d:/SIH\backend\api\intake\sms_webhook.py:85 -> # Send SMS back via Pushbullet (mocked via logger if no key)
+d:/SIH\backend\api\intake\sms_webhook.py:88 -> # Mocking the actual HTTP call to pushbullet for brevity
+d:/SIH\backend\api\scoring\fusion.py:72 -> Example: if acoustic fails (w=0.40), redistribute 0.40 proportionally
+d:/SIH\backend\api\scoring\sentiment_emotion.py:8 -> MVP Mock for IndicBERT + LLM emotion classification.
+d:/SIH\backend\migrations\0004_consent_profile_safety.sql:111 -> -- v0.2: "safe contact windows (for example weekdays 11:00-13:00)".
+d:/SIH\backend\migrations\0005_staff.sql:67 -> -- deferred, not faked.
+d:/SIH\backend\migrations\0005_staff.sql:91 -> -- anywhere), so this is a nullable placeholder column, populated by
+d:/SIH\backend\migrations\0005_staff.sql:134 -> -- placeholder hash columns would itself be a false claim of tamper-evidence
+d:/SIH\backend\migrations\0010_tasks.sql:12 -> -- escalation, and the silence-ladder code sample on PDF page 17) versus
+d:/SIH\backend\migrations\0010_tasks.sql:23 -> -- how v0.2's own examples describe tasks created by workflow code, not a
+d:/SIH\backend\scripts\clear_db.py:78 -> # Delete all rows where id is not a dummy nil uuid (deletes everything)
+d:/SIH\backend\scripts\run_production_gate.py:27 -> # Set mock API keys for LangChain initialization
+d:/SIH\backend\scripts\run_production_gate.py:28 -> os.environ["GROQ_API_KEY"] = "mock_key_for_test_environment"
+d:/SIH\backend\scripts\run_production_gate.py:62 -> # 2. Verify OTP (assuming dev environment accepts dummy '123456')
+d:/SIH\backend\scripts\run_production_gate.py:137 -> logger.warning(" ⚠ Distress score was not persisted. (Might be using mock DB in test client)")
+d:/SIH\backend\services\embedding_service.py:4 -> BGE-M3 embedding provider (BAAI/bge-m3) with a lightweight mock fallback
+d:/SIH\backend\services\embedding_service.py:38 -> _MOCK_SEED = 42  # reproducible mock vectors keyed to text hash
+d:/SIH\backend\services\embedding_service.py:98 -> # Mock provider (dev / CI / no-GPU fallback)
+d:/SIH\backend\services\embedding_service.py:101 -> class MockEmbeddingProvider:
+d:/SIH\backend\services\embedding_service.py:109 -> mock embeddings to test retrieval quality, only to test DB round-trips
+d:/SIH\backend\services\embedding_service.py:136 -> def get_embedder(force_mock: bool = False) -> EmbeddingProvider:
+d:/SIH\backend\services\embedding_service.py:141 -> 1. MockEmbeddingProvider if force_mock=True
+d:/SIH\backend\services\embedding_service.py:142 -> 2. MockEmbeddingProvider if sentence-transformers is not installed
+d:/SIH\backend\services\embedding_service.py:146 -> if _provider is not None and not force_mock:
+d:/SIH\backend\services\embedding_service.py:149 -> if force_mock:
+d:/SIH\backend\services\embedding_service.py:150 -> _provider = MockEmbeddingProvider()
+d:/SIH\backend\services\embedding_service.py:151 -> logger.info("Using mock embedding provider (forced)")
+d:/SIH\backend\services\embedding_service.py:159 -> _provider = MockEmbeddingProvider()
+d:/SIH\backend\services\embedding_service.py:161 -> "sentence-transformers not installed; using mock embedding provider. "
+d:/SIH\backend\services\location_resolver.py:10 -> For now, we simulate this with a mock implementation.
+d:/SIH\backend\services\location_resolver.py:14 -> # Mock implementation:
+d:/SIH\backend\services\location_resolver.py:17 -> # Just returning a dummy district/state for the sake of the demo
+d:/SIH\backend\services\location_resolver.py:18 -> return "Mock District", "Mock State"
+d:/SIH\backend\services\pii_redaction.py:8 -> In MVP, we do a basic mock replacement for demo purposes.
+d:/SIH\backend\services\pii_redaction.py:12 -> # Very basic mock logic for MVP
+d:/SIH\backend\services\translation.py:19 -> # For MVP mock, just return original text if we don't have a specific mock rule
+d:/SIH\docs\AAVAZ_GIT_STRATEGY.md:48 -> 4c92d00  Add backend/.env.example
+d:/SIH\docs\AAVAZ_GIT_STRATEGY.md:50 -> 86c15c9  Remove hardcoded OTP values and seed data placeholders
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:107 -> | Translation | `services/translation.py` | Mock: two hardcoded Hindi-word substitutions, returns input unchanged otherwise. |
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:137 -> validates only that 6 digits were typed (including a `__DEV__`-only "auto-fill mock
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:140 -> number and fabricates a session token client-side: `'mock_jwt_token_' + Date.now()`.
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:146 -> - **Push notifications are entirely mocked.** `services/notifications.js` has the real
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:148 -> logs `"Mock: Registering for push notifications"`.
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:164 -> - **Mocked/simulated**: acoustic analysis (OpenSMILE), sentiment/emotion classification
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:189 -> - **Secrets/config**: `backend/.env.example` lists `SUPABASE_URL`,
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:314 -> replacement fake record, and records the full inventory of every code path and UI
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:346 -> - Rebuild the scoring pipeline as real signals (or explicitly keep mocks but stop
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:387 -> remove entirely, no replacement fake record; full code/UI-path inventory recorded.
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:427 -> `if cnr == "DLCT110011162019":` block and its unconditional fake judge
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:431 -> example that reused the exact same fabricated statute citation
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:433 -> generic, non-specific format placeholder, removing a subtle anchoring risk that
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:504 -> `ecourts_parser.py` module, not fakes/rewrites of them. Test infrastructure
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:566 -> "Mocking the actual HTTP call to pushbullet for brevity").
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:582 -> `code.length === 6` locally, including a `__DEV__`-only "auto-fill mock OTP"
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:586 -> string (`'mock_jwt_token_' + Date.now()`); web stored a plain `user` object in
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:738 -> (fake OTP, no auth header ever sent), so both were updated symmetrically:
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:771 -> A new `tests/fake_supabase.py` in-memory query-builder fake was built so OTP
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:811 -> confirmed by checking for `backend/.env` (absent) and any other non-example
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:847 -> with synthetic-only data (`+910000000000`, dummy hex hash values, "Synthetic
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:859 -> covered by real (non-fake) unit tests in S2 (construction-time
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:864 -> - The full 89-test backend suite (in-memory-fake-backed, per S2) was re-run
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:880 -> | `Counsellor/Queue.jsx` | **No** — hardcoded `mockCases` array | n/a | Same as above, not changed |
+d:/SIH\docs\AAVAZ_IMPLEMENTATION_AUDIT.md:931 -> | Hardcoded authentication tokens | **SAFE** | Repo-wide search for `mock_jwt`/`fake_token`/hardcoded `Bearer <literal>` found nothing; every `Bearer` occurrence interpolates a real variable |
+d:/SIH\docs\AAVAZ_MIGRATION_PLAN.md:120 -> behavior. It must not be replaced with another realistic-looking fake legal record;
+d:/SIH\docs\AAVAZ_MIGRATION_PLAN.md:218 -> Everything else identified as mocked, stubbed, or architecturally incompatible (audit
+d:/SIH\docs\AAVAZ_MIGRATION_PLAN.md:259 -> in Decision 5, §0) — **remove only, do not replace with another realistic-looking fake
+d:/SIH\docs\AAVAZ_MIGRATION_PLAN.md:268 -> - Replace the mocked scoring pipeline (acoustic/sentiment/engagement/fusion) with either
+d:/SIH\docs\AAVAZ_MIGRATION_PLAN.md:291 -> the mobile app's fake verification calls one screen at a time (OTP screen first, then
+d:/SIH\docs\AAVAZ_MIGRATION_PLAN.md:310 -> currently fake) and SOS (since it's currently disconnected).
+d:/SIH\docs\AAVAZ_MIGRATION_PLAN.md:401 -> 5 (§0): remove it entirely, with no replacement fake record.** The dependency
+d:/SIH\docs\MIGRATION_STATUS.md:48 -> - **`state_routes.py` (FastAPI oversight) returns 100% hardcoded mock
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:8 -> state_routes.py` returns 100%-hardcoded mock data with no indication to a
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:102 -> reached `IN_SERVICE` is excluded from the sample entirely — not counted
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:105 -> proven by test). The sample size itself is suppressed alongside the
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:158 -> and `suppressibleMedian` share one behavior: when a cell/sample is below
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:160 -> statistic AND the underlying sample size are hidden — not just the
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:162 -> destination/status pair" or "an exact below-5 sample size feeding a
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:172 -> extends the same principle to the sample-size number that would otherwise
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:198 -> migrated one. `state_routes.py`'s mock-data problem (S8 audit §D) is
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:208 -> `oversight.service.spec.ts` — 15 tests, `FakePrismaService`): threshold
+d:/SIH\docs\S10_OVERSIGHT_MIGRATION.md:210 -> sample-size-is-also-hidden property), role gating for both directions
+d:/SIH\docs\S11_AUDIT_HASH_CHAIN_MIGRATION.md:37 -> correctly deferred rather than worked around with a fake local-disk
+d:/SIH\docs\S11_AUDIT_HASH_CHAIN_MIGRATION.md:149 -> — 7 tests, `FakePrismaService`): genesis-hash reproducibility, hash
+d:/SIH\docs\S12_TASK_MIGRATION.md:61 -> - **`silence`** (the silence-ladder code sample, PDF page 17). No
+d:/SIH\docs\S12_TASK_MIGRATION.md:88 -> ## C. Task types and priority — a real code sample, not guesswork
+d:/SIH\docs\S12_TASK_MIGRATION.md:91 -> text), v0.2's PDF contains an actual JavaScript code sample for task
+d:/SIH\docs\S12_TASK_MIGRATION.md:147 -> tests, `FakePrismaService`; plus 2 new tests added to
+d:/SIH\docs\S13_MILESTONE_MIGRATION.md:89 -> — 14 tests, `FakePrismaService`): closed-set type validation, both real
+d:/SIH\docs\S14_TASK_TRIGGER_EXTENSION.md:73 -> resolves every registration to the location mock's "Mock District," which
+d:/SIH\docs\S15_BREAK_GLASS_MIGRATION.md:104 -> - **Unit** (`break-glass.service.spec.ts` — 11 tests, `FakePrismaService`):
+d:/SIH\docs\S5_REGISTRATION_MIGRATION.md:365 -> **Unit** (`FakePrismaService`-backed, extended with `case`/`counsellor`
+d:/SIH\docs\S5_REGISTRATION_MIGRATION.md:412 -> - **No secrets committed**: `.env.example` additions are documentation
+d:/SIH\docs\S6_ONBOARDING_MIGRATION.md:110 -> No placeholder modules were created for anything in the STOP list.
+d:/SIH\docs\S6_ONBOARDING_MIGRATION.md:149 -> statutory references are placeholders pending legal review). Per this
+d:/SIH\docs\S6_ONBOARDING_MIGRATION.md:151 -> clearly-labeled **placeholder** copy string and version per scope, in a
+d:/SIH\docs\S6_ONBOARDING_MIGRATION.md:263 -> faked claim:
+d:/SIH\docs\S6_ONBOARDING_MIGRATION.md:282 -> `app.district_scope` would be exactly the "fake RLS" this phase
+d:/SIH\docs\S6_ONBOARDING_MIGRATION.md:286 -> implemented here so it isn't faked.
+d:/SIH\docs\S6_ONBOARDING_MIGRATION.md:404 -> **Unit** (`FakePrismaService`-backed, extended with `consent`/
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:103 -> (`supabase.auth.sign_in_with_password`), **not** a mock. On success it looks
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:152 -> | `GET /state/stats` | `state_admin`+ | N/A (mock) | N/A | **100% hardcoded mock data** — no DB query at all. |
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:183 -> | `frontend/src/pages/Counsellor/Queue.jsx` | **100% mock** | A hardcoded `mockCases` array; no `authFetch`, no `fetch` call of any kind. |
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:188 -> **Still calling FastAPI directly**: every real (non-mock) screen above
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:224 -> worked RLS example is `CREATE POLICY cm_scope ON victims USING
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:305 -> codebase (Python or Node), and no policy resembling v0.2's worked example
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:314 -> `users.location_district`, which is (a) mock-resolved data (S5's
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:315 -> `LocationService`, ported 1:1 from the Python mock geocoder) and (b) not
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:437 -> was instructed not to fake it); a `staff` table shape final enough to
+d:/SIH\docs\S7_STAFF_CONSOLE_AUDIT.md:618 -> faked.
+d:/SIH\docs\S7_STAFF_CONSOLE_MIGRATION.md:76 -> | `org_id` | `staff.org_id`, nullable TEXT placeholder — no `orgs` concept exists yet in this codebase, so nothing populates it | **Structurally present, semantically deferred** |
+d:/SIH\docs\S7_STAFF_CONSOLE_MIGRATION.md:81 -> | `on_call_schedule` | `staff.on_call_schedule`, nullable JSONB placeholder, unpopulated | **Structurally present, semantically deferred** |
+d:/SIH\docs\S8_DEPENDENCY_AUDIT.md:290 -> this repository in any form, mocked or real, and building triage against
+d:/SIH\docs\S8_DEPENDENCY_AUDIT.md:368 -> Groq LLM for the reply (`llm_parser.py`), separately calls the mocked
+d:/SIH\docs\S8_DEPENDENCY_AUDIT.md:378 -> counter-example** — the "channel" (the mobile app's chat screen, via this
+d:/SIH\docs\S8_DEPENDENCY_AUDIT.md:627 -> district-unscoped); `state_routes.py` is **100% hardcoded mock data**.
+d:/SIH\docs\S8_DEPENDENCY_AUDIT.md:813 -> The task's own example (S8→S9→S10 as a strict line) is explicitly flagged
+d:/SIH\docs\S8_DEPENDENCY_AUDIT.md:865 -> - **Mocked oversight data presented as real**: `state_routes.py` returns
+d:/SIH\docs\S8_LIFECYCLE_MIGRATION.md:262 -> 53 tests, `FakePrismaService`): state/enum shape, every matrix edge
+d:/SIH\docs\S9_REFERRAL_MIGRATION.md:131 -> placeholder or invented value. A case manager previewing a legal-aid
+d:/SIH\docs\S9_REFERRAL_MIGRATION.md:151 -> obviously-fake distress score seeded in the test case — never appears
+d:/SIH\docs\S9_REFERRAL_MIGRATION.md:264 -> — 31 tests, `FakePrismaService`): full transition-matrix coverage
+d:/SIH\frontend\vite.config.js:14 -> env.VITE_API_URL ? new URL(env.VITE_API_URL).hostname : 'localhost',
+d:/SIH\frontend\vite.config.js:15 -> 'localhost',
+d:/SIH\frontend\vite.config.js:16 -> '127.0.0.1'
+d:/SIH\frontend\vite.config.js:20 -> target: env.VITE_API_URL || 'http://localhost:8000',
+d:/SIH\frontend\vite.config.js:26 -> target: 'http://localhost:8090',
+d:/SIH\frontend\src\hooks\useVoiceAgent.js:59 -> if (!playCtxRef.current || playCtxRef.current.sampleRate !== rate) {
+d:/SIH\frontend\src\hooks\useVoiceAgent.js:61 -> playCtxRef.current = new AudioContext({ sampleRate: rate });
+d:/SIH\frontend\src\hooks\useVoiceAgent.js:96 -> micCtxRef.current = new AudioContext({ sampleRate: IN_RATE });
+d:/SIH\frontend\src\hooks\useVoiceAgent.js:153 -> ttsRateRef.current = msg.output_sample_rate;
+d:/SIH\frontend\src\hooks\useVoiceAgent.js:183 -> ttsRateRef.current = msg.sample_rate;
+d:/SIH\frontend\src\pages\Login.jsx:73 -> text-white placeholder-white/40 font-medium
+d:/SIH\frontend\src\pages\Login.jsx:287 -> placeholder="+91 98765 43210"
+d:/SIH\frontend\src\pages\Login.jsx:348 -> required placeholder="Jane Doe" className={INPUT_CLASS} />
+d:/SIH\frontend\src\pages\Login.jsx:378 -> required placeholder="counsellor_01"
+d:/SIH\frontend\src\pages\Login.jsx:387 -> required placeholder="••••••••"
+d:/SIH\frontend\src\pages\Admin\NationalDashboard.jsx:13 -> top: `${Math.random() * 100}%`,
+d:/SIH\frontend\src\pages\Admin\NationalDashboard.jsx:14 -> left: `${Math.random() * 100}%`,
+d:/SIH\frontend\src\pages\Admin\NationalDashboard.jsx:15 -> animationDelay: `${Math.random() * 3}s`,
+d:/SIH\frontend\src\pages\Admin\NationalDashboard.jsx:16 -> animationDuration: `${Math.floor(Math.random() * (8 - 2) + 2)}s`,
+d:/SIH\frontend\src\pages\Admin\NationalDashboard.jsx:52 -> const mockStates = [
+d:/SIH\frontend\src\pages\Admin\NationalDashboard.jsx:130 -> {mockStates.map((state) => (
+d:/SIH\frontend\src\pages\Admin\StateDashboard.jsx:21 -> // Mock district breakdown for UI visualization
+d:/SIH\frontend\src\pages\Admin\StateDashboard.jsx:22 -> const mockDistricts = [
+d:/SIH\frontend\src\pages\Admin\StateDashboard.jsx:95 -> {mockDistricts.map((district) => (
+d:/SIH\frontend\src\pages\Victim\CaseLifecycle.jsx:185 -> placeholder="Enter 16-digit CNR Number"
+d:/SIH\frontend\src\pages\Victim\CaseLifecycle.jsx:334 -> placeholder="I want to report an incident regarding..."
+d:/SIH\frontend\src\pages\Victim\Chatbot.jsx:263 -> placeholder="Type your thoughts..."
+d:/SIH\mobile\src\components\SystemInput.jsx:15 -> placeholder,
+d:/SIH\mobile\src\components\SystemInput.jsx:33 -> placeholder={placeholder}
+d:/SIH\mobile\src\components\SystemInput.jsx:34 -> placeholderTextColor={Colors.tertiaryLabel}
+d:/SIH\mobile\src\screens\ChatbotScreen.jsx:281 -> placeholder="Type your thoughts or ask a question..."
+d:/SIH\mobile\src\screens\ChatbotScreen.jsx:282 -> placeholderTextColor={DS.text.muted}
+d:/SIH\mobile\src\screens\LoginScreen.js:76 -> placeholder="Enter 10-digit number"
+d:/SIH\mobile\src\screens\LoginScreen.js:77 -> placeholderTextColor={DS.text.muted}
+d:/SIH\mobile\src\screens\OTPVerificationScreen.js:124 -> {/* S2: the dev "auto-fill mock OTP" button was removed here — OTP
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:43 -> location: { lat: 18.5204, lng: 73.8567 } // Optional location mock
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:99 -> placeholder="e.g. Priya Sharma"
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:100 -> placeholderTextColor={DS.text.muted}
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:114 -> placeholder="e.g. 26"
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:115 -> placeholderTextColor={DS.text.muted}
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:141 -> placeholder="e.g. Ramesh Kumar (Brother / Lawyer)"
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:142 -> placeholderTextColor={DS.text.muted}
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:153 -> placeholder="+91 98765 43210"
+d:/SIH\mobile\src\screens\RegisterScreen.jsx:154 -> placeholderTextColor={DS.text.muted}
+d:/SIH\mobile\src\services\api.js:7 -> return config.apiUrl || 'http://localhost:8000';
+d:/SIH\mobile\src\services\api.js:10 -> export const API_BASE_URL = config.apiUrl || 'http://localhost:8000';
+d:/SIH\mobile\src\services\notifications.js:47 -> console.log('Mock: Registering for push notifications');
+d:/SIH\mobile\src\services\notifications.js:52 -> console.log('Mock: Received notification:', notification);
+d:/SIH\mobile\src\services\__tests__\api-auth-wiring.test.js:58 -> assert.doesNotMatch(source, /mock_jwt/i);
+d:/SIH\voice-agent\.env:37 -> INPUT_SAMPLE_RATE=16000
+d:/SIH\voice-agent\main.py:46 -> def __init__(self, sample_rate: int) -> None:
+d:/SIH\voice-agent\main.py:47 -> self.sample_rate = sample_rate
+d:/SIH\voice-agent\main.py:71 -> samplerate=self.sample_rate, channels=1, dtype="int16"
+d:/SIH\voice-agent\main.py:80 -> samples = np.frombuffer(item, dtype="<i2")
+d:/SIH\voice-agent\main.py:82 -> for start in range(0, len(samples), 1024):
+d:/SIH\voice-agent\main.py:85 -> stream.write(samples[start : start + 1024])
+d:/SIH\voice-agent\main.py:102 -> print("\n! OPENROUTER_API_KEY is not set — copy .env.example to .env first.")
+d:/SIH\voice-agent\main.py:105 -> speaker = Speaker(tts.sample_rate)
+d:/SIH\voice-agent\main.py:123 -> sample_rate=settings.input_sample_rate,
+d:/SIH\voice-agent\main.py:143 -> samplerate=settings.input_sample_rate,
+d:/SIH\voice-agent\README.md:60 -> cp .env.example .env          # then put your OPENROUTER_API_KEY in it
+d:/SIH\voice-agent\README.md:66 -> Open <http://localhost:8000> and you get a built-in test client. Click **Connect & talk**, allow microphone access, and start talking.
+d:/SIH\voice-agent\README.md:78 -> cp .env.example .env          # add your key
+d:/SIH\voice-agent\README.md:116 -> | Sample rate | 16000 Hz (also confirmed in the `ready` message) |
+d:/SIH\voice-agent\README.md:130 -> **Binary frames** carry the synthesised speech at `output_sample_rate`, same encoding as above. They always arrive between `tts_start` and `tts_end`.
+d:/SIH\voice-agent\README.md:136 -> | `ready` | `session_id`, `input_sample_rate`, `output_sample_rate`, `barge_in` | Handshake. Always arrives first. |
+d:/SIH\voice-agent\README.md:143 -> | `tts_start` | `sample_rate` | Audio frames are about to follow. |
+d:/SIH\voice-agent\README.md:152 -> const ws = new WebSocket('ws://localhost:8000/ws');
+d:/SIH\voice-agent\README.md:175 -> | `GET /info` | Which models are active, sample rates, how many sessions are live. |
+d:/SIH\voice-agent\README.md:180 -> Everything comes from environment variables. [`.env.example`](.env.example) has the full list, but these are the ones you will actually touch:
+d:/SIH\voice-agent\README.md:294 -> `.env` is untracked and gitignored as of this version. Use `.env.example` as your template and inject real secrets through your platform's secret manager rather than a file on disk.
+d:/SIH\voice-agent\README.md:301 -> - **Serving over TLS.** Browsers refuse microphone access on anything other than HTTPS or localhost, so you need this anyway.
+d:/SIH\voice-agent\app\aavaz_bridge.py:40 -> BACKEND_BASE_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
+d:/SIH\voice-agent\app\asr.py:65 -> duration = len(pcm) / self._settings.input_sample_rate
+d:/SIH\voice-agent\app\config.py:136 -> input_sample_rate: int = field(
+d:/SIH\voice-agent\app\config.py:137 -> default_factory=lambda: _int("INPUT_SAMPLE_RATE", 16000)
+d:/SIH\voice-agent\app\pipeline.py:173 -> {"type": "tts_start", "sample_rate": self._tts.sample_rate}
+d:/SIH\voice-agent\app\segmenter.py:34 -> sample_rate: int = 16000,
+d:/SIH\voice-agent\app\segmenter.py:41 -> self.sample_rate = sample_rate
+d:/SIH\voice-agent\app\segmenter.py:43 -> self.frame_size = max(1, int(sample_rate * FRAME_MS / 1000))
+d:/SIH\voice-agent\app\segmenter.py:68 -> """Push float32 mono samples in [-1, 1]; get back zero or more events."""
+d:/SIH\voice-agent\app\segmenter.py:143 -> def float32_to_pcm16(samples: np.ndarray) -> bytes:
+d:/SIH\voice-agent\app\segmenter.py:144 -> clipped = np.clip(samples, -1.0, 1.0)
+d:/SIH\voice-agent\app\server.py:144 -> "input_sample_rate": settings.input_sample_rate,
+d:/SIH\voice-agent\app\server.py:145 -> "output_sample_rate": app.state.tts.sample_rate,
+d:/SIH\voice-agent\app\tts.py:8 -> The output sample rate is read from the voice's own config file rather than
+d:/SIH\voice-agent\app\tts.py:30 -> self._sample_rate = 22050
+d:/SIH\voice-agent\app\tts.py:39 -> def sample_rate(self) -> int:
+d:/SIH\voice-agent\app\tts.py:40 -> return self._sample_rate
+d:/SIH\voice-agent\app\tts.py:53 -> # Trust the voice config for the sample rate — this is the single
+d:/SIH\voice-agent\app\tts.py:58 -> self._sample_rate = int(config.get("audio", {}).get("sample_rate", 22050))
+d:/SIH\voice-agent\app\tts.py:75 -> self._sample_rate,
+d:/SIH\voice-agent\app\tts.py:105 -> rate = getattr(chunk, "sample_rate", None)
+d:/SIH\voice-agent\app\tts.py:106 -> if rate and rate != self._sample_rate:
+d:/SIH\voice-agent\app\tts.py:109 -> self._sample_rate,
+d:/SIH\voice-agent\app\tts.py:113 -> self._sample_rate = int(rate)
+d:/SIH\voice-agent\app\tts.py:133 -> """Return int16 little-endian mono PCM at `self.sample_rate`."""
+d:/SIH\voice-agent\app\ws.py:53 -> sample_rate=settings.input_sample_rate,
+d:/SIH\voice-agent\app\ws.py:83 -> "input_sample_rate": self._settings.input_sample_rate,
+d:/SIH\voice-agent\app\ws.py:85 -> "output_sample_rate": self._tts.sample_rate,
+d:/SIH\voice-agent\app\ws.py:115 -> samples = pcm16_to_float32(raw)
+d:/SIH\voice-agent\app\ws.py:116 -> for event in self._segmenter.feed(samples):
+d:/SIH\voice-agent\scripts\smoke_test.py:8 -> audio back. Ends with a round-trip comparison, which catches sample-rate and
+d:/SIH\voice-agent\scripts\smoke_test.py:62 -> seconds = len(audio) / 2 / engine.sample_rate
+d:/SIH\voice-agent\scripts\smoke_test.py:63 -> print(f"      {len(audio)} bytes @ {engine.sample_rate} Hz = {seconds:.2f}s")
+d:/SIH\voice-agent\scripts\smoke_test.py:70 -> handle.setframerate(engine.sample_rate)
+d:/SIH\voice-agent\scripts\smoke_test.py:73 -> return audio, engine.sample_rate
+d:/SIH\voice-agent\scripts\smoke_test.py:76 -> async def check_asr(settings, audio: bytes, sample_rate: int) -> None:
+d:/SIH\voice-agent\scripts\smoke_test.py:78 -> samples = np.frombuffer(audio, dtype="<i2").astype(np.float32) / 32768.0
+d:/SIH\voice-agent\scripts\smoke_test.py:80 -> if sample_rate != settings.input_sample_rate:
+d:/SIH\voice-agent\scripts\smoke_test.py:81 -> # Linear resample is fine for a smoke test.
+d:/SIH\voice-agent\scripts\smoke_test.py:82 -> target = int(len(samples) * settings.input_sample_rate / sample_rate)
+d:/SIH\voice-agent\scripts\smoke_test.py:83 -> samples = np.interp(
+d:/SIH\voice-agent\scripts\smoke_test.py:84 -> np.linspace(0, len(samples) - 1, target),
+d:/SIH\voice-agent\scripts\smoke_test.py:85 -> np.arange(len(samples)),
+d:/SIH\voice-agent\scripts\smoke_test.py:86 -> samples,
+d:/SIH\voice-agent\scripts\smoke_test.py:91 -> result = await engine.transcribe(samples)
+d:/SIH\voice-agent\scripts\smoke_test.py:99 -> print("      ⚠ low overlap — check the voice sample rate in models/*.onnx.json")

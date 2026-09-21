@@ -1,8 +1,18 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Shield, Sparkles, User } from 'lucide-react-native';
+import Animated, { 
+  useAnimatedStyle, 
+  withSpring, 
+  interpolateColor,
+  useDerivedValue
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { DS } from '../theme/designSystem';
+import ScalePressable from './ScalePressable';
+
+const { width } = Dimensions.get('window');
 
 const TABS = [
   { id: 'Home', label: 'Home', icon: Home },
@@ -13,20 +23,53 @@ const TABS = [
 
 export default function FloatingTabBar({ activeTab, onTabPress }) {
   const insets = useSafeAreaInsets();
+  
+  // Calculate tab width dynamically
+  const containerPadding = 20;
+  const ribbonPadding = 8;
+  const ribbonWidth = width - (containerPadding * 2);
+  const tabWidth = (ribbonWidth - (ribbonPadding * 2)) / TABS.length;
+
+  // Find active index for sliding pill
+  const activeIndex = Math.max(0, TABS.findIndex(t => t.id === activeTab));
+
+  // Sliding pill animated style
+  const pillStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { 
+          translateX: withSpring(activeIndex * tabWidth, {
+            stiffness: 300,
+            damping: 25,
+            mass: 0.5,
+          }) 
+        }
+      ]
+    };
+  });
 
   return (
     <View style={[styles.outerContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
       <View style={styles.ribbonBar}>
-        {TABS.map((tab) => {
+        
+        {/* Animated Background Pill */}
+        <Animated.View style={[styles.slidingPill, { width: tabWidth }, pillStyle]} />
+
+        {TABS.map((tab, idx) => {
           const isActive = activeTab === tab.id;
           const IconComponent = tab.icon;
 
           return (
-            <TouchableOpacity
+            <ScalePressable
               key={tab.id}
-              style={[styles.tabItem, isActive && styles.tabItemActive]}
-              onPress={() => onTabPress(tab.id)}
-              activeOpacity={0.7}
+              style={[styles.tabItem, { width: tabWidth }]}
+              scaleTo={0.85}
+              onPress={() => {
+                if (!isActive) {
+                  Haptics.selectionAsync();
+                  onTabPress(tab.id);
+                }
+              }}
             >
               <View style={styles.iconWrapper}>
                 <IconComponent
@@ -40,15 +83,10 @@ export default function FloatingTabBar({ activeTab, onTabPress }) {
                   </View>
                 ) : null}
               </View>
-              <Text
-                style={[
-                  styles.tabLabel,
-                  isActive && styles.tabLabelActive,
-                ]}
-              >
+              <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                 {tab.label}
               </Text>
-            </TouchableOpacity>
+            </ScalePressable>
           );
         })}
       </View>
@@ -68,29 +106,32 @@ const styles = StyleSheet.create({
   },
   ribbonBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.94)', // Frosted cloud white base
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 32,
-    borderWidth: 1.5,
-    borderColor: DS.canvas.border, // Soft Periwinkle #EBE8F6
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
     height: 64,
     alignItems: 'center',
-    justifyContent: 'space-around',
     paddingHorizontal: 8,
     shadowColor: '#1E1F24',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 8,
+    // Add glass blur if supported via react-native-blur (omitted for standard View)
   },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
+  slidingPill: {
+    position: 'absolute',
+    left: 8, // match paddingHorizontal of ribbonBar
+    height: 48,
+    backgroundColor: DS.primary.muted,
     borderRadius: 24,
   },
-  tabItemActive: {
-    backgroundColor: DS.primary.muted, // Soft lavender tint
+  tabItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    zIndex: 1, // ensure text/icon renders above pill
   },
   iconWrapper: {
     position: 'relative',
@@ -100,27 +141,30 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
     top: -4,
-    right: -10,
+    right: -8,
     backgroundColor: DS.accent.sos,
-    width: 16,
-    height: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    minWidth: 16,
+    height: 16,
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#ffffff',
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: '#ffffff',
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: 'bold',
+    paddingHorizontal: 4,
   },
   tabLabel: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 10,
+    fontFamily: 'Inter-Medium',
     color: DS.text.muted,
-    marginTop: 3,
+    marginTop: 2,
   },
   tabLabelActive: {
-    color: DS.primary.main, // Lavender #8A79B8
-    fontWeight: '700',
+    color: DS.primary.main,
+    fontFamily: 'Inter-Bold',
   },
 });

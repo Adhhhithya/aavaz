@@ -14,9 +14,10 @@ class Settings(BaseSettings):
 
     # External APIs
     BOLNA_API_KEY: str = ""
+    BOLNA_AGENT_ID: str = ""
     PUSHBULLET_API_KEY: str = ""
     GROQ_API_KEY: str = ""
-    NGROK_URL: str = ""
+    PUBLIC_WEBHOOK_BASE_URL: str = ""
     ECOURTS_API_KEY: str = ""
 
     # Shared secrets for verifying inbound provider webhooks (S1/S2 remediation —

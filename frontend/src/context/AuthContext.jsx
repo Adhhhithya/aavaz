@@ -39,7 +39,10 @@ export function AuthProvider({ children }) {
   // won't be authenticated — see docs/AAVAZ_IMPLEMENTATION_AUDIT.md for which
   // ones have been migrated to this helper.
   const authFetch = useCallback((url, options = {}) => {
-    const headers = { ...(options.headers || {}) };
+    const headers = { 
+      'ngrok-skip-browser-warning': '1',
+      ...(options.headers || {}) 
+    };
     if (user?.token) {
       headers['Authorization'] = `Bearer ${user.token}`;
     }

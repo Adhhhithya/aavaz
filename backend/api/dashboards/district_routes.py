@@ -90,9 +90,17 @@ async def get_district_sos(
     """
     supabase = await get_supabase()
     try:
-        # Mock logic to get SOS events for this district
-        resp = await supabase.table("sos_events").select("*").eq("resolved", False).execute()
-        # In prod: filter by district via case_id -> user_id -> district join
+        users_resp = await supabase.table("users").select("id").eq("location_district", district_name).execute()
+        user_ids = [u["id"] for u in users_resp.data]
+        if not user_ids:
+            return []
+            
+        cases_resp = await supabase.table("cases").select("id").in_("user_id", user_ids).execute()
+        case_ids = [c["id"] for c in cases_resp.data]
+        if not case_ids:
+            return []
+            
+        resp = await supabase.table("sos_events").select("*").in_("case_id", case_ids).eq("resolved", False).execute()
         return resp.data
     except Exception as e:
         logger.error(f"Error fetching district SOS: {e}")

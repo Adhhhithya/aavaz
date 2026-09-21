@@ -36,6 +36,7 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isListeningMic, setIsListeningMic] = useState(false);
+  const [crisisAlert, setCrisisAlert] = useState(null);
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
@@ -87,8 +88,20 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
           id: (Date.now() + 1).toString(),
           sender: 'bot',
           text: res.reply,
+          emotion: res.emotion_flagged,
+          distress_score: res.distress_score,
+          risk_level: res.risk_level,
+          escalated: res.escalated,
         };
         setMessages((prev) => [...prev, botMsg]);
+
+        if (res.escalated || res.distress_score >= 70) {
+          setCrisisAlert({
+            level: res.risk_level || 'high',
+            score: res.distress_score,
+            message: 'A safety alert has been recorded for your counsellor. If you are in immediate danger, please call 112 or press SOS.',
+          });
+        }
       }
     } catch (e) {
       console.error("Chat error", e);
@@ -99,12 +112,41 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
 
   const handleClear = () => {
     setMessages([{ id: 'init', sender: 'bot', text: 'Hello. I am here to support you. How are you feeling today?' }]);
+    setCrisisAlert(null);
   };
 
   const handleMicToggle = () => {
-    setIsListeningMic(!isListeningMic);
     if (!isListeningMic) {
-      setInputText('I am experiencing sudden panic symptoms.');
+      setIsListeningMic(true);
+      if (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRec();
+        recognition.lang = userProfile?.preferred_language === 'hi' ? 'hi-IN' : 'en-IN';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          setIsListeningMic(false);
+          if (transcript) {
+            sendMessage(transcript);
+          }
+        };
+        recognition.onerror = () => setIsListeningMic(false);
+        recognition.onend = () => setIsListeningMic(false);
+        try {
+          recognition.start();
+        } catch (_) {
+          setIsListeningMic(false);
+        }
+      } else {
+        // Voice active check simulation
+        setTimeout(() => {
+          setIsListeningMic(false);
+          setInputText('I am feeling very overwhelmed and scared today.');
+        }, 1200);
+      }
+    } else {
+      setIsListeningMic(false);
     }
   };
 
@@ -191,6 +233,17 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
             </View>
           )}
         </ScrollView>
+
+        {/* Crisis Safety Alert Banner */}
+        {crisisAlert && (
+          <View style={styles.crisisBanner}>
+            <View style={styles.crisisBannerHeader}>
+              <XCircle size={16} color="#DC2626" style={{ marginRight: 6 }} />
+              <Text style={styles.crisisBannerTitle}>Safety Notice: Elevated Distress</Text>
+            </View>
+            <Text style={styles.crisisBannerText}>{crisisAlert.message}</Text>
+          </View>
+        )}
 
         {/* Quick Reply Prompt Chips */}
         <View style={styles.chipsContainer}>
@@ -435,5 +488,31 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.4,
+  },
+  crisisBanner: {
+    marginHorizontal: DS.spacing.lg,
+    marginBottom: DS.spacing.xs,
+    padding: 10,
+    backgroundColor: '#FEE2E2',
+    borderRadius: DS.radius.md,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  crisisBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  crisisBannerTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#991B1B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  crisisBannerText: {
+    fontSize: 12,
+    color: '#7F1D1D',
+    lineHeight: 16,
   },
 });

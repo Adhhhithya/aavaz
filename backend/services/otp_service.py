@@ -18,8 +18,9 @@ import hashlib
 import hmac
 import logging
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from config import settings
 from services.otp_providers import get_otp_provider
@@ -72,16 +73,33 @@ def generate_code(length: Optional[int] = None) -> str:
     return f"{secrets.randbelow(10 ** length):0{length}d}"
 
 
+# In-memory store fallback for local development when otp_codes table has not yet
+# been created in the connected Supabase instance (e.g. migration 0002 pending).
+_dev_otp_store: List[Dict[str, Any]] = []
+_use_dev_in_memory_store: bool = False
+
+
 async def _count_recent(supabase, column: str, value: str, window_seconds: int) -> int:
+    global _use_dev_in_memory_store
     since = (datetime.now(timezone.utc) - timedelta(seconds=window_seconds)).isoformat()
-    resp = (
-        await supabase.table("otp_codes")
-        .select("id")
-        .eq(column, value)
-        .gte("created_at", since)
-        .execute()
-    )
-    return len(resp.data or [])
+    if _use_dev_in_memory_store:
+        return sum(1 for r in _dev_otp_store if r.get(column) == value and r.get("created_at", "") >= since)
+
+    try:
+        resp = (
+            await supabase.table("otp_codes")
+            .select("id")
+            .eq(column, value)
+            .gte("created_at", since)
+            .execute()
+        )
+        return len(resp.data or [])
+    except Exception as e:
+        if settings.ENVIRONMENT.strip().lower() == "development" and ("PGRST205" in str(e) or "otp_codes" in str(e)):
+            logger.warning("[DEV ONLY] 'otp_codes' table not found in Supabase schema (PGRST205). Falling back to in-memory OTP store for development.")
+            _use_dev_in_memory_store = True
+            return sum(1 for r in _dev_otp_store if r.get(column) == value and r.get("created_at", "") >= since)
+        raise
 
 
 async def request_otp(phone_number: str, ip_address: Optional[str] = None, purpose: str = "login") -> None:
@@ -92,6 +110,7 @@ async def request_otp(phone_number: str, ip_address: Optional[str] = None, purpo
     recently. Never returns, logs, or persists the plaintext code beyond the
     single call to the delivery provider.
     """
+    global _use_dev_in_memory_store
     supabase = await get_supabase()
     phone_hash = hash_phone(phone_number)
     ip_hash = hash_phone(ip_address) if ip_address else None
@@ -111,18 +130,43 @@ async def request_otp(phone_number: str, ip_address: Optional[str] = None, purpo
     code_hash = _hash_code(code, salt)
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=settings.OTP_TTL_SECONDS)
 
-    await supabase.table("otp_codes").insert(
-        {
-            "phone_hash": phone_hash,
-            "code_hash": code_hash,
-            "salt": salt,
-            "purpose": purpose,
-            "ip_hash": ip_hash,
-            "attempts": 0,
-            "max_attempts": settings.OTP_MAX_ATTEMPTS,
-            "expires_at": expires_at.isoformat(),
-        }
-    ).execute()
+    record = {
+        "id": str(uuid.uuid4()),
+        "phone_hash": phone_hash,
+        "code_hash": code_hash,
+        "salt": salt,
+        "purpose": purpose,
+        "ip_hash": ip_hash,
+        "attempts": 0,
+        "max_attempts": settings.OTP_MAX_ATTEMPTS,
+        "expires_at": expires_at.isoformat(),
+        "consumed_at": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    if _use_dev_in_memory_store:
+        _dev_otp_store.append(record)
+    else:
+        try:
+            await supabase.table("otp_codes").insert(
+                {
+                    "phone_hash": phone_hash,
+                    "code_hash": code_hash,
+                    "salt": salt,
+                    "purpose": purpose,
+                    "ip_hash": ip_hash,
+                    "attempts": 0,
+                    "max_attempts": settings.OTP_MAX_ATTEMPTS,
+                    "expires_at": expires_at.isoformat(),
+                }
+            ).execute()
+        except Exception as e:
+            if settings.ENVIRONMENT.strip().lower() == "development" and ("PGRST205" in str(e) or "otp_codes" in str(e)):
+                logger.warning("[DEV ONLY] 'otp_codes' table not found in Supabase schema (PGRST205). Falling back to in-memory OTP store for development.")
+                _use_dev_in_memory_store = True
+                _dev_otp_store.append(record)
+            else:
+                raise
 
     provider = get_otp_provider()
     await provider.send_otp(phone_number=phone_number, code=code, channel="sms")
@@ -139,23 +183,55 @@ async def verify_otp(phone_number: str, submitted_code: str, purpose: str = "log
     how these map to a single generic HTTP response). On success, marks the row
     consumed so it cannot be replayed.
     """
+    global _use_dev_in_memory_store
     supabase = await get_supabase()
     phone_hash = hash_phone(phone_number)
 
-    resp = (
-        await supabase.table("otp_codes")
-        .select("*")
-        .eq("phone_hash", phone_hash)
-        .eq("purpose", purpose)
-        .is_("consumed_at", "null")
-        .order("created_at", desc=True)
-        .limit(1)
-        .execute()
-    )
-    if not resp.data:
-        raise InvalidOtpError("No pending OTP for this phone number")
+    if _use_dev_in_memory_store:
+        matching = [
+            r for r in _dev_otp_store
+            if r.get("phone_hash") == phone_hash
+            and r.get("purpose") == purpose
+            and r.get("consumed_at") is None
+        ]
+        matching.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+        if not matching:
+            raise InvalidOtpError("No pending OTP for this phone number")
+        row = matching[0]
+    else:
+        try:
+            resp = (
+                await supabase.table("otp_codes")
+                .select("*")
+                .eq("phone_hash", phone_hash)
+                .eq("purpose", purpose)
+                .is_("consumed_at", "null")
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if not resp.data:
+                raise InvalidOtpError("No pending OTP for this phone number")
+            row = resp.data[0]
+        except (InvalidOtpError, ExpiredOtpError):
+            raise
+        except Exception as e:
+            if settings.ENVIRONMENT.strip().lower() == "development" and ("PGRST205" in str(e) or "otp_codes" in str(e)):
+                logger.warning("[DEV ONLY] 'otp_codes' table not found in Supabase schema (PGRST205). Falling back to in-memory OTP store for development.")
+                _use_dev_in_memory_store = True
+                matching = [
+                    r for r in _dev_otp_store
+                    if r.get("phone_hash") == phone_hash
+                    and r.get("purpose") == purpose
+                    and r.get("consumed_at") is None
+                ]
+                matching.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+                if not matching:
+                    raise InvalidOtpError("No pending OTP for this phone number")
+                row = matching[0]
+            else:
+                raise
 
-    row = resp.data[0]
     now = datetime.now(timezone.utc)
     expires_at = datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00"))
 
@@ -167,7 +243,14 @@ async def verify_otp(phone_number: str, submitted_code: str, purpose: str = "log
 
     expected_hash = _hash_code(submitted_code, row["salt"])
     if not hmac.compare_digest(expected_hash, row["code_hash"]):
-        await supabase.table("otp_codes").update({"attempts": row["attempts"] + 1}).eq("id", row["id"]).execute()
+        if _use_dev_in_memory_store:
+            row["attempts"] = row.get("attempts", 0) + 1
+        else:
+            await supabase.table("otp_codes").update({"attempts": row["attempts"] + 1}).eq("id", row["id"]).execute()
         raise InvalidOtpError("Incorrect code")
 
-    await supabase.table("otp_codes").update({"consumed_at": now.isoformat()}).eq("id", row["id"]).execute()
+    if _use_dev_in_memory_store:
+        row["consumed_at"] = now.isoformat()
+    else:
+        await supabase.table("otp_codes").update({"consumed_at": now.isoformat()}).eq("id", row["id"]).execute()
+

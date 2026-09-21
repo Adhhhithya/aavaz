@@ -1,31 +1,57 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 const SESSION_KEY = '@auth_session_user';
+let _memorySession = null;
 
 export const storage = {
   async saveSession(sessionData) {
+    _memorySession = sessionData;
     try {
-      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+      } else {
+        await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(sessionData));
+      }
     } catch (e) {
-      console.warn('Failed to save session to AsyncStorage', e);
+      // Memory fallback is preserved
+      console.warn('Failed to save secure session', e);
     }
   },
 
   async getSession() {
+    if (_memorySession) return _memorySession;
     try {
-      const data = await AsyncStorage.getItem(SESSION_KEY);
-      return data ? JSON.parse(data) : null;
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+        const local = window.localStorage.getItem(SESSION_KEY);
+        if (local) {
+          _memorySession = JSON.parse(local);
+          return _memorySession;
+        }
+      } else {
+        const data = await SecureStore.getItemAsync(SESSION_KEY);
+        if (data) {
+          _memorySession = JSON.parse(data);
+          return _memorySession;
+        }
+      }
     } catch (e) {
-      console.warn('Failed to read session from AsyncStorage', e);
-      return null;
+      // Memory fallback is preserved
+      console.warn('Failed to get secure session', e);
     }
+    return _memorySession;
   },
 
   async clearSession() {
+    _memorySession = null;
     try {
-      await AsyncStorage.removeItem(SESSION_KEY);
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(SESSION_KEY);
+      } else {
+        await SecureStore.deleteItemAsync(SESSION_KEY);
+      }
     } catch (e) {
-      console.warn('Failed to clear session', e);
+      console.warn('Failed to clear secure session', e);
     }
   },
 

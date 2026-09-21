@@ -1,6 +1,20 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @theme {
+  /* ─── Motion tokens ──────────────────────────────────────────── */
+  /* Cube Motion calibrated ease curves */
+  --ease-out-quint:   cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+  --ease-bounce:      cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Duration scale — shorter = faster, more responsive */
+  --duration-instant: 80ms;   /* :active press feedback */
+  --duration-fast:   160ms;   /* Hover states, tooltips */
+  --duration-normal: 240ms;   /* Modals, drawers, page enter */
+  --duration-slow:   400ms;   /* XAI bars, page-level reveals */
+
+
   --font-sans: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Malayalam', sans-serif;
 
   --color-canvas-base: #F8F9FC;
@@ -38,10 +52,44 @@
   --radius-pill: 9999px;
 }
 
+
 body {
-  font-family: var(--font-sans);
+  font-family: 'Inter', var(--font-sans);
   background-color: var(--color-canvas-base);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Global interaction feedback ───────────────────────────── */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── Reduced motion — hard global kill switch ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ─── SOS pulse ring (CSS animation — runs off main thread) ──── */
+@keyframes sos-pulse {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  70%  { transform: scale(1.6); opacity: 0;   }
+  100% { transform: scale(1.6); opacity: 0;   }
+}
+
+/* ─── @starting-style fallback for page card entries ─────────── */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Typing indicator bounce ────────────────────────────────── */
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%            { transform: translateY(-6px); }
 }

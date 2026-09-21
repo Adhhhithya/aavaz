@@ -1,128 +1,159 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldAlert, ArrowRight, HeartPulse } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { FileText, MessageCircle, ArrowRight } from 'lucide-react';
+import NumberFlow from 'number-flow';
+import { supabase } from '../../config/supabase';
+import useAlertStore from '../../store/alertStore';
 
 export default function VictimDashboard() {
   const { user, authFetch } = useAuth();
-  const [greeting, setGreeting] = useState('');
-  const [scoreData, setScoreData] = useState(null);
+  const navigate = useNavigate();
+  const [caseProgress, setCaseProgress] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good morning');
-    else if (hour < 18) setGreeting('Good afternoon');
-    else setGreeting('Good evening');
-
-    // Fetch score if user exists. S2: uses authFetch so the victim's session
-    // token is attached — /api/v1/intake/app/cases/{id} and
-    // /api/v1/cases/{id}/progress both require it (see
-    // docs/AAVAZ_IMPLEMENTATION_AUDIT.md).
-    if (user?.id) {
-      authFetch(`/api/v1/intake/app/cases/${user.id}`, {
-        headers: { 'ngrok-skip-browser-warning': '1' }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.cases && data.cases.length > 0) {
-          return authFetch(`/api/v1/cases/${data.cases[0].id}/progress`, {
+    async function fetchProgress() {
+      try {
+        const casesRes = await authFetch(`/api/v1/intake/app/cases/${user?.id}`, {
+          headers: { 'ngrok-skip-browser-warning': '1' }
+        });
+        const casesData = await casesRes.json();
+        
+        if (casesData.cases?.length > 0) {
+          const caseId = casesData.cases[0].id;
+          const progRes = await authFetch(`/api/v1/cases/${caseId}/progress`, {
             headers: { 'ngrok-skip-browser-warning': '1' }
           });
+          if (progRes.ok) {
+            const data = await progRes.json();
+            setCaseProgress(data);
+          }
         }
-        throw new Error('No case found');
-      })
-      .then(res => res.json())
-      .then(data => {
-        setScoreData({ score: data.latestScore, explanation: data.scoreExplanation });
-      })
-      .catch(err => console.error("Error fetching score:", err));
+      } catch (err) {
+        console.error("Failed to fetch progress", err);
+      }
+      setLoading(false);
     }
+    
+    fetchProgress();
+
+    // Supabase Realtime Subscription
+    const channel = supabase
+      .channel('victim-cases-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'cases',
+          filter: `victim_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Realtime case update received for victim!', payload);
+          useAlertStore.getState().addAlert({
+            title: 'Case Updated',
+            message: 'Your case status has been updated in real-time.',
+            type: 'info'
+          });
+          fetchProgress();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, authFetch]);
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 animate-[card-in_400ms_var(--ease-out-quint)_both]">
       
-      {/* Header Area */}
+      {/* ─── Header ────────────────────────────────────────────── */}
       <div>
-        <h1 className="text-3xl md:text-4xl font-black text-text-primary tracking-tight">
-          {greeting}, <span className="text-primary-main">{user?.name}</span>
+        <h1 className="text-3xl font-black text-text-primary tracking-tight">
+          Hello, {user?.name?.split(' ')[0] || 'Citizen'}
         </h1>
-        <p className="text-text-secondary mt-2 text-lg font-medium">
-          We're here to support you every step of the way.
-        </p>
+        <p className="text-text-secondary mt-1 font-medium">Here is your current status update.</p>
       </div>
 
-      {/* Primary Action Card */}
-      <div className="bg-canvas-surface rounded-2xl p-6 md:p-8 shadow-hover border border-canvas-border flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden group">
-        <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary-muted rounded-full blur-3xl opacity-50 transition-opacity group-hover:opacity-100"></div>
-        <div className="relative z-10 flex-1">
-          {scoreData ? (
-            <>
-              <div className="flex items-center gap-2 text-primary-main mb-2">
-                <HeartPulse size={20} />
-                <span className="font-bold text-sm tracking-widest uppercase">Well-being Status</span>
-              </div>
-              <h2 className="text-xl md:text-2xl font-bold text-text-primary mb-2">
-                {scoreData.explanation}
-              </h2>
-              <p className="text-text-muted font-medium max-w-md">
-                We continuously monitor your interactions to ensure your assigned counsellor provides the right support at the right time.
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 text-primary-main mb-2">
-                <ShieldAlert size={20} />
-                <span className="font-bold text-sm tracking-widest uppercase">Action Required</span>
-              </div>
-              <h2 className="text-xl md:text-2xl font-bold text-text-primary mb-2">Your Case requires an update</h2>
-              <p className="text-text-muted font-medium max-w-md">
-                Please complete the initial demographic assessment so your assigned counsellor can review your details.
-              </p>
-            </>
-          )}
+      {/* ─── Primary Hero Card (Spotlight style) ────────────────── */}
+      <div className="relative group rounded-2xl border border-canvas-borderActive overflow-hidden bg-canvas-surface shadow-hover isolate">
+        {/* CSS Radial gradient glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--color-primary-glow)_0%,transparent_50%)] -z-10" />
+        
+        <div className="p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex-1">
+            <div className="text-xs font-bold text-primary-main uppercase tracking-widest mb-2 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-main animate-pulse" />
+              Active System Status
+            </div>
+            
+            {loading ? (
+              <div className="h-8 w-48 bg-canvas-surfaceSubtle rounded-lg animate-pulse mb-3" />
+            ) : caseProgress ? (
+              <>
+                <h2 className="text-3xl font-black text-text-primary mb-3">
+                  Score: <NumberFlow value={caseProgress.latestScore || 0} />
+                </h2>
+                <p className="text-text-secondary font-medium text-lg leading-relaxed max-w-lg">
+                  {caseProgress.scoreExplanation}
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-black text-text-primary mb-3">No Active Case</h2>
+                <p className="text-text-secondary font-medium max-w-lg">
+                  You haven't registered a case yet. Your support network will activate once you file a complaint.
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="shrink-0 flex gap-3 flex-wrap">
+            <button
+              onClick={() => navigate('/victim/chat')}
+              className="px-6 py-3 bg-text-primary text-white font-bold rounded-full transition-transform duration-[var(--duration-instant)] ease-[var(--ease-out-quint)] active:scale-95"
+            >
+              Talk to AI
+            </button>
+          </div>
         </div>
-        <Link 
-          to="/victim/case"
-          className="relative z-10 shrink-0 bg-primary-main hover:bg-primary-hover active:scale-95 text-white font-bold py-3 px-6 rounded-pill shadow-sm transition-all flex items-center gap-2 whitespace-nowrap"
-        >
-          View Case Status <ArrowRight size={18} />
-        </Link>
       </div>
 
-      {/* Secondary Actions Grid */}
+      {/* ─── Secondary Action Grid ─────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* Chatbot Entry */}
-        <Link 
-          to="/victim/chat"
-          className="bg-canvas-surface rounded-2xl p-6 border border-canvas-border shadow-card hover:shadow-hover hover:-translate-y-1 transition-all group"
+        <div
+          onClick={() => navigate('/victim/case')}
+          className="group cursor-pointer bg-canvas-surface border border-canvas-border rounded-2xl p-6 shadow-card hover:shadow-hover hover:-translate-y-1 transition-all duration-[var(--duration-fast)] ease-[var(--ease-out-quint)]"
         >
-          <div className="w-12 h-12 rounded-full bg-primary-muted flex items-center justify-center mb-4">
-            <span className="text-2xl">💬</span>
+          <div className="w-12 h-12 bg-primary-muted rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-[var(--duration-fast)]">
+            <FileText size={24} className="text-primary-main" />
           </div>
-          <h3 className="text-lg font-bold text-text-primary mb-2">Talk to Support AI</h3>
-          <p className="text-text-muted text-sm font-medium">
-            Confidential space to express your feelings and get immediate guidance.
+          <h3 className="text-xl font-bold text-text-primary mb-2">My Case Details</h3>
+          <p className="text-text-secondary font-medium">
+            View your legal timeline, court dates, and assigned counsellor contact.
           </p>
-        </Link>
+        </div>
 
-        {/* Breathing Exercise Entry */}
-        <Link 
-          to="/victim/breathe"
-          className="bg-canvas-surface rounded-2xl p-6 border border-canvas-border shadow-card hover:shadow-hover hover:-translate-y-1 transition-all group"
+        <div
+          onClick={() => navigate('/victim/chat')}
+          className="group cursor-pointer bg-canvas-surface border border-canvas-border rounded-2xl p-6 shadow-card hover:shadow-hover hover:-translate-y-1 transition-all duration-[var(--duration-fast)] ease-[var(--ease-out-quint)]"
         >
-          <div className="w-12 h-12 rounded-full bg-accent-sage/20 flex items-center justify-center mb-4 text-accent-sage">
-            <HeartPulse size={24} />
+          <div className="w-12 h-12 bg-canvas-surfaceSubtle rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-[var(--duration-fast)]">
+            <MessageCircle size={24} className="text-text-muted" />
           </div>
-          <h3 className="text-lg font-bold text-text-primary mb-2">Grounding Exercise</h3>
-          <p className="text-text-muted text-sm font-medium">
-            Take 2 minutes to follow a guided breathing animation to reduce panic.
+          <h3 className="text-xl font-bold text-text-primary mb-2 flex items-center gap-2">
+            AI Support Chat
+            <ArrowRight size={18} className="text-text-muted opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-[var(--duration-fast)]" />
+          </h3>
+          <p className="text-text-secondary font-medium">
+            Get instant legal answers or talk through how you're feeling right now.
           </p>
-        </Link>
+        </div>
 
       </div>
-
     </div>
   );
 }

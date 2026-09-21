@@ -23,21 +23,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "version": app.version}
+from api import health_routes
+app.include_router(health_routes.router, tags=["health"])
 
-from api.intake import app_routes, ivr_webhook, sms_webhook, chatbot_routes
+from api.intake import app_routes, ivr_webhook, sms_webhook, chatbot_routes, voice_routes
 from api.cases import sos_routes, case_routes, lifecycle_routes, ecourts_routes, report_routes
 from api.dashboards import district_routes, counsellor_routes, state_routes, national_routes, superadmin_routes
 from api.auth import auth_routes
 from api.assignment.escalation import check_and_escalate_sos
+from services.telephony_scheduler import run_check_in_scheduler
 import asyncio
 
 @app.on_event("startup")
 async def startup_event():
     # Start the background escalation engine
     asyncio.create_task(check_and_escalate_sos())
+    # Start the outbound check-in telephony scheduler
+    asyncio.create_task(run_check_in_scheduler())
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -49,6 +51,7 @@ app.include_router(app_routes.router, prefix="/api/v1/intake/app", tags=["intake
 app.include_router(chatbot_routes.router, prefix="/api/v1/intake/chatbot", tags=["intake", "chatbot"])
 app.include_router(ivr_webhook.router, prefix="/api/v1/intake/ivr", tags=["intake", "ivr"])
 app.include_router(sms_webhook.router, prefix="/api/v1/intake/sms", tags=["intake", "sms"])
+app.include_router(voice_routes.router, prefix="/api/v1/intake/voice", tags=["intake", "voice"])
 
 app.include_router(sos_routes.router, prefix="/api/v1/cases/sos", tags=["cases", "sos"])
 app.include_router(case_routes.router, prefix="/api/v1/cases", tags=["cases", "progress"])

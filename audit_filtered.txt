@@ -1,0 +1,429 @@
+d:/SIH/mobile\src\components\GlassCard.jsx:5 -> * for real system-level glass blur. Includes a solid fallback
+d:/SIH/mobile\src\components\GlassCard.jsx:32 -> // Solid fallback for web and Android where blur doesn't render natively
+d:/SIH/mobile\src\components\GlassCard.jsx:33 -> <View style={[styles.solidFallback, ...innerStyle]}>
+d:/SIH/mobile\src\components\GlassCard.jsx:51 -> solidFallback: {
+d:/SIH/mobile\src\components\SystemInput.jsx:15 -> placeholder,
+d:/SIH/mobile\src\components\SystemInput.jsx:33 -> placeholder={placeholder}
+d:/SIH/mobile\src\components\SystemInput.jsx:34 -> placeholderTextColor={Colors.tertiaryLabel}
+d:/SIH/mobile\src\screens\ChatbotScreen.jsx:281 -> placeholder="Type your thoughts or ask a question..."
+d:/SIH/mobile\src\screens\ChatbotScreen.jsx:282 -> placeholderTextColor={DS.text.muted}
+d:/SIH/mobile\src\screens\LoginScreen.js:76 -> placeholder="Enter 10-digit number"
+d:/SIH/mobile\src\screens\LoginScreen.js:77 -> placeholderTextColor={DS.text.muted}
+d:/SIH/mobile\src\screens\OTPVerificationScreen.js:124 -> {/* S2: the dev "auto-fill mock OTP" button was removed here — OTP
+d:/SIH/mobile\src\screens\OTPVerificationScreen.js:125 -> verification is now real, so a hardcoded code can no longer
+d:/SIH/mobile\src\screens\OTPVerificationScreen.js:163 -> {/* Fallback Verify Button */}
+d:/SIH/mobile\src\screens\ProfileScreen.jsx:120 -> {/* Emergency SOS Fallback Section */}
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:43 -> location: { lat: 18.5204, lng: 73.8567 } // Optional location mock
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:99 -> placeholder="e.g. Priya Sharma"
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:100 -> placeholderTextColor={DS.text.muted}
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:114 -> placeholder="e.g. 26"
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:115 -> placeholderTextColor={DS.text.muted}
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:131 -> <Text style={styles.emergencyTagText}>Emergency SOS Fallback</Text>
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:141 -> placeholder="e.g. Ramesh Kumar (Brother / Lawyer)"
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:142 -> placeholderTextColor={DS.text.muted}
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:153 -> placeholder="+91 98765 43210"
+d:/SIH/mobile\src\screens\RegisterScreen.jsx:154 -> placeholderTextColor={DS.text.muted}
+d:/SIH/mobile\src\services\api.js:7 -> return config.apiUrl || 'http://localhost:8000';
+d:/SIH/mobile\src\services\api.js:10 -> export const API_BASE_URL = config.apiUrl || 'http://localhost:8000';
+d:/SIH/mobile\src\services\notifications.js:47 -> console.log('Mock: Registering for push notifications');
+d:/SIH/mobile\src\services\notifications.js:52 -> console.log('Mock: Received notification:', notification);
+d:/SIH/mobile\src\services\storage.js:17 -> // Memory fallback is preserved
+d:/SIH/mobile\src\services\storage.js:39 -> // Memory fallback is preserved
+d:/SIH/mobile\src\services\__tests__\api-auth-wiring.test.js:58 -> assert.doesNotMatch(source, /mock_jwt/i);
+d:/SIH/frontend\vite.config.js:14 -> env.VITE_API_URL ? new URL(env.VITE_API_URL).hostname : 'localhost',
+d:/SIH/frontend\vite.config.js:15 -> 'localhost',
+d:/SIH/frontend\vite.config.js:16 -> '127.0.0.1'
+d:/SIH/frontend\vite.config.js:20 -> target: env.VITE_API_URL || 'http://localhost:8000',
+d:/SIH/frontend\vite.config.js:26 -> target: 'http://localhost:8090',
+d:/SIH/frontend\src\hooks\useVoiceAgent.js:9 -> // instead of using the voice-agent's generic .env fallback.
+d:/SIH/frontend\src\hooks\useVoiceAgent.js:59 -> if (!playCtxRef.current || playCtxRef.current.sampleRate !== rate) {
+d:/SIH/frontend\src\hooks\useVoiceAgent.js:61 -> playCtxRef.current = new AudioContext({ sampleRate: rate });
+d:/SIH/frontend\src\hooks\useVoiceAgent.js:96 -> micCtxRef.current = new AudioContext({ sampleRate: IN_RATE });
+d:/SIH/frontend\src\hooks\useVoiceAgent.js:153 -> ttsRateRef.current = msg.output_sample_rate;
+d:/SIH/frontend\src\hooks\useVoiceAgent.js:183 -> ttsRateRef.current = msg.sample_rate;
+d:/SIH/frontend\src\pages\Login.jsx:73 -> text-white placeholder-white/40 font-medium
+d:/SIH/frontend\src\pages\Login.jsx:287 -> placeholder="+91 98765 43210"
+d:/SIH/frontend\src\pages\Login.jsx:348 -> required placeholder="Jane Doe" className={INPUT_CLASS} />
+d:/SIH/frontend\src\pages\Login.jsx:378 -> required placeholder="counsellor_01"
+d:/SIH/frontend\src\pages\Login.jsx:387 -> required placeholder="••••••••"
+d:/SIH/frontend\src\pages\Admin\NationalDashboard.jsx:13 -> top: `${Math.random() * 100}%`,
+d:/SIH/frontend\src\pages\Admin\NationalDashboard.jsx:14 -> left: `${Math.random() * 100}%`,
+d:/SIH/frontend\src\pages\Admin\NationalDashboard.jsx:15 -> animationDelay: `${Math.random() * 3}s`,
+d:/SIH/frontend\src\pages\Admin\NationalDashboard.jsx:16 -> animationDuration: `${Math.floor(Math.random() * (8 - 2) + 2)}s`,
+d:/SIH/frontend\src\pages\Admin\NationalDashboard.jsx:52 -> const mockStates = [
+d:/SIH/frontend\src\pages\Admin\NationalDashboard.jsx:130 -> {mockStates.map((state) => (
+d:/SIH/frontend\src\pages\Admin\StateDashboard.jsx:21 -> // Mock district breakdown for UI visualization
+d:/SIH/frontend\src\pages\Admin\StateDashboard.jsx:22 -> const mockDistricts = [
+d:/SIH/frontend\src\pages\Admin\StateDashboard.jsx:39 -> highRisk: data.stats.critical_cases || 87, // fallback
+d:/SIH/frontend\src\pages\Admin\StateDashboard.jsx:44 -> // Fallback if data structure is missing
+d:/SIH/frontend\src\pages\Admin\StateDashboard.jsx:95 -> {mockDistricts.map((district) => (
+d:/SIH/frontend\src\pages\Victim\CaseLifecycle.jsx:185 -> placeholder="Enter 16-digit CNR Number"
+d:/SIH/frontend\src\pages\Victim\CaseLifecycle.jsx:334 -> placeholder="I want to report an incident regarding..."
+d:/SIH/frontend\src\pages\Victim\Chatbot.jsx:97 -> // session from the backend (not hardcoded here) so it stays in sync with
+d:/SIH/frontend\src\pages\Victim\Chatbot.jsx:263 -> placeholder="Type your thoughts..."
+d:/SIH/frontend\tests\staff-dashboard-auth.test.js:80 -> assert.doesNotMatch(source, /mock_jwt/i, 'no fabricated token pattern should remain');
+d:/SIH/frontend\tests\staff-dashboard-auth.test.js:86 -> // These pages are mock-data-only today (confirmed by audit — no fetch call
+d:/SIH/backend\api\assignment\auto_assign.py:38 -> best_fallback = counsellors[0]
+d:/SIH/backend\api\assignment\auto_assign.py:40 -> .update({"current_caseload": best_fallback["current_caseload"] + 1})\
+d:/SIH/backend\api\assignment\auto_assign.py:41 -> .eq("id", best_fallback["id"])\
+d:/SIH/backend\api\assignment\auto_assign.py:43 -> return best_fallback["id"]
+d:/SIH/backend\api\auth\auth_routes.py:113 -> # Fallback for staff who might not have a profile yet
+d:/SIH/backend\api\auth\victim_dependencies.py:149 -> the fallback. A direct Python call bypasses FastAPI's own dependency-
+d:/SIH/backend\api\cases\report_routes.py:8 -> from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+d:/SIH/backend\api\cases\report_routes.py:38 -> styles = getSampleStyleSheet()
+d:/SIH/backend\api\cases\sos_routes.py:58 -> # 3. Schedule 30-minute escalation (Mocked)
+d:/SIH/backend\api\dashboards\district_routes.py:93 -> # Mock logic to get SOS events for this district
+d:/SIH/backend\api\dashboards\national_routes.py:65 -> "avg_sla": "24h", # Placeholder until SLA tracking is implemented
+d:/SIH/backend\api\dashboards\national_routes.py:66 -> "resource_utilization": "76%", # Placeholder until counsellor loads are summed
+d:/SIH/backend\api\dashboards\state_routes.py:20 -> # Mock aggregation for MVP
+d:/SIH/backend\api\intake\app_routes.py:209 -> "assigned_counsellor_id": "11111111-1111-1111-1111-111111111111" # Assign dummy counsellor for MVP
+d:/SIH/backend\api\intake\ivr_webhook.py:77 -> # --- Legacy Mock Engine ---
+d:/SIH/backend\api\intake\sms_webhook.py:85 -> # Send SMS back via Pushbullet (mocked via logger if no key)
+d:/SIH/backend\api\intake\sms_webhook.py:88 -> # Mocking the actual HTTP call to pushbullet for brevity
+d:/SIH/backend\api\scoring\sentiment_emotion.py:8 -> MVP Mock for IndicBERT + LLM emotion classification.
+d:/SIH/backend\migrations\0005_staff.sql:67 -> -- deferred, not faked.
+d:/SIH/backend\migrations\0005_staff.sql:91 -> -- anywhere), so this is a nullable placeholder column, populated by
+d:/SIH/backend\migrations\0005_staff.sql:134 -> -- placeholder hash columns would itself be a false claim of tamper-evidence
+d:/SIH/backend\migrations\0010_tasks.sql:12 -> -- escalation, and the silence-ladder code sample on PDF page 17) versus
+d:/SIH/backend\scripts\clear_db.py:78 -> # Delete all rows where id is not a dummy nil uuid (deletes everything)
+d:/SIH/backend\scripts\run_production_gate.py:27 -> # Set mock API keys for LangChain initialization
+d:/SIH/backend\scripts\run_production_gate.py:28 -> os.environ["GROQ_API_KEY"] = "mock_key_for_test_environment"
+d:/SIH/backend\scripts\run_production_gate.py:62 -> # 2. Verify OTP (assuming dev environment accepts dummy '123456')
+d:/SIH/backend\scripts\run_production_gate.py:137 -> logger.warning(" ⚠ Distress score was not persisted. (Might be using mock DB in test client)")
+d:/SIH/backend\scripts\run_production_gate.py:159 -> assert res.status_code == 200, f"Empty ASR fallback failed: {res.text}"
+d:/SIH/backend\scripts\run_production_gate.py:163 -> logger.info("[Cleanup] Tearing down S11 E2E Test Data...")
+d:/SIH/backend\scripts\seed_legal_knowledge.py:147 -> "- Temporary shelter: If the victim cannot safely return home due to ongoing "
+d:/SIH/backend\scripts\seed_legal_knowledge.py:148 -> "  threat, temporary accommodation must be arranged by the district administration.\n"
+d:/SIH/backend\services\acoustic_extractor.py:173 -> with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+d:/SIH/backend\services\ecourts_parser.py:17 -> prior version of this function hardcoded fabricated legal facts for one specific
+d:/SIH/backend\services\ecourts_parser.py:65 -> return raw_data  # Fallback to deterministically corrected raw data if parsing fails
+d:/SIH/backend\services\embedding_service.py:4 -> BGE-M3 embedding provider (BAAI/bge-m3) with a lightweight mock fallback
+d:/SIH/backend\services\embedding_service.py:38 -> _MOCK_SEED = 42  # reproducible mock vectors keyed to text hash
+d:/SIH/backend\services\embedding_service.py:98 -> # Mock provider (dev / CI / no-GPU fallback)
+d:/SIH/backend\services\embedding_service.py:101 -> class MockEmbeddingProvider:
+d:/SIH/backend\services\embedding_service.py:109 -> mock embeddings to test retrieval quality, only to test DB round-trips
+d:/SIH/backend\services\embedding_service.py:136 -> def get_embedder(force_mock: bool = False) -> EmbeddingProvider:
+d:/SIH/backend\services\embedding_service.py:141 -> 1. MockEmbeddingProvider if force_mock=True
+d:/SIH/backend\services\embedding_service.py:142 -> 2. MockEmbeddingProvider if sentence-transformers is not installed
+d:/SIH/backend\services\embedding_service.py:146 -> if _provider is not None and not force_mock:
+d:/SIH/backend\services\embedding_service.py:149 -> if force_mock:
+d:/SIH/backend\services\embedding_service.py:150 -> _provider = MockEmbeddingProvider()
+d:/SIH/backend\services\embedding_service.py:151 -> logger.info("Using mock embedding provider (forced)")
+d:/SIH/backend\services\embedding_service.py:159 -> _provider = MockEmbeddingProvider()
+d:/SIH/backend\services\embedding_service.py:161 -> "sentence-transformers not installed; using mock embedding provider. "
+d:/SIH/backend\services\location_resolver.py:10 -> For now, we simulate this with a mock implementation.
+d:/SIH/backend\services\location_resolver.py:14 -> # Mock implementation:
+d:/SIH/backend\services\location_resolver.py:17 -> # Just returning a dummy district/state for the sake of the demo
+d:/SIH/backend\services\location_resolver.py:18 -> return "Mock District", "Mock State"
+d:/SIH/backend\services\otp_service.py:76 -> # In-memory store fallback for local development when otp_codes table has not yet
+d:/SIH/backend\services\pii_redaction.py:8 -> In MVP, we do a basic mock replacement for demo purposes.
+d:/SIH/backend\services\pii_redaction.py:12 -> # Very basic mock logic for MVP
+d:/SIH/backend\services\translation.py:19 -> # For MVP mock, just return original text if we don't have a specific mock rule
+d:/SIH/backend\services\agents\empathy_agent.py:143 -> # Safe fallback - always acknowledge and direct to SOS
+d:/SIH/backend\tests\fake_supabase.py:2 -> A minimal in-memory fake of the subset of the Supabase/postgrest async query
+d:/SIH/backend\tests\fake_supabase.py:6 -> This is NOT a general-purpose Supabase mock — it exists specifically so
+d:/SIH/backend\tests\fake_supabase.py:10 -> code paths against this fake's stored rows, not against a rewritten/simplified
+d:/SIH/backend\tests\fake_supabase.py:19 -> class FakeTable:
+d:/SIH/backend\tests\fake_supabase.py:92 -> # real table, so the fake must supply it the same way Postgres does.
+d:/SIH/backend\tests\fake_supabase.py:120 -> class FakeSupabaseClient:
+d:/SIH/backend\tests\fake_supabase.py:127 -> return FakeTable(self._store, name)
+d:/SIH/backend\tests\test_bolna_webhook.py:4 -> Mocked-payload tests for the Bolna IVR webhook handler (Phase 5 requirement).
+d:/SIH/backend\tests\test_bolna_webhook.py:21 -> from unittest.mock import AsyncMock, patch, MagicMock
+d:/SIH/backend\tests\test_bolna_webhook.py:39 -> # Fixture: fake Supabase client
+d:/SIH/backend\tests\test_bolna_webhook.py:42 -> class FakeSupabase:
+d:/SIH/backend\tests\test_bolna_webhook.py:43 -> """Minimal Supabase mock that records inserts and supports chain queries."""
+d:/SIH/backend\tests\test_bolna_webhook.py:51 -> return FakeTable(name, self)
+d:/SIH/backend\tests\test_bolna_webhook.py:62 -> class FakeTable:
+d:/SIH/backend\tests\test_bolna_webhook.py:99 -> result = MagicMock()
+d:/SIH/backend\tests\test_bolna_webhook.py:124 -> fake_db = FakeSupabase(users=[], cases=[])
+d:/SIH/backend\tests\test_bolna_webhook.py:126 -> with patch("api.intake.ivr_webhook.get_supabase", new_callable=AsyncMock) as mock_sup, \
+d:/SIH/backend\tests\test_bolna_webhook.py:128 -> patch("api.intake.ivr_webhook.calculate_dynamic_score", new_callable=AsyncMock) as mock_score:
+d:/SIH/backend\tests\test_bolna_webhook.py:130 -> mock_sup.return_value = fake_db
+d:/SIH/backend\tests\test_bolna_webhook.py:131 -> mock_score.return_value = {
+d:/SIH/backend\tests\test_bolna_webhook.py:154 -> tables_inserted = [i["table"] for i in fake_db.inserts]
+d:/SIH/backend\tests\test_bolna_webhook.py:164 -> fake_db = FakeSupabase(users=existing_user, cases=existing_case)
+d:/SIH/backend\tests\test_bolna_webhook.py:166 -> with patch("api.intake.ivr_webhook.get_supabase", new_callable=AsyncMock) as mock_sup, \
+d:/SIH/backend\tests\test_bolna_webhook.py:168 -> patch("api.intake.ivr_webhook.calculate_dynamic_score", new_callable=AsyncMock) as mock_score:
+d:/SIH/backend\tests\test_bolna_webhook.py:170 -> mock_sup.return_value = fake_db
+d:/SIH/backend\tests\test_bolna_webhook.py:171 -> mock_score.return_value = {
+d:/SIH/backend\tests\test_bolna_webhook.py:192 -> tables_inserted = [i["table"] for i in fake_db.inserts]
+d:/SIH/backend\tests\test_bolna_webhook.py:201 -> fake_db = FakeSupabase(users=[{"id": "u1"}], cases=[{"id": "c1"}])
+d:/SIH/backend\tests\test_bolna_webhook.py:203 -> with patch("api.intake.ivr_webhook.get_supabase", new_callable=AsyncMock) as mock_sup, \
+d:/SIH/backend\tests\test_bolna_webhook.py:205 -> patch("api.intake.ivr_webhook.calculate_dynamic_score", new_callable=AsyncMock) as mock_score:
+d:/SIH/backend\tests\test_bolna_webhook.py:207 -> mock_sup.return_value = fake_db
+d:/SIH/backend\tests\test_bolna_webhook.py:208 -> mock_score.return_value = {
+d:/SIH/backend\tests\test_bolna_webhook.py:230 -> fake_db = FakeSupabase(users=[{"id": "u1"}], cases=[{"id": "c1"}])
+d:/SIH/backend\tests\test_bolna_webhook.py:232 -> with patch("api.intake.ivr_webhook.get_supabase", new_callable=AsyncMock) as mock_sup, \
+d:/SIH/backend\tests\test_bolna_webhook.py:234 -> patch("api.intake.ivr_webhook.calculate_dynamic_score", new_callable=AsyncMock) as mock_score:
+d:/SIH/backend\tests\test_bolna_webhook.py:236 -> mock_sup.return_value = fake_db
+d:/SIH/backend\tests\test_bolna_webhook.py:237 -> mock_score.return_value = {
+d:/SIH/backend\tests\test_bolna_webhook.py:282 -> fake_db = FakeSupabase(users=[], cases=[])
+d:/SIH/backend\tests\test_bolna_webhook.py:283 -> with patch("api.intake.ivr_webhook.get_supabase", new_callable=AsyncMock) as mock_sup, \
+d:/SIH/backend\tests\test_bolna_webhook.py:285 -> mock_sup.return_value = fake_db
+d:/SIH/backend\tests\test_bolna_webhook.py:297 -> fake_db = FakeSupabase(
+d:/SIH/backend\tests\test_bolna_webhook.py:301 -> with patch("api.intake.ivr_webhook.get_supabase", new_callable=AsyncMock) as mock_sup, \
+d:/SIH/backend\tests\test_bolna_webhook.py:303 -> mock_sup.return_value = fake_db
+d:/SIH/backend\tests\test_bolna_webhook.py:337 -> with patch("httpx.AsyncClient") as mock_client_cls, \
+d:/SIH/backend\tests\test_bolna_webhook.py:344 -> mock_client = AsyncMock()
+d:/SIH/backend\tests\test_bolna_webhook.py:345 -> mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+d:/SIH/backend\tests\test_bolna_webhook.py:346 -> mock_client.__aexit__ = AsyncMock(return_value=False)
+d:/SIH/backend\tests\test_bolna_webhook.py:347 -> mock_client.post.side_effect = Exception("connection refused")
+d:/SIH/backend\tests\test_bolna_webhook.py:348 -> mock_client_cls.return_value = mock_client
+d:/SIH/backend\tests\test_dashboard_authorization.py:8 -> 1. Against the REAL application (`from main import app`) with no mocking: a request
+d:/SIH/backend\tests\test_dashboard_authorization.py:15 -> dependency on dummy routes: this proves the full accept/reject decision (401 vs
+d:/SIH/backend\tests\test_dashboard_authorization.py:30 -> # A representative sample covering every router touched by this remediation pass.
+d:/SIH/backend\tests\test_dashboard_authorization.py:81 -> # occurs and no mocking is needed.
+d:/SIH/backend\tests\test_dashboard_authorization.py:117 -> Mounts the real `require_roles` dependency on trivial dummy routes, so the
+d:/SIH/backend\tests\test_e2e_integration.py:18 -> from unittest.mock import AsyncMock, patch, MagicMock
+d:/SIH/backend\tests\test_e2e_integration.py:38 -> # Test Fixtures & Mocks
+d:/SIH/backend\tests\test_e2e_integration.py:41 -> class FakeDbResult:
+d:/SIH/backend\tests\test_e2e_integration.py:46 -> class FakeDbQuery:
+d:/SIH/backend\tests\test_e2e_integration.py:129 -> return FakeDbResult(filtered[0] if filtered else None)
+d:/SIH/backend\tests\test_e2e_integration.py:130 -> return FakeDbResult(filtered)
+d:/SIH/backend\tests\test_e2e_integration.py:133 -> class FakeDb:
+d:/SIH/backend\tests\test_e2e_integration.py:138 -> return FakeDbQuery(self.store, table_name)
+d:/SIH/backend\tests\test_e2e_integration.py:178 -> with patch("httpx.AsyncClient") as mock_client_cls:
+d:/SIH/backend\tests\test_e2e_integration.py:179 -> mock_client = AsyncMock()
+d:/SIH/backend\tests\test_e2e_integration.py:180 -> mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+d:/SIH/backend\tests\test_e2e_integration.py:181 -> mock_client.__aexit__ = AsyncMock(return_value=False)
+d:/SIH/backend\tests\test_e2e_integration.py:183 -> mock_backend_response = MagicMock()
+d:/SIH/backend\tests\test_e2e_integration.py:184 -> mock_backend_response.status_code = 200
+d:/SIH/backend\tests\test_e2e_integration.py:185 -> mock_backend_response.json.return_value = {
+d:/SIH/backend\tests\test_e2e_integration.py:193 -> mock_backend_response.raise_for_status = MagicMock()
+d:/SIH/backend\tests\test_e2e_integration.py:194 -> mock_client.post.return_value = mock_backend_response
+d:/SIH/backend\tests\test_e2e_integration.py:195 -> mock_client_cls.return_value = mock_client
+d:/SIH/backend\tests\test_e2e_integration.py:248 -> fake_db = FakeDb(initial_db)
+d:/SIH/backend\tests\test_e2e_integration.py:250 -> with patch("api.dashboards.counsellor_routes.get_supabase", new_callable=AsyncMock) as mock_sup:
+d:/SIH/backend\tests\test_e2e_integration.py:251 -> mock_sup.return_value = fake_db
+d:/SIH/backend\tests\test_ecourts_fabrication_removed.py:2 -> Regression tests proving the hardcoded, fabricated legal data previously injected
+d:/SIH/backend\tests\test_ecourts_fabrication_removed.py:9 -> cannot be confused with a real one). No realistic-looking fake case data is
+d:/SIH/backend\tests\test_ecourts_fabrication_removed.py:30 -> def test_fabricated_cnr_not_hardcoded_in_source():
+d:/SIH/backend\tests\test_ecourts_fabrication_removed.py:54 -> the fabricated CNR unconditionally mutated raw_data with fake facts before this
+d:/SIH/backend\tests\test_ecourts_fabrication_removed.py:83 -> def test_no_new_hardcoded_realistic_cnr_introduced():
+d:/SIH/backend\tests\test_memory_validation.py:10 -> from unittest.mock import AsyncMock, patch
+d:/SIH/backend\tests\test_memory_validation.py:39 -> # Mock the Groq client inside empathy_agent
+d:/SIH/backend\tests\test_memory_validation.py:40 -> with patch("services.agents.empathy_agent._groq.chat.completions.create", new_callable=AsyncMock) as mock_groq:
+d:/SIH/backend\tests\test_memory_validation.py:41 -> class MockChoice:
+d:/SIH/backend\tests\test_memory_validation.py:42 -> class MockMessage:
+d:/SIH/backend\tests\test_memory_validation.py:44 -> message = MockMessage()
+d:/SIH/backend\tests\test_memory_validation.py:46 -> class MockResponse:
+d:/SIH/backend\tests\test_memory_validation.py:47 -> choices = [MockChoice()]
+d:/SIH/backend\tests\test_memory_validation.py:48 -> class MockUsage:
+d:/SIH/backend\tests\test_memory_validation.py:50 -> usage = MockUsage()
+d:/SIH/backend\tests\test_memory_validation.py:52 -> mock_groq.return_value = MockResponse()
+d:/SIH/backend\tests\test_memory_validation.py:57 -> mock_groq.assert_called_once()
+d:/SIH/backend\tests\test_memory_validation.py:60 -> messages_sent = mock_groq.call_args.kwargs['messages']
+d:/SIH/backend\tests\test_multi_agent_flow.py:13 -> from unittest.mock import AsyncMock, patch
+d:/SIH/backend\tests\test_multi_agent_flow.py:28 -> # Mock the underlying agents so we don't hit the real LLM
+d:/SIH/backend\tests\test_multi_agent_flow.py:29 -> with patch("services.agents.supervisor.triage_agent.run", new_callable=AsyncMock) as mock_triage, \
+d:/SIH/backend\tests\test_multi_agent_flow.py:30 -> patch("services.agents.supervisor.medical_agent.run", new_callable=AsyncMock) as mock_medical, \
+d:/SIH/backend\tests\test_multi_agent_flow.py:31 -> patch("services.agents.supervisor.legal_agent.run", new_callable=AsyncMock) as mock_legal, \
+d:/SIH/backend\tests\test_multi_agent_flow.py:32 -> patch("services.agents.supervisor.empathy_agent.run", new_callable=AsyncMock) as mock_empathy:
+d:/SIH/backend\tests\test_multi_agent_flow.py:34 -> async def _mock_triage(s):
+d:/SIH/backend\tests\test_multi_agent_flow.py:41 -> mock_triage.side_effect = _mock_triage
+d:/SIH/backend\tests\test_multi_agent_flow.py:43 -> async def _mock_medical(s):
+d:/SIH/backend\tests\test_multi_agent_flow.py:46 -> mock_medical.side_effect = _mock_medical
+d:/SIH/backend\tests\test_multi_agent_flow.py:48 -> async def _mock_empathy(s):
+d:/SIH/backend\tests\test_multi_agent_flow.py:50 -> mock_empathy.side_effect = _mock_empathy
+d:/SIH/backend\tests\test_multi_agent_flow.py:54 -> mock_triage.assert_called_once()
+d:/SIH/backend\tests\test_multi_agent_flow.py:55 -> mock_medical.assert_called_once()
+d:/SIH/backend\tests\test_multi_agent_flow.py:56 -> mock_legal.assert_not_called()
+d:/SIH/backend\tests\test_multi_agent_flow.py:57 -> mock_empathy.assert_called_once()
+d:/SIH/backend\tests\test_multi_agent_flow.py:70 -> with patch("services.agents.supervisor.triage_agent.run", new_callable=AsyncMock) as mock_triage, \
+d:/SIH/backend\tests\test_multi_agent_flow.py:71 -> patch("services.agents.supervisor.medical_agent.run", new_callable=AsyncMock) as mock_medical, \
+d:/SIH/backend\tests\test_multi_agent_flow.py:72 -> patch("services.agents.supervisor.legal_agent.run", new_callable=AsyncMock) as mock_legal, \
+d:/SIH/backend\tests\test_multi_agent_flow.py:73 -> patch("services.agents.supervisor.retrieve_victim_memories", new_callable=AsyncMock) as mock_mem, \
+d:/SIH/backend\tests\test_multi_agent_flow.py:74 -> patch("services.agents.supervisor.empathy_agent.run", new_callable=AsyncMock) as mock_empathy:
+d:/SIH/backend\tests\test_multi_agent_flow.py:76 -> # Mock Legal routing
+d:/SIH/backend\tests\test_multi_agent_flow.py:77 -> async def _mock_triage(s):
+d:/SIH/backend\tests\test_multi_agent_flow.py:84 -> mock_triage.side_effect = _mock_triage
+d:/SIH/backend\tests\test_multi_agent_flow.py:86 -> async def _mock_legal(s):
+d:/SIH/backend\tests\test_multi_agent_flow.py:94 -> mock_legal.side_effect = _mock_legal
+d:/SIH/backend\tests\test_multi_agent_flow.py:96 -> async def _mock_empathy(s):
+d:/SIH/backend\tests\test_multi_agent_flow.py:99 -> mock_empathy.side_effect = _mock_empathy
+d:/SIH/backend\tests\test_multi_agent_flow.py:101 -> mock_mem.return_value = []
+d:/SIH/backend\tests\test_multi_agent_flow.py:105 -> mock_triage.assert_called_once()
+d:/SIH/backend\tests\test_multi_agent_flow.py:106 -> mock_legal.assert_called_once()
+d:/SIH/backend\tests\test_multi_agent_flow.py:107 -> mock_medical.assert_not_called()
+d:/SIH/backend\tests\test_multi_agent_flow.py:108 -> mock_empathy.assert_called_once()
+d:/SIH/backend\tests\test_otp_service.py:4 -> in-memory fake Supabase store (tests/fake_supabase.py) — not a rewritten copy of
+d:/SIH/backend\tests\test_otp_service.py:14 -> from tests.fake_supabase import FakeSupabaseClient
+d:/SIH/backend\tests\test_otp_service.py:32 -> def fake_db(monkeypatch):
+d:/SIH/backend\tests\test_otp_service.py:33 -> client = FakeSupabaseClient()
+d:/SIH/backend\tests\test_otp_service.py:35 -> async def _get_fake_supabase():
+d:/SIH/backend\tests\test_otp_service.py:38 -> monkeypatch.setattr(otp_service, "get_supabase", _get_fake_supabase)
+d:/SIH/backend\tests\test_otp_service.py:60 -> async def _request_and_capture_code(fake_db, recording_provider, phone=PHONE) -> str:
+d:/SIH/backend\tests\test_otp_service.py:87 -> async def test_valid_otp_succeeds(fake_db, recording_provider):
+d:/SIH/backend\tests\test_otp_service.py:88 -> code = await _request_and_capture_code(fake_db, recording_provider)
+d:/SIH/backend\tests\test_otp_service.py:92 -> async def test_invalid_otp_fails(fake_db, recording_provider):
+d:/SIH/backend\tests\test_otp_service.py:93 -> await _request_and_capture_code(fake_db, recording_provider)
+d:/SIH/backend\tests\test_otp_service.py:98 -> async def test_expired_otp_fails(fake_db, recording_provider):
+d:/SIH/backend\tests\test_otp_service.py:99 -> code = await _request_and_capture_code(fake_db, recording_provider)
+d:/SIH/backend\tests\test_otp_service.py:101 -> row = fake_db._store["otp_codes"][-1]
+d:/SIH/backend\tests\test_otp_service.py:108 -> async def test_otp_cannot_be_reused(fake_db, recording_provider):
+d:/SIH/backend\tests\test_otp_service.py:109 -> code = await _request_and_capture_code(fake_db, recording_provider)
+d:/SIH/backend\tests\test_otp_service.py:116 -> async def test_fourth_attempt_fails_after_three_wrong_attempts(fake_db, recording_provider):
+d:/SIH/backend\tests\test_otp_service.py:117 -> await _request_and_capture_code(fake_db, recording_provider)
+d:/SIH/backend\tests\test_otp_service.py:124 -> row = fake_db._store["otp_codes"][-1]
+d:/SIH/backend\tests\test_otp_service.py:131 -> async def test_no_pending_otp_is_rejected(fake_db, recording_provider):
+d:/SIH/backend\tests\test_otp_service.py:138 -> async def test_phone_rate_limit_is_enforced(fake_db, recording_provider, monkeypatch):
+d:/SIH/backend\tests\test_otp_service.py:148 -> async def test_ip_rate_limit_is_enforced_across_different_phones(fake_db, recording_provider, monkeypatch):
+d:/SIH/backend\tests\test_otp_service.py:158 -> async def test_rate_limit_window_expiry_allows_new_requests(fake_db, recording_provider, monkeypatch):
+d:/SIH/backend\tests\test_otp_service.py:163 -> row = fake_db._store["otp_codes"][-1]
+d:/SIH/backend\tests\test_otp_service.py:171 -> async def test_plaintext_code_is_never_persisted(fake_db, recording_provider):
+d:/SIH/backend\tests\test_otp_service.py:172 -> code = await _request_and_capture_code(fake_db, recording_provider)
+d:/SIH/backend\tests\test_otp_service.py:173 -> row = fake_db._store["otp_codes"][-1]
+d:/SIH/backend\tests\test_otp_service.py:180 -> async def test_request_otp_return_value_never_contains_the_code(fake_db, recording_provider):
+d:/SIH/backend\tests\test_rag_retrieval.py:6 -> Tests use the MockEmbeddingProvider (no actual model download) to verify:
+d:/SIH/backend\tests\test_rag_retrieval.py:8 -> 2. Mock vectors are deterministic (same text -> same vector)
+d:/SIH/backend\tests\test_rag_retrieval.py:9 -> 3. Mock vectors are unit-normalised (required for cosine similarity)
+d:/SIH/backend\tests\test_rag_retrieval.py:10 -> 4. get_embedder() returns mock when force_mock=True
+d:/SIH/backend\tests\test_rag_retrieval.py:18 -> MockEmbeddingProvider,
+d:/SIH/backend\tests\test_rag_retrieval.py:28 -> async def test_mock_provider_returns_correct_dimension():
+d:/SIH/backend\tests\test_rag_retrieval.py:29 -> provider = MockEmbeddingProvider()
+d:/SIH/backend\tests\test_rag_retrieval.py:36 -> async def test_mock_provider_is_deterministic():
+d:/SIH/backend\tests\test_rag_retrieval.py:38 -> provider = MockEmbeddingProvider()
+d:/SIH/backend\tests\test_rag_retrieval.py:45 -> async def test_mock_provider_different_texts_produce_different_vectors():
+d:/SIH/backend\tests\test_rag_retrieval.py:46 -> provider = MockEmbeddingProvider()
+d:/SIH/backend\tests\test_rag_retrieval.py:53 -> async def test_mock_provider_is_unit_normalised():
+d:/SIH/backend\tests\test_rag_retrieval.py:55 -> provider = MockEmbeddingProvider()
+d:/SIH/backend\tests\test_rag_retrieval.py:64 -> async def test_mock_provider_handles_empty_input():
+d:/SIH/backend\tests\test_rag_retrieval.py:65 -> provider = MockEmbeddingProvider()
+d:/SIH/backend\tests\test_rag_retrieval.py:71 -> async def test_mock_provider_handles_multiple_texts():
+d:/SIH/backend\tests\test_rag_retrieval.py:72 -> provider = MockEmbeddingProvider()
+d:/SIH/backend\tests\test_rag_retrieval.py:79 -> def test_get_embedder_with_force_mock_returns_mock():
+d:/SIH/backend\tests\test_rag_retrieval.py:82 -> provider = get_embedder(force_mock=True)
+d:/SIH/backend\tests\test_rag_retrieval.py:83 -> assert isinstance(provider, MockEmbeddingProvider)
+d:/SIH/backend\tests\test_rag_retrieval.py:88 -> provider = MockEmbeddingProvider()
+d:/SIH/backend\tests\test_rag_retrieval.py:185 -> from unittest.mock import AsyncMock, patch
+d:/SIH/backend\tests\test_rag_retrieval.py:187 -> # Mock the Groq client inside empathy_agent
+d:/SIH/backend\tests\test_rag_retrieval.py:188 -> with patch("services.agents.empathy_agent._groq.chat.completions.create", new_callable=AsyncMock) as mock_groq:
+d:/SIH/backend\tests\test_rag_retrieval.py:189 -> class MockChoice:
+d:/SIH/backend\tests\test_rag_retrieval.py:190 -> class MockMessage:
+d:/SIH/backend\tests\test_rag_retrieval.py:192 -> message = MockMessage()
+d:/SIH/backend\tests\test_rag_retrieval.py:194 -> class MockResponse:
+d:/SIH/backend\tests\test_rag_retrieval.py:195 -> choices = [MockChoice()]
+d:/SIH/backend\tests\test_rag_retrieval.py:196 -> class MockUsage:
+d:/SIH/backend\tests\test_rag_retrieval.py:198 -> usage = MockUsage()
+d:/SIH/backend\tests\test_rag_retrieval.py:200 -> mock_groq.return_value = MockResponse()
+d:/SIH/backend\tests\test_rag_retrieval.py:205 -> mock_groq.assert_called_once()
+d:/SIH/backend\tests\test_rag_retrieval.py:208 -> messages_sent = mock_groq.call_args.kwargs['messages']
+d:/SIH/backend\tests\test_victim_authorization.py:8 -> Synthetic test identities only (fake UUID-shaped ids, no real phone numbers).
+d:/SIH/backend\tests\test_victim_authorization.py:16 -> from tests.fake_supabase import FakeSupabaseClient
+d:/SIH/backend\tests\test_victim_authorization.py:55 -> fake = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_authorization.py:57 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_authorization.py:58 -> return fake
+d:/SIH/backend\tests\test_victim_authorization.py:60 -> monkeypatch.setattr(app_routes, "get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\test_victim_authorization.py:82 -> fake = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_authorization.py:84 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_authorization.py:85 -> return fake
+d:/SIH/backend\tests\test_victim_authorization.py:87 -> async def _fake_process_turn(*_args, **_kwargs):
+d:/SIH/backend\tests\test_victim_authorization.py:93 -> monkeypatch.setattr("services.supabase_client.get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\test_victim_authorization.py:94 -> monkeypatch.setattr("services.agents.supervisor.execute_turn", _fake_process_turn)
+d:/SIH/backend\tests\test_victim_authorization.py:102 -> # No case exists for VICTIM_A in the fake store, so nothing gets updated -
+d:/SIH/backend\tests\test_victim_authorization.py:104 -> assert fake._store.get("cases", []) == []
+d:/SIH/backend\tests\test_victim_authorization.py:112 -> fake = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_authorization.py:114 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_authorization.py:115 -> return fake
+d:/SIH/backend\tests\test_victim_authorization.py:117 -> monkeypatch.setattr(case_routes, "get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\test_victim_authorization.py:123 -> fake.table("cases")
+d:/SIH/backend\tests\test_victim_authorization.py:135 -> fake = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_authorization.py:137 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_authorization.py:138 -> return fake
+d:/SIH/backend\tests\test_victim_authorization.py:140 -> monkeypatch.setattr(case_routes, "get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\test_victim_authorization.py:146 -> fake.table("cases")
+d:/SIH/backend\tests\test_victim_authorization.py:160 -> fake = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_authorization.py:162 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_authorization.py:163 -> return fake
+d:/SIH/backend\tests\test_victim_authorization.py:165 -> monkeypatch.setattr(sos_routes, "get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\test_victim_authorization.py:171 -> fake.table("cases").insert({"id": case_id, "user_id": VICTIM_B, "assigned_counsellor_id": None}).execute()
+d:/SIH/backend\tests\test_victim_authorization.py:180 -> assert fake._store.get("sos_events", []) == []  # no SOS event was created
+d:/SIH/backend\tests\test_victim_authorization.py:186 -> fake = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_authorization.py:188 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_authorization.py:189 -> return fake
+d:/SIH/backend\tests\test_victim_authorization.py:191 -> monkeypatch.setattr(sos_routes, "get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\test_victim_authorization.py:197 -> fake.table("cases").insert({"id": case_id, "user_id": VICTIM_A, "assigned_counsellor_id": None}).execute()
+d:/SIH/backend\tests\test_victim_authorization.py:206 -> assert len(fake._store["sos_events"]) == 1
+d:/SIH/backend\tests\test_victim_authorization.py:214 -> fake = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_authorization.py:216 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_authorization.py:217 -> return fake
+d:/SIH/backend\tests\test_victim_authorization.py:219 -> async def _fake_fetch(cnr):
+d:/SIH/backend\tests\test_victim_authorization.py:222 -> async def _fake_parse(cnr, raw):
+d:/SIH/backend\tests\test_victim_authorization.py:225 -> monkeypatch.setattr(ecourts_routes, "get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\test_victim_authorization.py:226 -> monkeypatch.setattr(ecourts_routes, "fetch_ecourts_case_api", _fake_fetch)
+d:/SIH/backend\tests\test_victim_authorization.py:227 -> monkeypatch.setattr("services.ecourts_parser.parse_unstructured_case_data", _fake_parse)
+d:/SIH/backend\tests\test_victim_authorization.py:235 -> stored_case = fake._store["cases"][0]
+d:/SIH/backend\tests\test_victim_identity.py:92 -> from tests.fake_supabase import FakeSupabaseClient
+d:/SIH/backend\tests\test_victim_identity.py:94 -> client = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_identity.py:97 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_identity.py:100 -> monkeypatch.setattr(vd, "get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\test_victim_identity.py:107 -> from tests.fake_supabase import FakeSupabaseClient
+d:/SIH/backend\tests\test_victim_identity.py:109 -> client = FakeSupabaseClient()
+d:/SIH/backend\tests\test_victim_identity.py:111 -> async def _fake_get_supabase():
+d:/SIH/backend\tests\test_victim_identity.py:114 -> monkeypatch.setattr(vd, "get_supabase", _fake_get_supabase)
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:3 -> from unittest.mock import patch, AsyncMock
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:24 -> # Mock the underlying LLMs
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:25 -> with patch("services.agents.supervisor.triage_agent.run", new_callable=AsyncMock) as mock_triage, \
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:26 -> patch("services.agents.supervisor.empathy_agent.run", new_callable=AsyncMock) as mock_empathy:
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:28 -> async def _mock_triage(s):
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:37 -> async def _mock_empathy(s):
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:40 -> mock_triage.side_effect = _mock_triage
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:41 -> mock_empathy.side_effect = _mock_empathy
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:71 -> with patch("services.agents.supervisor.triage_agent.run", new_callable=AsyncMock) as mock_triage, \
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:72 -> patch("services.agents.supervisor.empathy_agent.run", new_callable=AsyncMock) as mock_empathy, \
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:73 -> patch("services.agents.supervisor.legal_agent.run", new_callable=AsyncMock) as mock_legal:
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:75 -> async def _mock_triage(s):
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:83 -> async def _mock_legal(s):
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:87 -> async def _mock_empathy(s):
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:90 -> mock_triage.side_effect = _mock_triage
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:91 -> mock_legal.side_effect = _mock_legal
+d:/SIH/backend\tests\agents\test_adversarial_guardrails.py:92 -> mock_empathy.side_effect = _mock_empathy
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:5 -> from unittest.mock import patch, AsyncMock, MagicMock
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:12 -> # Use the dummy secret from testing config or mock it
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:15 -> class FakeDbResult:
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:33 -> # Mock the signature verification to always pass for testing
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:35 -> # We also need to mock Supabase calls since this is an integration test
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:36 -> with patch("api.intake.ivr_webhook.get_supabase") as mock_supabase:
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:38 -> # Setup mock Supabase responses
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:39 -> mock_client = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:40 -> mock_supabase.return_value = mock_client
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:42 -> mock_execute = AsyncMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:43 -> mock_execute.return_value = FakeDbResult(data=[])
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:45 -> # Setup the chain to return the mock_execute
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:46 -> mock_query = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:47 -> mock_query.execute = mock_execute
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:49 -> mock_eq = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:50 -> mock_eq.eq.return_value = mock_query
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:51 -> mock_eq.neq.return_value = mock_query
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:52 -> mock_eq.execute = mock_execute
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:54 -> mock_select = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:55 -> mock_select.eq.return_value = mock_eq
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:57 -> mock_table = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:58 -> mock_table.select.return_value = mock_select
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:60 -> mock_client.table.return_value = mock_table
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:66 -> mock_execute_2 = AsyncMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:67 -> mock_execute_2.return_value = FakeDbResult(data=[{"id": "123"}])
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:68 -> mock_query_2 = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:69 -> mock_query_2.execute = mock_execute_2
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:70 -> mock_eq.eq.return_value = mock_query_2
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:91 -> with patch("api.intake.ivr_webhook.get_supabase") as mock_supabase:
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:92 -> mock_client = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:93 -> mock_supabase.return_value = mock_client
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:95 -> # Setup basic mocks to let the pipeline run
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:96 -> mock_execute = AsyncMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:97 -> mock_execute.return_value = FakeDbResult(data=[])
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:99 -> mock_query = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:100 -> mock_query.execute = mock_execute
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:102 -> mock_eq = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:103 -> mock_eq.eq.return_value = mock_query
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:104 -> mock_eq.neq.return_value = mock_query
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:105 -> mock_eq.execute = mock_execute
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:107 -> mock_select = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:108 -> mock_select.eq.return_value = mock_eq
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:110 -> mock_table = MagicMock()
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:111 -> mock_table.select.return_value = mock_select
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:113 -> mock_client.table.return_value = mock_table
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:117 -> with patch("api.intake.ivr_webhook.calculate_dynamic_score") as mock_score:
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:118 -> mock_score.return_value = (50.0, "medium", {"acoustic": {"contribution": 50}, "sentiment": {"contribution": 0}})
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:122 -> # Should not crash 500. Might fail depending on deeper mocks, but we verify
+d:/SIH/backend\tests\ivr\test_webhook_failures.py:124 -> assert response.status_code in [200, 500] # Depending on if our DB mocks are perfect

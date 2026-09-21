@@ -23,6 +23,7 @@ import * as Haptics from 'expo-haptics';
 import { DS } from '../theme/designSystem';
 import DistressGauge from '../components/DistressGauge';
 import SOSModal from '../components/SOSModal';
+import ScalePressable from '../components/ScalePressable';
 import { api } from '../services/api';
 
 const MOODS = [
@@ -33,35 +34,7 @@ const MOODS = [
   { id: 'distressed', label: 'Distressed', emoji: '😣', color: DS.accent.terracotta },
 ];
 
-function ScalePressable({ children, onPress, style, disabled }) {
-  const scale = useSharedValue(1);
-  
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scale.get() }],
-    };
-  });
 
-  return (
-    <Pressable
-      disabled={disabled}
-      onPressIn={() => {
-        scale.set(withSpring(0.97, { damping: 15, stiffness: 300 }));
-      }}
-      onPressOut={() => {
-        scale.set(withSpring(1, { damping: 15, stiffness: 300 }));
-      }}
-      onPress={(e) => {
-        Haptics.selectionAsync();
-        if (onPress) onPress(e);
-      }}
-    >
-      <Animated.View style={[animatedStyle, style]}>
-        {children}
-      </Animated.View>
-    </Pressable>
-  );
-}
 
 export default function HomeScreen({
   userName = 'User',
@@ -169,27 +142,6 @@ export default function HomeScreen({
               </Text>
             </View>
           )}
-        </ScalePressable>
-
-        {/* Secondary Card 2: Grounding Tool */}
-        <ScalePressable style={styles.card} onPress={onNavigateToBreathing}>
-          <View style={styles.groundingHeader}>
-            <View style={styles.iconBox}>
-              <Wind size={22} color="#FFFFFF" />
-            </View>
-            <View style={styles.groundingTextContent}>
-              <Text style={styles.cardTitle}>Box Breathing</Text>
-              <Text style={styles.cardSubtitle}>
-                Calm the nervous system with guided pacing
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Begin 2-Min Grounding</Text>
-          </View>
         </ScalePressable>
       </ScrollView>
 
@@ -355,34 +307,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(60, 60, 67, 0.6)',
     flex: 1,
-  },
-  groundingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: DS.primary.main, // rich lavender fill
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  groundingTextContent: {
-    flex: 1,
-  },
-  primaryButton: {
-    backgroundColor: DS.primary.main, // refined lavender fill
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
   },
 });

@@ -567,8 +567,73 @@ Triggered → Resolved (directly, if handled within 30 min)
 
 | Level | Approach |
 |---|---|
-| Unit | fusion.py, rules_engine.py, auto_assign.py, escalation.py, location_resolver.py |
-| Integration | Webhook payload → DB row → dashboard read (per channel) |
+| Unit | fusion.py, rules_engine.py, auto_assign.py, escalation.py, location_resolver.py, test_fusion_math.py, test_rag_retrieval.py, test_multi_agent_flow.py, test_bolna_webhook.py |
+| Integration | Webhook payload → DB row → dashboard read (per channel), test_e2e_integration.py |
 | Access control | RLS policy test suite covering full Section 2.2 matrix |
-| End-to-end | Scripted demo path covering all 6 phases in sequence |
+| End-to-end | Voice Agent → Bridge → Supervisor → Fusion → Counsellor Queue E2E flow |
 | Manual/qualitative | Emotion tag and score sanity review on sample transcripts before demo day |
+
+---
+
+## 8. AAVAZ Multi-Agent & Advanced Voice Architecture (Production Specification)
+
+### 8.1 Shared Typed Contracts (`backend/models/contracts.py`)
+All subsystem boundaries share strictly typed Pydantic models ensuring consistent schema across FastApi, Voice Agent, and Supabase:
+- `AcousticFeatures`: F0 mean, jitter, shimmer, speech_to_pause_ratio, voice_stress_index, confidence.
+- `ScoreComponent`: weight, value, contribution, notes (XAI compliance).
+- `DistressResult`: distress_score (0-100), risk_level (LOW, MEDIUM, HIGH, CRITICAL), emotion_tag, score_breakdown, intervention.
+- `TriageResult`: risk_level, immediate_danger, self_harm_signal, witness_intimidation_signal, requires_escalation, reason_codes.
+- `Turn`: turn_id, speaker ('user'|'agent'), language, transcript, audio_url, created_at.
+- `ConversationState`: conversation_id, victim_id, case_id, language, channel, transcript (bounded window of 20 turns), triage, distress, memories, legal context, escalation state.
+- `LegalDoc`: document_id, title, content, act_section, compensation_amount, confidence.
+- `MemoryChunk`: id, victim_id, conversation_id, memory_type (8 categories: safety_risk, follow_up, emotional_state, legal_status, etc.), content, similarity_score.
+- `EscalationState`: escalation_id, severity, reason, summary, recommended_action, counsellor_task_id.
+
+### 8.2 Real Multimodal Acoustic DSP Engine (`backend/services/acoustic_extractor.py`)
+- Replaces mock audio heuristics with digital signal processing using `librosa`, `scipy`, and `numpy`.
+- Computes:
+  1. Fundamental Frequency ($F_0$) via probabilistic YIN (`librosa.pyin`) for pitch contour and pitch instability.
+  2. Jitter: relative cycle-to-cycle pitch period variation.
+  3. Shimmer: cycle-to-cycle peak amplitude perturbation.
+  4. Speech-to-Pause Ratio: energy-based voice activity detection distinguishing agitated speech bursts and prolonged hesitation silences.
+- Computes a continuous Voice Stress Index ($VSI \in [0, 100]$) and maps to an explainable breakdown object.
+- Graceful degradation: if audio is corrupt, silent, or unavailable, weights in `fusion.py` automatically redistribute proportionally across sentiment and engagement signals.
+
+### 8.3 Dual-Domain BGE-M3 pgvector Knowledge System (`backend/services/embedding_service.py` & `rag_retriever.py`)
+- Vector dimension: 1024 (`BAAI/bge-m3` dense embeddings, with deterministic unit-normalized mock provider fallback for offline/test environments).
+- Table 1: `victim_memory` with `vector(1024)`:
+  - Stores PII-redacted user conversation facts categorized into 8 memory types (`safety_risk`, `emotional_state`, `legal_status`, `medical_need`, `family_context`, `financial_situation`, `case_progress`, `follow_up`).
+  - Gated by `MEMORY_CONFIDENCE_GATE = 0.55`.
+- Table 2: `legal_documents` with `vector(1024)`:
+  - Stores public legal knowledge: SC/ST (PoA) Act sections (Sec 3 atrocities, Sec 15A witness protection), Schedule II compensation tables, welfare rehabilitation schemes.
+  - Strict anti-hallucination gate: `LEGAL_CONFIDENCE_GATE = 0.72`. Below 0.72, retriever returns an empty list, and agents state they lack verified data rather than guessing.
+
+### 8.4 5-Node Supervisor Multi-Agent Orchestrator (`backend/services/agents/`)
+State-machine orchestrator enforcing turn-level coordination:
+```
+Audio/Text Turn -> [Supervisor]
+                     ├── [1] Triage Agent: fast deterministic crisis keyword scan + structured LLM classifier
+                     ├── [2] Legal Agent: semantic retrieval over legal knowledge base (RAG-grounded)
+                     ├── [3] Memory Retrieval: victim private memory retrieval via pgvector
+                     ├── [4] Escalation Agent: automated counsellor task insertion & break-glass flag
+                     ├── [5] Multimodal Fusion: acoustic DSP + sentiment + engagement scoring
+                     └── [6] Empathy Agent: trauma-informed conversational response + safety advisory
+```
+- **Supervisor (`supervisor.py`)**: The sole writer of `ConversationState`. Trims context window, coordinates sub-agents concurrently where applicable (`asyncio.gather`), redacts PII before async memory storage.
+- **Triage Agent (`triage_agent.py`)**: Identifies physical danger, self-harm, and witness intimidation. Flags `requires_escalation=True` immediately.
+- **Legal Agent (`legal_agent.py`)**: Answers compensation and statutory rights queries using cited RAG context only.
+- **Escalation Agent (`escalation_agent.py`)**: Idempotent alert dispatch. Creates urgent counsellor task in `tasks` table with PII-free summary (risk signals, not raw transcripts).
+- **Empathy Agent (`empathy_agent.py`)**: Generates empathetic, supportive guidance while strictly respecting safety constraints (never promises absolute secrecy, always surfaces SOS/112 in danger).
+
+### 8.5 Voice Agent Integration Bridge (`voice-agent/app/aavaz_bridge.py`)
+- Bridges the low-latency voice pipeline (`voice-agent`) with the core AAVAZ backend via `POST /api/v1/intake/voice/turn`.
+- Passes user transcript and raw audio PCM stream for real-time acoustic analysis.
+- When backend handles the turn, `ResponseEnvelope.reply` feeds directly into the voice TTS engine.
+- On CRITICAL threat detection, prepends urgent emergency response prefix to TTS stream.
+- Degrades gracefully to local voice-agent LLM when backend is offline.
+
+### 8.6 Outbound Bolna IVR Telephony Engine (`backend/services/telephony_scheduler.py`)
+- Autonomous periodic check-in background engine running on FastAPI startup.
+- Dynamic interval: 24-hour cycle for high-distress victims (score $\ge 60$), 72-hour cycle for standard monitoring.
+- Dispatches outbound calls via Bolna API, receives call events at `/api/v1/intake/ivr/webhook`, tracks idempotent call state in `scheduled_calls` table (`005_scheduled_calls.sql`).
+

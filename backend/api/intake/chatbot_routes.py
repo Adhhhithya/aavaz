@@ -15,8 +15,9 @@ class ChatMessage(BaseModel):
     message: str
 
 from datetime import datetime, timezone
-from services.llm_parser import generate_chat_response, build_system_prompt
-from api.scoring.fusion import calculate_dynamic_score
+from services.llm_parser import build_system_prompt
+from services.agents.supervisor import execute_turn, new_conversation
+from api.scoring.fusion import calculate_dynamic_score_legacy
 
 @router.post("/message")
 async def handle_chatbot_message(
@@ -29,9 +30,6 @@ async def handle_chatbot_message(
     """
     logger.info(f"Received chat from {current_victim.id}")
 
-    reply = "I'm having trouble connecting right now, but I'm here for you. Please try again in a moment."
-    emotion = "neutral"
-
     try:
         from services.supabase_client import get_supabase
         supabase = await get_supabase()
@@ -43,7 +41,7 @@ async def handle_chatbot_message(
 
         user_resp = await supabase.table("users").select("name, preferred_language, role_type").eq("id", current_victim.id).execute()
         user_data = user_resp.data[0] if user_resp.data else None
-        
+
         case_context = None
         if case_data and user_data:
             case_context = {
@@ -54,46 +52,67 @@ async def handle_chatbot_message(
                 "case_stage": case_data.get("case_stage"),
                 "current_distress_score": case_data.get("current_distress_score")
             }
-        
-        history_messages = []
+
+        language = user_data.get("preferred_language", "en") if user_data else "en"
+
+        # --- Multi-Agent Supervisor pipeline ---
+        # Each session_id maps to a fresh ConversationState.
+        # In a production deployment this would be persisted in Redis/DB;
+        # for now we create a per-request state and rely on the transcript
+        # history loaded from the interactions table below.
+        conv_state = new_conversation(
+            victim_id=current_victim.id,
+            case_id=case_id,
+            language=language,
+            channel="chat",
+        )
+
+        # Inject recent chat history so agents have context
         if case_id:
+            from models.contracts import Turn
             interactions = await supabase.table("interactions").select("transcript_ref").eq("case_id", case_id).eq("channel", "chatbot").order("timestamp", desc=False).execute()
-            for row in interactions.data[-10:]: # last 10 messages
+            for row in interactions.data[-10:]:
                 text = row["transcript_ref"]
                 if text.startswith("User: "):
-                    history_messages.append({"role": "user", "content": text[6:]})
+                    conv_state.transcript.append(Turn(
+                        conversation_id=conv_state.conversation_id,
+                        turn_id=f"hist_{len(conv_state.transcript)}",
+                        speaker="user", language=language,
+                        transcript=text[6:],
+                    ))
                 elif text.startswith("Bot: "):
-                    history_messages.append({"role": "model", "content": text[5:]})
-                    
-        # Append current message
-        history_messages.append({"role": "user", "content": payload.message})
-        
-        # Generate response using LLM
-        reply = await generate_chat_response(history_messages, case_context)
-        
-        # Calculate dynamic score using the XAI fusion engine based on the user's message
-        fusion_result = await calculate_dynamic_score(payload.message, 0)
-        
-        final_score = fusion_result["final_score"]
-        escalation_risk = fusion_result["escalation_risk"]
-        case_type = fusion_result["case_type"]
-        intervention = fusion_result["recommended_intervention"]
-        xai_reasoning = fusion_result["reasoning"]
-        
-        emotion = "high_stress" if final_score > 60 else "neutral"
-        if "help" in payload.message.lower() or "scared" in payload.message.lower():
-            emotion = "fear"
+                    conv_state.transcript.append(Turn(
+                        conversation_id=conv_state.conversation_id,
+                        turn_id=f"hist_{len(conv_state.transcript)}",
+                        speaker="agent", language=language,
+                        transcript=text[5:],
+                    ))
 
-        # Update case with new score and LLM categorizations
+        # Run full agent pipeline
+        conv_state, reply = await execute_turn(
+            state=conv_state,
+            user_text=payload.message
+        )
+
+        # Extract scoring outputs from updated state
+        distress = conv_state.distress
+        final_score = distress.distress_score if distress else 0.0
+        escalation_risk = distress.risk_level.value.lower() if distress else "medium"
+        intervention = distress.intervention.value if distress else "none"
+        emotion = distress.emotion_tag.value if distress else "neutral"
+        score_breakdown = {
+            k: {"weight": v.weight, "contribution": v.contribution, "notes": v.notes}
+            for k, v in (distress.score_breakdown.items() if distress else {})
+        }
+
+        # Persist to interactions table
         if case_id:
-            await supabase.table("cases").update({
-                "current_distress_score": final_score,
-                "predicted_escalation_risk": escalation_risk,
-                "case_type": case_type,
-                "recommended_intervention": intervention
-            }).eq("id", case_id).execute()
-        
-            # Save user message
+            if distress:
+                await supabase.table("cases").update({
+                    "current_distress_score": final_score,
+                    "predicted_escalation_risk": escalation_risk,
+                }).eq("id", case_id).execute()
+
             await supabase.table("interactions").insert({
                 "case_id": case_id,
                 "channel": "chatbot",
@@ -104,14 +123,10 @@ async def handle_chatbot_message(
                 "engagement_score": 100,
                 "history_score": 0.0,
                 "final_score": final_score,
-                "score_breakdown": {
-                    "acoustic": {"contribution": 0, "reason": "Text-only channel, no acoustic data"},
-                    "sentiment": {"contribution": 100, "reason": xai_reasoning}
-                },
-                "intervention_recommended": intervention
+                "score_breakdown": score_breakdown or {"acoustic": {"contribution": 0}, "sentiment": {"contribution": 100}},
+                "intervention_recommended": intervention,
             }).execute()
-            
-            # Save bot message
+
             await supabase.table("interactions").insert({
                 "case_id": case_id,
                 "channel": "chatbot",
@@ -122,17 +137,18 @@ async def handle_chatbot_message(
                 "engagement_score": 100,
                 "history_score": 0,
                 "final_score": 0,
-                "score_breakdown": {
-                    "acoustic": {"contribution": 0, "reason": "Bot message"},
-                    "sentiment": {"contribution": 0, "reason": "Bot message"}
-                }
+                "score_breakdown": {"acoustic": {"contribution": 0}, "sentiment": {"contribution": 0}},
             }).execute()
+
     except Exception as e:
-        logger.error(f"Failed to save chat: {e}")
-        
+        logger.error(f"Failed to process chat turn: {e}")
+
     return {
         "reply": reply,
-        "emotion_flagged": emotion
+        "emotion_flagged": emotion,
+        "distress_score": final_score if 'final_score' in dir() else 0.0,
+        "risk_level": escalation_risk if 'escalation_risk' in dir() else "unknown",
+        "escalated": bool(conv_state.escalation) if 'conv_state' in dir() else False,
     }
 
 @router.get("/voice-context")
@@ -168,10 +184,18 @@ async def get_voice_context(
                 "current_distress_score": case_data.get("current_distress_score"),
             }
 
-        return {"system_prompt": build_system_prompt(case_context, voice=True)}
+        return {
+            "system_prompt": build_system_prompt(case_context, voice=True),
+            "victim_id": current_victim.id,
+            "case_id": case_data["id"] if case_data else None,
+        }
     except Exception as e:
         logger.error(f"Failed to build voice context: {e}")
-        return {"system_prompt": build_system_prompt(None, voice=True)}
+        return {
+            "system_prompt": build_system_prompt(None, voice=True),
+            "victim_id": current_victim.id if 'current_victim' in locals() else None,
+            "case_id": None,
+        }
 
 
 @router.get("/history/{user_id}")

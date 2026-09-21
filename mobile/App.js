@@ -3,6 +3,7 @@ import { View, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DS } from './src/theme/designSystem';
 import { storage } from './src/services/storage';
+import { authService } from './src/auth/authService';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -12,10 +13,9 @@ import HomeScreen from './src/screens/HomeScreen';
 import CaseLifecycleScreen from './src/screens/CaseLifecycleScreen';
 import ChatbotScreen from './src/screens/ChatbotScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
-import BreathingScreen from './src/screens/BreathingScreen';
 
 // Services
-import { api, setAuthToken, clearAuthToken } from './src/services/api';
+import { api } from './src/services/api';
 
 // Navigation components
 import FloatingTabBar from './src/components/FloatingTabBar';
@@ -32,7 +32,6 @@ function MainAppShell({ userProfile, onLogout, onUpdateProfile }) {
             userProfile={userProfile}
             onNavigateToCases={() => setActiveTab('Cases')}
             onNavigateToAssistant={() => setActiveTab('Assistant')}
-            onNavigateToBreathing={() => setActiveTab('Breathing')}
           />
         );
       case 'Cases':
@@ -56,8 +55,6 @@ function MainAppShell({ userProfile, onLogout, onUpdateProfile }) {
             onSaveProfile={onUpdateProfile}
           />
         );
-      case 'Breathing':
-        return <BreathingScreen onNavigateBack={() => setActiveTab('Home')} />;
       default:
         return <HomeScreen />;
     }
@@ -82,16 +79,11 @@ export default function App() {
   // Session Persistence Check on Launch
   useEffect(() => {
     async function checkSession() {
-      const session = await storage.getSession();
-      // S2: only a real victim_session token (issued after OTP verification or
-      // registration) restores MainApp — a lingering phone_verified token (from
-      // an interrupted registration) is not a session and must not be trusted.
-      if (session && session.token && session.token_type === 'victim_session') {
-        setAuthToken(session.token);
+      const session = await authService.restoreSession();
+      if (session) {
         setAuthData((prev) => ({ ...prev, ...session }));
         setCurrentScreen('MainApp');
       } else {
-        await storage.clearSession();
         setCurrentScreen('Login');
       }
     }
@@ -113,38 +105,20 @@ export default function App() {
   const handleVerifySuccess = async (otpCode) => {
     try {
       const formattedPhone = `${authData.countryCode}${authData.phoneNumber}`;
-      const res = await api.post('/api/v1/auth/otp/verify', {
-        phone_number: formattedPhone,
-        code: otpCode,
-      });
+      const result = await authService.signIn(formattedPhone, otpCode);
 
-      const isNew = res.is_new_user;
-
-      if (isNew) {
-        // res.token is a short-lived phone-verified token, NOT a session — it
-        // only authorizes the upcoming call to /register. It is deliberately
-        // not persisted to storage.
+      if (result.isNewUser) {
         setAuthData((prev) => ({
           ...prev,
           phone: formattedPhone,
           is_new_user: true,
-          phoneVerifiedToken: res.token,
+          phoneVerifiedToken: result.token,
         }));
         setCurrentScreen('Onboarding');
         return;
       }
 
-      const session = {
-        token: res.token,
-        token_type: res.token_type,
-        phone: formattedPhone,
-        is_new_user: false,
-        userProfile: res.userProfile || { name: '', phone: formattedPhone },
-      };
-
-      setAuthToken(res.token);
-      await storage.saveSession(session);
-      setAuthData((prev) => ({ ...prev, ...session }));
+      setAuthData((prev) => ({ ...prev, ...result.session }));
       setCurrentScreen('MainApp');
     } catch (e) {
       alert('Verification failed: incorrect or expired code.');
@@ -152,31 +126,22 @@ export default function App() {
   };
 
   const handleCompleteOnboarding = async (result) => {
-    // RegisterScreen performs the actual POST /register call (it holds the
-    // phone-verified token) and passes back the issued victim_session token.
-    const session = {
-      token: result.token,
-      token_type: 'victim_session',
-      phone: authData.phone,
-      is_new_user: false,
-      userProfile: {
+    // result contains token and token_type 'victim_session'
+    const session = await authService.registerUser(
+      {
         fullName: result.fullName,
         age: result.age,
         emergencyContact: result.emergencyContact,
-        id: result.id,
-        case_id: result.case_id,
         phone: authData.phone,
       },
-    };
-    setAuthToken(result.token);
-    await storage.saveSession(session);
+      authData.phoneVerifiedToken
+    );
     setAuthData((prev) => ({ ...prev, ...session }));
     setCurrentScreen('MainApp');
   };
 
   const handleLogout = async () => {
-    clearAuthToken();
-    await storage.clearSession();
+    await authService.signOut();
     setAuthData({
       countryCode: '+91',
       phoneNumber: '',

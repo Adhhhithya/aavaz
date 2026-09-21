@@ -23,6 +23,7 @@ from .llm import LLMClient, LLMError
 from .session import Session
 from .textproc import SentenceChunker, ThinkTagFilter
 from .tts import TTSEngine
+from .aavaz_bridge import emergency_tts_prefix, report_turn, ResponseEnvelope
 
 log = logging.getLogger(__name__)
 
@@ -39,20 +40,37 @@ class ConversationPipeline:
         tts: TTSEngine,
         emit: Emit,
         emit_audio: EmitAudio,
+        victim_id: str | None = None,
+        case_id: str | None = None,
     ) -> None:
         self._asr = asr
         self._llm = llm
         self._tts = tts
         self._emit = emit
         self._emit_audio = emit_audio
+        self._victim_id = victim_id
+        self._case_id = case_id
 
     async def transcribe(self, pcm) -> str:
         result = await self._asr.transcribe(pcm)
         return result.text
 
-    async def respond(self, session: Session, user_text: str) -> None:
+    async def respond(
+        self, session: Session, user_text: str,
+        audio_bytes: bytes | None = None,
+    ) -> None:
         """Run one full turn. Safe to cancel at any point."""
         session.add_user(user_text)
+
+        # ---- AAVAZ bridge: distress scoring + multi-agent response ----
+        bridge_result: ResponseEnvelope | None = await report_turn(
+            session_id=session.id,
+            user_text=user_text,
+            victim_id=self._victim_id,
+            case_id=self._case_id,
+            language=getattr(session, "language", "en"),
+            audio_bytes=audio_bytes,
+        )
 
         think_filter = ThinkTagFilter()
         chunker = SentenceChunker()
@@ -69,23 +87,54 @@ class ConversationPipeline:
         try:
             await self._emit({"type": "response_start"})
 
-            async for delta in self._llm.stream(session.messages()):
-                visible = think_filter.feed(delta)
-                if not visible:
-                    continue
-                await self._emit({"type": "token", "text": visible})
-                for sentence in chunker.feed(visible):
-                    await submit(sentence)
+            # Emit distress metadata to client (used by mobile app for UI)
+            if bridge_result:
+                await self._emit({
+                    "type": "distress_update",
+                    "distress_score": bridge_result.distress_score,
+                    "risk_level": bridge_result.risk_level,
+                    "emotion_tag": bridge_result.emotion_tag,
+                    "escalated": bridge_result.escalated,
+                    "intervention": bridge_result.intervention,
+                })
 
-            tail = think_filter.flush()
-            if tail:
-                await self._emit({"type": "token", "text": tail})
-                for sentence in chunker.feed(tail):
-                    await submit(sentence)
+            if bridge_result and bridge_result.handled and bridge_result.reply:
+                # ---- Backend-driven path: stream the empathy agent reply ----
+                # Prepend emergency TTS prefix on CRITICAL escalations
+                prefix = emergency_tts_prefix(
+                    bridge_result.risk_level, bridge_result.escalated
+                )
+                if prefix:
+                    await self._emit({"type": "token", "text": prefix + " "})
+                    await submit(prefix)
 
-            remainder = chunker.flush()
-            if remainder:
-                await submit(remainder)
+                # Break the full reply into TTS-safe sentence chunks
+                for sentence in chunker.feed(bridge_result.reply):
+                    await self._emit({"type": "token", "text": sentence + " "})
+                    await submit(sentence)
+                remainder = chunker.flush()
+                if remainder:
+                    await self._emit({"type": "token", "text": remainder})
+                    await submit(remainder)
+            else:
+                # ---- LLM fallback path (bridge unavailable or degraded) ----
+                async for delta in self._llm.stream(session.messages()):
+                    visible = think_filter.feed(delta)
+                    if not visible:
+                        continue
+                    await self._emit({"type": "token", "text": visible})
+                    for sentence in chunker.feed(visible):
+                        await submit(sentence)
+
+                tail = think_filter.flush()
+                if tail:
+                    await self._emit({"type": "token", "text": tail})
+                    for sentence in chunker.feed(tail):
+                        await submit(sentence)
+
+                remainder = chunker.flush()
+                if remainder:
+                    await submit(remainder)
 
             await synth_queue.put(None)
             await drain

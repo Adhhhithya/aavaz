@@ -24,13 +24,19 @@ class AppRegistrationRequest(BaseModel):
     preferred_language: str = Field(..., description="hi, ta, ml, or en")
 
 class BolnaWebhookPayload(BaseModel):
-    call_id: str
-    user_phone: str
-    transcript: str
+    call_id: Optional[str] = "unknown_call"
+    user_phone: Optional[str] = None
+    phone_number: Optional[str] = None
+    recipient_phone_number: Optional[str] = None
+    transcript: Optional[str] = ""
     audio_url: Optional[str] = None
     language_detected: Optional[str] = None
-    duration_seconds: float
-    call_status: str
+    duration_seconds: Optional[float] = 0.0
+    call_status: Optional[str] = "completed"
+
+    @property
+    def caller_phone(self) -> str:
+        return (self.user_phone or self.phone_number or self.recipient_phone_number or "").strip()
 
 class PushbulletWebhookPayload(BaseModel):
     from_number: str
@@ -50,7 +56,21 @@ class BolnaDistressAssessment(BaseModel):
     summary_notes: str
 
 class BolnaPreCallPayload(BaseModel):
-    call_id: str
-    user_phone: str
+    call_id: Optional[str] = None
+    user_phone: Optional[str] = None
+    phone_number: Optional[str] = None
     from_number: Optional[str] = None
     to_number: Optional[str] = None
+    recipient_phone_number: Optional[str] = None
+
+    @property
+    def phone(self) -> str:
+        return (
+            self.user_phone
+            or self.phone_number
+            or self.to_number
+            or self.from_number
+            or self.recipient_phone_number
+            or ""
+        ).strip()
+

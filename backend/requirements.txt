@@ -8,3 +8,15 @@ python-multipart
 playwright
 groq
 reportlab
+# Acoustic feature extraction (Phase 1)
+librosa>=0.10.0
+soundfile
+scipy
+numpy
+# Embedding / RAG (Phase 2)
+sentence-transformers>=3.0.0
+
+# Multi-Agent Orchestration (Phase 3)
+langgraph>=0.2.14
+langchain-core>=0.2.33
+langchain-groq>=0.1.9

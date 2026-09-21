@@ -1,11 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Animated } from 'react-native';
-import { AlertCircle, X, ShieldAlert, CheckCircle2 } from 'lucide-react-native';
+import { View, Text, StyleSheet, Modal } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withTiming,
+  FadeIn,
+  FadeOut
+} from 'react-native-reanimated';
+import { ShieldAlert, CheckCircle2 } from 'lucide-react-native';
 import { DS } from '../theme/designSystem';
+import HapticButton from './HapticButton';
 
 export default function SOSModal({ visible, onClose, onDispatched }) {
   const [countdown, setCountdown] = useState(5);
   const [dispatched, setDispatched] = useState(false);
+  
+  // Reanimated scale for the modal card
+  const scale = useSharedValue(0.8);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (visible) {
+      scale.value = withSpring(1, { damping: 20, stiffness: 300 });
+      opacity.value = withTiming(1, { duration: 250 });
+    } else {
+      scale.value = withTiming(0.8, { duration: 200 });
+      opacity.value = withTiming(0, { duration: 200 });
+    }
+  }, [visible, scale, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+    };
+  });
 
   useEffect(() => {
     let timer;
@@ -43,18 +73,19 @@ export default function SOSModal({ visible, onClose, onDispatched }) {
     onClose();
   };
 
+  if (!visible && opacity.value === 0) return null;
+
   return (
     <Modal
       transparent
       visible={visible}
-      animationType="fade"
+      animationType="none" // We handle animation via Reanimated
       onRequestClose={handleCancel}
     >
       <View style={styles.overlay}>
-        <View style={styles.modalCard}>
+        <Animated.View style={[styles.modalCard, animatedStyle]}>
           {!dispatched ? (
-            <>
-              {/* Header Icon */}
+            <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.contentContainer}>
               <View style={styles.iconCircle}>
                 <ShieldAlert size={32} color={DS.accent.sos} />
               </View>
@@ -65,37 +96,30 @@ export default function SOSModal({ visible, onClose, onDispatched }) {
                 This will immediately notify your designated emergency contacts and dispatch your live coordinates to the local case response authority.
               </Text>
 
-              {/* 5-second Active Countdown Ring / Counter */}
+              {/* Countdown badge */}
               <View style={styles.timerBadge}>
                 <Text style={styles.timerLabel}>Auto-dispatching in</Text>
                 <View style={styles.counterWrap}>
-                  <Text style={styles.counterNumber}>{countdown}</Text>
+                  <Text style={styles.counterNumber} key={countdown}>{countdown}</Text>
                   <Text style={styles.counterSec}>seconds</Text>
                 </View>
               </View>
 
-              {/* Action Buttons */}
               <View style={styles.buttonStack}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
+                <HapticButton
+                  title="Cancel SOS"
+                  variant="secondary"
                   onPress={handleCancel}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel SOS</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.dispatchNowButton}
+                />
+                <HapticButton
+                  title="Dispatch Immediately"
+                  variant="danger"
                   onPress={handleDispatch}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.dispatchNowText}>Dispatch Immediately</Text>
-                </TouchableOpacity>
+                />
               </View>
-            </>
+            </Animated.View>
           ) : (
-            <>
-              {/* Dispatched Confirmation State */}
+            <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.contentContainer}>
               <View style={[styles.iconCircle, { backgroundColor: 'rgba(104, 176, 135, 0.15)' }]}>
                 <CheckCircle2 size={36} color={DS.accent.sage} />
               </View>
@@ -106,16 +130,17 @@ export default function SOSModal({ visible, onClose, onDispatched }) {
                 Your coordinates and emergency alert have been successfully transmitted to your assigned counselor and response team. Help is on the way.
               </Text>
 
-              <TouchableOpacity
-                style={[styles.cancelButton, { marginTop: DS.spacing.lg }]}
-                onPress={handleCancel}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.cancelButtonText}>Return to App</Text>
-              </TouchableOpacity>
-            </>
+              <View style={styles.buttonStack}>
+                <HapticButton
+                  title="Return to App"
+                  variant="secondary"
+                  onPress={handleCancel}
+                  style={{ marginTop: DS.spacing.lg }}
+                />
+              </View>
+            </Animated.View>
           )}
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -124,7 +149,7 @@ export default function SOSModal({ visible, onClose, onDispatched }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(30, 31, 36, 0.45)',
+    backgroundColor: 'rgba(30, 31, 36, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: DS.spacing.lg,
@@ -138,7 +163,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: DS.canvas.border,
-    ...DS.shadow.card,
+    shadowColor: DS.accent.sos,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  contentContainer: {
+    width: '100%',
+    alignItems: 'center',
   },
   iconCircle: {
     width: 64,
@@ -151,13 +184,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
     color: DS.text.primary,
     textAlign: 'center',
     marginBottom: DS.spacing.sm,
   },
   description: {
     fontSize: 13,
+    fontFamily: 'Inter-Medium',
     color: DS.text.muted,
     textAlign: 'center',
     lineHeight: 18,
@@ -174,6 +208,7 @@ const styles = StyleSheet.create({
   },
   timerLabel: {
     fontSize: 12,
+    fontFamily: 'Inter-Bold',
     color: DS.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -185,43 +220,17 @@ const styles = StyleSheet.create({
   },
   counterNumber: {
     fontSize: 32,
-    fontWeight: '800',
+    fontFamily: 'Inter-Black',
     color: DS.accent.sos,
   },
   counterSec: {
     fontSize: 13,
+    fontFamily: 'Inter-Medium',
     color: DS.text.muted,
     marginLeft: 6,
-    fontWeight: '500',
   },
   buttonStack: {
     width: '100%',
     gap: DS.spacing.sm,
-  },
-  cancelButton: {
-    width: '100%',
-    backgroundColor: DS.canvas.surfaceSubtle,
-    borderWidth: 1,
-    borderColor: DS.canvas.border,
-    paddingVertical: 14,
-    borderRadius: DS.radius.pill,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: DS.text.primary,
-  },
-  dispatchNowButton: {
-    width: '100%',
-    backgroundColor: DS.accent.sos,
-    paddingVertical: 14,
-    borderRadius: DS.radius.pill,
-    alignItems: 'center',
-  },
-  dispatchNowText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
   },
 });
