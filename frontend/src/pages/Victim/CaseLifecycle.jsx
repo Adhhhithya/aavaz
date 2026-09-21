@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Search, Download, Plus, FileText, CheckCircle2, Circle } from 'lucide-react';
 import { toast } from 'sonner';
-import NumberFlow from 'number-flow';
+import NumberFlow from '@number-flow/react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const STAGES = [
@@ -18,7 +18,7 @@ export default function VictimCase() {
   const [activeCase, setActiveCase] = useState(null);
   const [caseProgress, setCaseProgress] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [cnrInput, setCnrInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
@@ -39,11 +39,11 @@ export default function VictimCase() {
       });
       if (!casesRes.ok) throw new Error('Failed to load cases');
       const casesData = await casesRes.json();
-      
+
       if (casesData.cases && casesData.cases.length > 0) {
         const c = casesData.cases[0];
         setActiveCase(c);
-        
+
         // 2. Fetch detailed progress for the active case
         const progRes = await authFetch(`/api/v1/cases/${c.id}/progress`, {
           headers: { 'ngrok-skip-browser-warning': '1' }
@@ -66,14 +66,14 @@ export default function VictimCase() {
     e.preventDefault();
     if (!cnrInput.trim()) return;
     setIsSearching(true);
-    
+
     try {
       const res = await authFetch('/api/v1/ecourts/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
         body: JSON.stringify({ cnr: cnrInput.trim() })
       });
-      
+
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success('Case found and linked to your profile.');
@@ -92,14 +92,14 @@ export default function VictimCase() {
     e.preventDefault();
     if (!newCaseDesc.trim()) return;
     setIsSubmitting(true);
-    
+
     try {
       const res = await authFetch('/api/v1/intake/app/cases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
         body: JSON.stringify({ description: newCaseDesc })
       });
-      
+
       if (res.ok) {
         toast.success('Complaint registered successfully.');
         setShowFileModal(false);
@@ -117,23 +117,23 @@ export default function VictimCase() {
   const handleDownloadReport = async () => {
     if (!activeCase) return;
     const toastId = toast.loading('Generating official report...');
-    
+
     try {
       const res = await authFetch(`/api/v1/cases/${activeCase.id}/report`, {
         headers: { 'ngrok-skip-browser-warning': '1' }
       });
       if (!res.ok) throw new Error('Report generation failed');
-      
+
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `case_report_${activeCase.cnr || activeCase.id.slice(0,8)}.pdf`;
+      a.download = `case_report_${activeCase.cnr || activeCase.id.slice(0, 8)}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Report downloaded', { id: toastId });
     } catch (err) {
       toast.error('Failed to download report', { id: toastId });
@@ -154,7 +154,7 @@ export default function VictimCase() {
 
   return (
     <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 animate-[card-in_400ms_var(--ease-out-quint)_both]">
-      
+
       {/* ─── Header & Actions ──────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -207,7 +207,7 @@ export default function VictimCase() {
           <div className="bg-canvas-surface border border-canvas-border rounded-2xl p-6 md:p-8 shadow-card relative overflow-hidden">
             {/* Top decorative bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary-main" />
-            
+
             <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
               <div>
                 <h2 className="text-2xl font-black text-text-primary mb-1">{activeCase.title || 'Case Report'}</h2>
@@ -249,6 +249,28 @@ export default function VictimCase() {
               )}
             </div>
 
+            {/* Extended Grievance Details */}
+            {activeCase.grievance_related_to && (
+              <div className="mt-6 pt-6 border-t border-canvas-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Grievance Type</p>
+                  <p className="text-base font-bold text-text-primary">{activeCase.grievance_related_to}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Submitter Role</p>
+                  <p className="text-base font-bold text-text-primary capitalize">{activeCase.submitter_role}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">FIR Registered</p>
+                  <p className="text-base font-bold text-text-primary">{activeCase.has_fir ? 'Yes' : 'No'}</p>
+                </div>
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Description</p>
+                  <p className="text-sm font-medium text-text-primary leading-relaxed">{activeCase.grievance_description}</p>
+                </div>
+              </div>
+            )}
+
             <div className="pt-6 border-t border-canvas-border flex justify-between items-center">
               <button
                 onClick={handleDownloadReport}
@@ -264,11 +286,11 @@ export default function VictimCase() {
           <div>
             <h2 className="text-xl font-bold text-text-primary mb-6">Lifecycle Progress</h2>
             <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-canvas-border">
-              
+
               {STAGES.map((stage, idx) => {
                 const isCompleted = idx < currentIdx;
                 const isCurrent = idx === currentIdx;
-                
+
                 return (
                   <motion.div
                     key={stage.id}
@@ -287,11 +309,10 @@ export default function VictimCase() {
                         <Circle className="w-5 h-5 text-canvas-borderActive" />
                       )}
                     </div>
-                    
+
                     {/* Content Card */}
-                    <div className={`w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border ${
-                      isCurrent ? 'bg-primary-muted border-primary-main shadow-sm' : 'bg-canvas-surface border-canvas-border'
-                    } transition-colors duration-300`}>
+                    <div className={`w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border ${isCurrent ? 'bg-primary-muted border-primary-main shadow-sm' : 'bg-canvas-surface border-canvas-border'
+                      } transition-colors duration-300`}>
                       <div className="flex items-center justify-between mb-1">
                         <h3 className={`font-bold ${isCurrent ? 'text-primary-main' : 'text-text-primary'}`}>
                           {stage.title}
@@ -356,7 +377,7 @@ export default function VictimCase() {
           </div>
         )}
       </AnimatePresence>
-      
+
     </div>
   );
 }

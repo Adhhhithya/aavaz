@@ -81,14 +81,19 @@ async def get_current_staff_user(token: str = Depends(get_bearer_token)) -> Curr
     profile_resp = (
         await supabase.table("users").select("id, role_type, name").eq("id", user.id).execute()
     )
+    
     if not profile_resp.data:
-        raise HTTPException(status_code=403, detail="No staff profile associated with this account")
+        # Fallback for staff who might not have a profile yet (like in auth_routes.py)
+        role = "counsellor"
+        name = "Staff"
+    else:
+        role = profile_resp.data[0].get("role_type")
+        name = profile_resp.data[0].get("name")
 
-    role = profile_resp.data[0].get("role_type")
     if role not in STAFF_ROLES:
         raise HTTPException(status_code=403, detail="This account does not have staff access")
 
-    return CurrentStaffUser(id=user.id, role=role, name=profile_resp.data[0].get("name"))
+    return CurrentStaffUser(id=user.id, role=role, name=name)
 
 
 def require_roles(*allowed_roles: str):

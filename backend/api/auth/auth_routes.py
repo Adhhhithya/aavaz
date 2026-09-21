@@ -1,14 +1,16 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 import logging
 
-from models.intake_models import OtpRequestPayload, OtpVerifyPayload
+from models.intake_models import OtpRequestPayload, OtpVerifyPayload, AppRegistrationRequest
 from services import otp_service
 from api.auth.victim_dependencies import (
     issue_phone_verified_token,
     issue_victim_session_token,
     resolve_victim_by_phone,
+    get_phone_verified_number,
 )
+from api.intake.app_routes import register_user as app_register_user
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -56,9 +58,11 @@ async def verify_otp(payload: OtpVerifyPayload):
     try:
         await otp_service.verify_otp(payload.phone_number, payload.code)
     except otp_service.ExpiredOtpError:
-        raise HTTPException(status_code=401, detail="Invalid or expired code")
-    except otp_service.InvalidOtpError:
-        raise HTTPException(status_code=401, detail="Invalid or expired code")
+        logger.warning(f"OTP verification failed for {payload.phone_number}: Code has expired")
+        raise HTTPException(status_code=401, detail="Verification code has expired. Please request a new code.")
+    except otp_service.InvalidOtpError as e:
+        logger.warning(f"OTP verification failed for {payload.phone_number}: {e}")
+        raise HTTPException(status_code=401, detail=f"Verification failed: {e}")
     except RuntimeError as e:
         logger.error(f"OTP verify failed due to configuration error: {e}")
         raise HTTPException(status_code=503, detail="OTP service is not available")
@@ -76,6 +80,19 @@ async def verify_otp(payload: OtpVerifyPayload):
 
     token = issue_phone_verified_token(payload.phone_number)
     return {"status": "success", "is_new_user": True, "token": token, "token_type": "phone_verified"}
+
+
+@router.post("/register")
+async def register(
+    request: AppRegistrationRequest,
+    phone_number: str = Depends(get_phone_verified_number),
+):
+    """
+    App Registration endpoint under /api/v1/auth/register.
+    Delegates directly to app_routes.register_user for unified identity, case, and session creation.
+    """
+    return await app_register_user(request=request, phone_number=phone_number)
+
 
 @router.post("/login")
 async def login(payload: LoginRequest):

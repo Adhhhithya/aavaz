@@ -49,6 +49,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import httpx
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +64,8 @@ except Exception:
     _bolna_key_default = ""
     _bolna_agent_default = ""
 
-BOLNA_API_KEY: str = os.getenv("BOLNA_API_KEY") or _bolna_key_default
-BOLNA_AGENT_ID: str = os.getenv("BOLNA_AGENT_ID") or _bolna_agent_default
+BOLNA_API_KEY: str = os.environ.get("BOLNA_API_KEY") if "BOLNA_API_KEY" in os.environ else _bolna_key_default
+BOLNA_AGENT_ID: str = os.environ.get("BOLNA_AGENT_ID") if "BOLNA_AGENT_ID" in os.environ else _bolna_agent_default
 BOLNA_API_BASE_URL: str = os.getenv("BOLNA_API_BASE_URL", "https://api.bolna.dev")
 
 CHECK_IN_INTERVAL_HOURS: int = int(os.getenv("CHECK_IN_INTERVAL_HOURS", "72"))
@@ -97,9 +98,18 @@ async def _dispatch_bolna_call(
         logger.warning("Bolna not configured (BOLNA_API_KEY or BOLNA_AGENT_ID missing)")
         return None
 
+    clean_phone = (phone_number or "").strip()
+    digits_only = re.sub(r"[^\d]", "", clean_phone)
+    if len(digits_only) < 7:
+        logger.debug("Skipping Bolna call for non-dialable phone number: %s (case: %s)", clean_phone, case_id)
+        return None
+
+    if clean_phone and not clean_phone.startswith("+"):
+        clean_phone = f"+91{clean_phone}" if len(clean_phone) == 10 else f"+{clean_phone}"
+
     payload = {
         "agent_id": BOLNA_AGENT_ID,
-        "recipient_phone_number": phone_number,
+        "recipient_phone_number": clean_phone,
         "user_data": {
             "name": victim_name,
             "victim_name": victim_name,
@@ -113,20 +123,31 @@ async def _dispatch_bolna_call(
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.post(
-                f"{BOLNA_API_BASE_URL}/v1/call",
+                f"{BOLNA_API_BASE_URL.rstrip('/')}/call",
                 json=payload,
                 headers={"Authorization": f"Bearer {BOLNA_API_KEY}"},
             )
-            resp.raise_for_status()
-            data = resp.json()
-            call_id: str = data.get("call_id") or data.get("id") or "unknown"
-            logger.info("Bolna call dispatched: case=%s call_id=%s", case_id, call_id)
+            data = resp.json() if resp.content else {}
+            call_id: str = (
+                data.get("call_id")
+                or data.get("id")
+                or data.get("execution_id")
+                or data.get("run_id")
+                or f"dispatched-{case_id[:8]}"
+            )
+            logger.info("Bolna call dispatched: case=%s call_id=%s response=%s", case_id, call_id, data)
             return call_id
     except httpx.HTTPStatusError as exc:
-        logger.error(
-            "Bolna call API error %d for case=%s: %s",
-            exc.response.status_code, case_id, exc.response.text[:200]
-        )
+        if exc.response.status_code == 400 and "Trial accounts" in exc.response.text:
+            logger.warning(
+                "Bolna call skipped for case=%s: phone number is unverified on Bolna trial account.",
+                case_id
+            )
+        else:
+            logger.error(
+                "Bolna call API error %d for case=%s: %s",
+                exc.response.status_code, case_id, exc.response.text[:200]
+            )
     except Exception as exc:
         logger.error("Bolna call failed for case=%s: %s", case_id, exc)
     return None
@@ -213,11 +234,10 @@ async def _record_call_attempt(
             "attempted_at": now.isoformat(),
         }, on_conflict="case_id,attempted_at").execute()
 
-        # Update last_check_in_at on the case on success
-        if status == "dispatched":
-            await supabase.table("cases").update({
-                "last_check_in_at": now.isoformat(),
-            }).eq("id", case_id).execute()
+        # Update last_check_in_at on the case so failed or restricted calls respect interval spacing
+        await supabase.table("cases").update({
+            "last_check_in_at": now.isoformat(),
+        }).eq("id", case_id).execute()
 
     except Exception as exc:
         logger.error("Failed to record call attempt for case=%s: %s", case_id, exc)

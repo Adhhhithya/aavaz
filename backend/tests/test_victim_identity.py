@@ -115,3 +115,40 @@ async def test_resolve_victim_by_phone_returns_none_for_unknown_phone(monkeypatc
 
     user = await vd.resolve_victim_by_phone("+910000000000")
     assert user is None
+
+
+async def test_auth_register_endpoint_alias(monkeypatch):
+    from unittest.mock import AsyncMock, patch
+    from fastapi.testclient import TestClient
+    from main import app
+
+    token = vd.issue_phone_verified_token("+919999999999")
+    test_client = TestClient(app)
+
+    mock_resp = {
+        "status": "success",
+        "user_id": "user-uuid-1",
+        "case_id": "case-uuid-1",
+        "token": "victim-session-jwt",
+        "token_type": "victim_session",
+    }
+
+    with patch("api.auth.auth_routes.app_register_user", new_callable=AsyncMock) as mock_app_reg:
+        mock_app_reg.return_value = mock_resp
+        response = test_client.post(
+            "/api/v1/auth/register",
+            json={
+                "name": "Test Citizen",
+                "role_type": "victim",
+                "preferred_language": "en",
+                "consent_given": True,
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["user_id"] == "user-uuid-1"
+        assert data["token_type"] == "victim_session"
+

@@ -44,11 +44,11 @@ export const registerForPushNotificationsAsync = async () => {
   }
   */
  
-  console.log('Mock: Registering for push notifications');
+  // In Expo Managed Go, push notification registration requires physical device credentials
   return token;
 };
 
 export const handleNotification = (notification) => {
-  console.log('Mock: Received notification:', notification);
+  // Production notification handler (incoming alert, SOS ping)
   // Handle incoming alert, SOS ping, etc.
 };

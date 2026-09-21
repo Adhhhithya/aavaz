@@ -14,7 +14,7 @@ import { ShieldCheck } from 'lucide-react-native';
 import { DS } from '../theme/designSystem';
 
 export default function OTPVerificationScreen({
-  phoneNumber = '9876543210',
+  phoneNumber = '',
   countryCode = '+91',
   onEditPhone,
   onVerifySuccess,
@@ -41,8 +41,20 @@ export default function OTPVerificationScreen({
 
   const handleOtpChange = (text, index) => {
     setError('');
+    const cleaned = text.replace(/[^0-9]/g, '');
+
+    // Handle full 6-digit paste or SMS autofill
+    if (cleaned.length === 6) {
+      const digits = cleaned.split('');
+      setOtp(digits);
+      inputsRef.current[5]?.focus();
+      setActiveIdx(5);
+      submitVerification(cleaned);
+      return;
+    }
+
     // Take only the last entered char if multiple entered
-    const char = text.slice(-1);
+    const char = cleaned.slice(-1);
     const newOtp = [...otp];
     newOtp[index] = char;
     setOtp(newOtp);
@@ -94,7 +106,9 @@ export default function OTPVerificationScreen({
   };
 
   const formattedTime = `00:${timer < 10 ? `0${timer}` : timer}`;
-  const maskedPhone = `${countryCode} ${phoneNumber.slice(0, 2)}******${phoneNumber.slice(-2)}`;
+  const maskedPhone = phoneNumber && phoneNumber.length >= 4 
+    ? `${countryCode} ${phoneNumber.slice(0, 2)}******${phoneNumber.slice(-2)}` 
+    : (phoneNumber || `${countryCode} ******`);
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -8,13 +8,19 @@ import RiskBadge from '../../components/ui/RiskBadge';
 import PageHeader from '../../components/ui/PageHeader';
 
 /* ─── Meteors Background Component ───────────────────────────────── */
+const STATIC_METEORS = [
+  { top: '12%', left: '25%', animationDelay: '0.4s', animationDuration: '4s' },
+  { top: '28%', left: '72%', animationDelay: '1.2s', animationDuration: '5s' },
+  { top: '45%', left: '15%', animationDelay: '2.1s', animationDuration: '3s' },
+  { top: '60%', left: '88%', animationDelay: '0.8s', animationDuration: '6s' },
+  { top: '75%', left: '42%', animationDelay: '1.7s', animationDuration: '4s' },
+  { top: '85%', left: '60%', animationDelay: '2.5s', animationDuration: '5s' },
+  { top: '35%', left: '50%', animationDelay: '1.0s', animationDuration: '3s' },
+  { top: '92%', left: '20%', animationDelay: '0.2s', animationDuration: '4s' },
+];
+
 function Meteors() {
-  const meteors = useMemo(() => new Array(8).fill(true).map(() => ({
-    top: `${Math.random() * 100}%`,
-    left: `${Math.random() * 100}%`,
-    animationDelay: `${Math.random() * 3}s`,
-    animationDuration: `${Math.floor(Math.random() * (8 - 2) + 2)}s`,
-  })), []);
+  const meteors = STATIC_METEORS;
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">

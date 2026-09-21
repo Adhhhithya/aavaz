@@ -39,19 +39,54 @@ class AuthService {
     return { isNewUser: false, session };
   }
 
-  async registerUser(registrationData, phoneVerifiedToken) {
-    const res = await api.post('/api/v1/auth/register', registrationData, {
-      headers: {
-        Authorization: `Bearer ${phoneVerifiedToken}`,
+  async saveRegisteredSession(result, phone) {
+    const session = {
+      token: result.token,
+      token_type: result.token_type || 'victim_session',
+      phone: phone,
+      is_new_user: false,
+      userProfile: {
+        id: result.id || result.user_id,
+        name: result.fullName || result.name || '',
+        fullName: result.fullName || result.name || '',
+        phone: phone,
+        case_id: result.case_id,
+        age: result.age,
+        emergencyContact: result.emergencyContact,
       },
+    };
+
+    setAuthToken(session.token);
+    await storage.saveSession(session);
+    return session;
+  }
+
+  async registerUser(registrationData, phoneVerifiedToken) {
+    const payload = {
+      name: registrationData.fullName || registrationData.name || '',
+      role_type: registrationData.role_type || 'victim',
+      consent_given: true,
+      preferred_language: registrationData.preferred_language || 'en',
+    };
+
+    const res = await api.post('/api/v1/auth/register', payload, {
+      authorization: phoneVerifiedToken,
     });
 
     const session = {
       token: res.token,
-      token_type: res.token_type,
-      phone: res.userProfile?.phone || registrationData.phone,
+      token_type: res.token_type || 'victim_session',
+      phone: registrationData.phone,
       is_new_user: false,
-      userProfile: res.userProfile,
+      userProfile: {
+        id: res.user_id,
+        case_id: res.case_id,
+        name: payload.name,
+        fullName: payload.name,
+        phone: registrationData.phone,
+        age: registrationData.age,
+        emergencyContact: registrationData.emergencyContact,
+      },
     };
 
     setAuthToken(session.token);

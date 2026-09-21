@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, User, LogIn, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, User, LogIn, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { OTPInput } from 'input-otp';
 
@@ -48,9 +48,9 @@ function AuroraBackground() {
 
 /* ─── Smooth step transition wrapper ────────────────────────────── */
 const STEP_VARIANTS = {
-  enter:  { opacity: 0, x: 40 },
-  center: { opacity: 1, x: 0,  transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] } },
-  exit:   { opacity: 0, x: -40, transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] } },
+  enter: { opacity: 0, x: 40 },
+  center: { opacity: 1, x: 0, transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] } },
+  exit: { opacity: 0, x: -40, transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] } },
 };
 
 function StepPane({ stepKey, children }) {
@@ -266,7 +266,7 @@ export default function Login() {
                 className="mb-6 p-3.5 rounded-xl text-sm font-semibold flex items-center gap-2"
                 style={{ background: 'rgba(217,93,93,0.18)', color: '#E06A6A', border: '1px solid rgba(217,93,93,0.3)' }}
               >
-                <span>⚠️</span> {error}
+                <AlertTriangle size={16} /> {error}
               </motion.div>
             )}
           </AnimatePresence>
@@ -353,8 +353,8 @@ export default function Login() {
                           className={INPUT_CLASS}
                           style={{ background: 'rgba(255,255,255,0.08)' }}
                         >
-                          {[['hi','Hindi'],['en','English'],['ta','Tamil'],['ml','Malayalam'],['te','Telugu'],['bn','Bengali'],['mr','Marathi'],['gu','Gujarati'],['kn','Kannada']].map(([v,l]) => (
-                            <option key={v} value={v}>{l}</option>
+                          {[['hi', 'Hindi'], ['en', 'English'], ['ta', 'Tamil'], ['ml', 'Malayalam'], ['te', 'Telugu'], ['bn', 'Bengali'], ['mr', 'Marathi'], ['gu', 'Gujarati'], ['kn', 'Kannada']].map(([v, l]) => (
+                            <option key={v} value={v} className="bg-gray-900 text-white">{l}</option>
                           ))}
                         </select>
                       </div>

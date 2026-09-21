@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # Basic LangChain Groq client
 _llm = ChatGroq(
     api_key=settings.GROQ_API_KEY,
-    model_name="llama3-8b-8192",  # Fast model for standard advice
+    model_name="qwen/qwen3.8-27b",  # Fast supported model for standard advice
     temperature=0.1
 )
 

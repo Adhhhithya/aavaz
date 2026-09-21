@@ -8,6 +8,7 @@ import VictimLayout from './pages/Victim/Layout';
 import VictimDashboard from './pages/Victim/Dashboard';
 import VictimCase from './pages/Victim/CaseLifecycle';
 import VictimChatbot from './pages/Victim/Chatbot';
+import GrievanceRegistration from './pages/Victim/GrievanceRegistration';
 
 import CounsellorQueue from './pages/Counsellor/Queue';
 import CaseDetail from './pages/Counsellor/CaseDetail';
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="dashboard" element={<VictimDashboard />} />
             <Route path="case" element={<VictimCase />} />
             <Route path="chat" element={<VictimChatbot />} />
+            <Route path="register-grievance" element={<GrievanceRegistration />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

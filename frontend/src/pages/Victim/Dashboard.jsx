@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { FileText, MessageCircle, ArrowRight } from 'lucide-react';
-import NumberFlow from 'number-flow';
+import { FileText, MessageCircle, ArrowRight, AlertCircle } from 'lucide-react';
+import NumberFlow from '@number-flow/react';
 import { supabase } from '../../config/supabase';
 import useAlertStore from '../../store/alertStore';
 
 export default function VictimDashboard() {
   const { user, authFetch } = useAuth();
   const navigate = useNavigate();
+  const [activeCase, setActiveCase] = useState(null);
   const [caseProgress, setCaseProgress] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +22,9 @@ export default function VictimDashboard() {
         const casesData = await casesRes.json();
         
         if (casesData.cases?.length > 0) {
-          const caseId = casesData.cases[0].id;
+          const currentCase = casesData.cases[0];
+          setActiveCase(currentCase);
+          const caseId = currentCase.id;
           const progRes = await authFetch(`/api/v1/cases/${caseId}/progress`, {
             headers: { 'ngrok-skip-browser-warning': '1' }
           });
@@ -29,6 +32,9 @@ export default function VictimDashboard() {
             const data = await progRes.json();
             setCaseProgress(data);
           }
+        } else {
+          // If no cases exist, redirect to the new Grievance Registration flow
+          navigate('/victim/register-grievance');
         }
       } catch (err) {
         console.error("Failed to fetch progress", err);
@@ -76,6 +82,27 @@ export default function VictimDashboard() {
         </h1>
         <p className="text-text-secondary mt-1 font-medium">Here is your current status update.</p>
       </div>
+
+      {/* ─── Check-In Banner ────────────────────────────────────── */}
+      {activeCase && activeCase.days_since_last_interaction >= 15 && activeCase.status !== 'RESOLVED' && (
+        <div className="bg-accent-sos/10 border border-accent-sos/20 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-4 justify-between">
+          <div className="flex gap-4 items-center">
+            <div className="w-12 h-12 bg-accent-sos/20 text-accent-sos rounded-full flex items-center justify-center shrink-0">
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-accent-sos">Mandatory 15-Day Check-in Required</h2>
+              <p className="text-text-primary text-sm font-medium">It has been {activeCase.days_since_last_interaction} days since your last update. Please complete a check-in to keep your case active and priorities accurate.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/victim/chat')}
+            className="px-6 py-2.5 bg-accent-sos text-white font-bold rounded-xl whitespace-nowrap hover:opacity-90 active:scale-95 transition-all"
+          >
+            Start Check-in
+          </button>
+        </div>
+      )}
 
       {/* ─── Primary Hero Card (Spotlight style) ────────────────── */}
       <div className="relative group rounded-2xl border border-canvas-borderActive overflow-hidden bg-canvas-surface shadow-hover isolate">

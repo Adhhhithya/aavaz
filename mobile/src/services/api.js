@@ -35,6 +35,23 @@ function buildHeaders(extra = {}) {
   return headers;
 }
 
+async function parseErrorResponse(res) {
+  let errorData = null;
+  try {
+    errorData = await res.json();
+  } catch (_) {
+    try {
+      const text = await res.text();
+      if (text) errorData = { message: text };
+    } catch (__) {}
+  }
+  const message = errorData?.detail || errorData?.message || `API Error: ${res.status}`;
+  const err = new Error(typeof message === 'string' ? message : JSON.stringify(message));
+  err.status = res.status;
+  err.data = errorData;
+  return err;
+}
+
 export const api = {
   get: async (endpoint) => {
     try {
@@ -43,7 +60,7 @@ export const api = {
         method: 'GET',
         headers: buildHeaders(),
       });
-      if (!res.ok) throw new Error(`API Error: ${res.status}`);
+      if (!res.ok) throw await parseErrorResponse(res);
       return await res.json();
     } catch (e) {
       console.error('GET Error', endpoint, e);
@@ -59,7 +76,7 @@ export const api = {
         headers: buildHeaders(authorization ? { Authorization: `Bearer ${authorization}` } : {}),
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error(`API Error: ${res.status}`);
+      if (!res.ok) throw await parseErrorResponse(res);
       return await res.json();
     } catch (e) {
       console.error('POST Error', endpoint, e);

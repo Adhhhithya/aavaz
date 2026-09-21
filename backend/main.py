@@ -34,16 +34,22 @@ from api.assignment.escalation import check_and_escalate_sos
 from services.telephony_scheduler import run_check_in_scheduler
 import asyncio
 
+from services.pushbullet_service import start_pushbullet_sms_listener, stop_pushbullet_sms_listener
+from services.sms_intake_service import process_incoming_sms
+
 @app.on_event("startup")
 async def startup_event():
     # Start the background escalation engine
     asyncio.create_task(check_and_escalate_sos())
     # Start the outbound check-in telephony scheduler
     asyncio.create_task(run_check_in_scheduler())
+    # Start the real-time Pushbullet SMS listener for 2-way incoming SMS
+    if settings.PUSHBULLET_API_KEY:
+        start_pushbullet_sms_listener(callback=process_incoming_sms)
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    pass
+    stop_pushbullet_sms_listener()
 
 app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["auth"])
 

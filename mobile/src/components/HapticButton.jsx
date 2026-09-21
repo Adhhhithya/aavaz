@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: DS.spacing.md,
     paddingHorizontal: DS.spacing.xl,
-    borderRadius: DS.borderRadius.full,
+    borderRadius: DS.radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -76,38 +76,38 @@ const styles = StyleSheet.create({
     marginRight: DS.spacing.sm,
   },
   text: {
-    ...DS.typography.body,
+    ...DS.type.body,
     fontWeight: 'bold',
   },
   primaryContainer: {
-    backgroundColor: DS.colors.primary.main,
+    backgroundColor: DS.primary.main,
     borderWidth: 1,
-    borderColor: DS.colors.primary.main,
+    borderColor: DS.primary.main,
   },
   primaryText: {
     color: '#ffffff',
   },
   secondaryContainer: {
-    backgroundColor: DS.colors.background.surface,
+    backgroundColor: DS.canvas.surface,
     borderWidth: 1,
-    borderColor: DS.colors.ui.border,
+    borderColor: DS.canvas.border,
   },
   secondaryText: {
-    color: DS.colors.text.primary,
+    color: DS.text.primary,
   },
   dangerContainer: {
-    backgroundColor: DS.colors.accent.sos,
+    backgroundColor: DS.accent.sos,
   },
   dangerText: {
     color: '#ffffff',
   },
   disabledContainer: {
-    backgroundColor: DS.colors.background.surfaceSubtle,
+    backgroundColor: DS.canvas.surfaceSubtle,
     borderWidth: 1,
-    borderColor: DS.colors.ui.border,
+    borderColor: DS.canvas.border,
     opacity: 0.6,
   },
   disabledText: {
-    color: DS.colors.text.muted,
+    color: DS.text.muted,
   },
 });

@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/api/scoring/fusion.py
 
 Multimodal distress fusion engine.
@@ -277,6 +277,13 @@ async def calculate_dynamic_score(
 async def calculate_dynamic_score_legacy(
     transcript: str,
     call_duration: int = 0,
+    audio_url: Optional[str] = None,
+    audio_bytes: Optional[bytes] = None,
+    missed_checkins: int = 0,
+    total_checkins: int = 0,
+    last_interaction_days_ago: int = 0,
+    language: str = "en",
+    **kwargs,
 ) -> dict:
     """
     Backward-compatible wrapper returning the original dict shape expected
@@ -285,6 +292,12 @@ async def calculate_dynamic_score_legacy(
     result = await calculate_dynamic_score(
         transcript=transcript,
         call_duration=call_duration,
+        audio_url=audio_url,
+        audio_bytes=audio_bytes,
+        missed_checkins=missed_checkins,
+        total_checkins=total_checkins,
+        last_interaction_days_ago=last_interaction_days_ago,
+        language=language,
     )
     return {
         "final_score": result.distress_score,

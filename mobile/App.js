@@ -4,6 +4,55 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DS } from './src/theme/designSystem';
 import { storage } from './src/services/storage';
 import { authService } from './src/auth/authService';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import {
+  WarningModalProvider,
+  showGlobalWarningModal,
+  formatErrorMessage,
+} from './src/context/WarningModalContext';
+
+import { LogBox } from 'react-native';
+
+// Suppress all React Native / Expo red and yellow box error overlays
+LogBox.ignoreAllLogs(true);
+
+// Intercept all unhandled JavaScript exceptions in React Native / Expo
+// Prevents red screens and displays the graceful Warning Modal instead
+if (typeof ErrorUtils !== 'undefined') {
+  ErrorUtils.setGlobalHandler((error, isFatal) => {
+    showGlobalWarningModal({
+      title: 'Notice',
+      message: formatErrorMessage(error),
+      type: 'warning',
+    });
+    if (__DEV__) {
+      console.warn('[GlobalErrorHandler intercepted]:', error?.message || error);
+    }
+  });
+}
+
+// Intercept all unhandled Promise rejections
+if (typeof global !== 'undefined') {
+  global.onunhandledrejection = (event) => {
+    const error = event?.reason || event;
+    showGlobalWarningModal({
+      title: 'Notice',
+      message: formatErrorMessage(error),
+      type: 'warning',
+    });
+  };
+}
+if (typeof window !== 'undefined') {
+  window.onunhandledrejection = (event) => {
+    if (event && event.preventDefault) event.preventDefault();
+    const error = event?.reason || event;
+    showGlobalWarningModal({
+      title: 'Notice',
+      message: formatErrorMessage(error),
+      type: 'warning',
+    });
+  };
+}
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -98,7 +147,11 @@ export default function App() {
       setAuthData((prev) => ({ ...prev, countryCode, phoneNumber }));
       setCurrentScreen('OTP');
     } catch (e) {
-      alert('Could not send a verification code. Please try again.');
+      showGlobalWarningModal({
+        title: 'Unable to Send Code',
+        message: formatErrorMessage(e),
+        type: 'warning',
+      });
     }
   };
 
@@ -121,23 +174,27 @@ export default function App() {
       setAuthData((prev) => ({ ...prev, ...result.session }));
       setCurrentScreen('MainApp');
     } catch (e) {
-      alert('Verification failed: incorrect or expired code.');
+      showGlobalWarningModal({
+        title: 'Verification Notice',
+        message: formatErrorMessage(e),
+        type: 'warning',
+      });
     }
   };
 
   const handleCompleteOnboarding = async (result) => {
-    // result contains token and token_type 'victim_session'
-    const session = await authService.registerUser(
-      {
-        fullName: result.fullName,
-        age: result.age,
-        emergencyContact: result.emergencyContact,
-        phone: authData.phone,
-      },
-      authData.phoneVerifiedToken
-    );
-    setAuthData((prev) => ({ ...prev, ...session }));
-    setCurrentScreen('MainApp');
+    try {
+      const session = await authService.saveRegisteredSession(result, authData.phone);
+      setAuthData((prev) => ({ ...prev, ...session }));
+      setCurrentScreen('MainApp');
+    } catch (e) {
+      console.error('Failed to complete onboarding:', e);
+      showGlobalWarningModal({
+        title: 'Registration Notice',
+        message: formatErrorMessage(e),
+        type: 'warning',
+      });
+    }
   };
 
   const handleLogout = async () => {
@@ -159,45 +216,49 @@ export default function App() {
   };
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" backgroundColor={DS.canvas.base} />
-      <View style={styles.root}>
-        {currentScreen === 'Loading' && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={DS.primary.main} />
+    <ErrorBoundary onReset={() => setCurrentScreen('Login')}>
+      <WarningModalProvider>
+        <SafeAreaProvider>
+          <StatusBar barStyle="dark-content" backgroundColor={DS.canvas.base} />
+          <View style={styles.root}>
+            {currentScreen === 'Loading' && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={DS.primary.main} />
+              </View>
+            )}
+
+            {currentScreen === 'Login' && (
+              <LoginScreen onSendOTP={handleSendOTP} />
+            )}
+
+            {currentScreen === 'OTP' && (
+              <OTPVerificationScreen
+                phoneNumber={authData.phoneNumber}
+                countryCode={authData.countryCode}
+                onEditPhone={() => setCurrentScreen('Login')}
+                onVerifySuccess={handleVerifySuccess}
+              />
+            )}
+
+            {currentScreen === 'Onboarding' && (
+              <RegisterScreen
+                phoneNumber={authData.phone}
+                phoneVerifiedToken={authData.phoneVerifiedToken}
+                onCompleteSetup={handleCompleteOnboarding}
+              />
+            )}
+
+            {currentScreen === 'MainApp' && (
+              <MainAppShell
+                userProfile={authData.userProfile}
+                onLogout={handleLogout}
+                onUpdateProfile={handleUpdateProfile}
+              />
+            )}
           </View>
-        )}
-
-        {currentScreen === 'Login' && (
-          <LoginScreen onSendOTP={handleSendOTP} />
-        )}
-
-        {currentScreen === 'OTP' && (
-          <OTPVerificationScreen
-            phoneNumber={authData.phoneNumber}
-            countryCode={authData.countryCode}
-            onEditPhone={() => setCurrentScreen('Login')}
-            onVerifySuccess={handleVerifySuccess}
-          />
-        )}
-
-        {currentScreen === 'Onboarding' && (
-          <RegisterScreen
-            phoneNumber={authData.phone}
-            phoneVerifiedToken={authData.phoneVerifiedToken}
-            onCompleteSetup={handleCompleteOnboarding}
-          />
-        )}
-
-        {currentScreen === 'MainApp' && (
-          <MainAppShell
-            userProfile={authData.userProfile}
-            onLogout={handleLogout}
-            onUpdateProfile={handleUpdateProfile}
-          />
-        )}
-      </View>
-    </SafeAreaProvider>
+        </SafeAreaProvider>
+      </WarningModalProvider>
+    </ErrorBoundary>
   );
 }
 

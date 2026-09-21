@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from models.intake_models import AppRegistrationRequest
+from models.intake_models import AppRegistrationRequest, GrievanceRegistrationPayload
 from services.supabase_client import get_supabase
 from services.location_resolver import resolve_location
 from api.auth.victim_dependencies import (
@@ -261,7 +261,15 @@ async def get_user_cases(
 
         # Format for mobile app
         formatted = []
+        from datetime import datetime, timezone
         for c in cases_resp.data:
+            # Fetch latest interaction
+            interactions_resp = await supabase.table("interactions").select("timestamp").eq("case_id", c["id"]).order("timestamp", desc=True).limit(1).execute()
+            
+            last_date_str = interactions_resp.data[0]["timestamp"] if interactions_resp.data else c["created_at"]
+            last_date = datetime.fromisoformat(last_date_str.replace("Z", "+00:00"))
+            days_since = (datetime.now(timezone.utc) - last_date).days
+
             # Determine best title
             title = "Case Report"
             if c.get("ecourts_data") and "title" in c["ecourts_data"]:
@@ -276,6 +284,12 @@ async def get_user_cases(
                 "status": c["case_stage"].upper(),
                 "isResolved": c["case_stage"] == "resolved",
                 "cnr": c.get("cnr"),
+                "cnr_number": c.get("cnr_number"),
+                "grievance_related_to": c.get("grievance_related_to"),
+                "grievance_description": c.get("grievance_description"),
+                "has_fir": c.get("has_fir"),
+                "submitter_role": c.get("submitter_role"),
+                "days_since_last_interaction": days_since,
                 "ecourts_data": c.get("ecourts_data"),
                 "timeline": [
                     {
@@ -299,3 +313,63 @@ async def get_user_cases(
     except Exception as e:
         logger.error(f"Fetch cases error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/grievance")
+async def submit_grievance(
+    request: GrievanceRegistrationPayload,
+    victim: CurrentVictim = Depends(get_current_victim)
+):
+    """
+    Handles the submission of the multi-step grievance form.
+    Updates the user's personal details and creates a case.
+    """
+    try:
+        supabase = await get_supabase()
+        
+        # 1. Update user details
+        user_update = {
+            "first_name": request.first_name,
+            "middle_name": request.middle_name,
+            "last_name": request.last_name,
+            "father_name": request.father_name,
+            "dob": request.dob if request.dob else None,
+            "category": request.category,
+            "nationality": request.nationality,
+            "aadhaar_number": request.aadhaar_number,
+            "address_pincode": request.pincode,
+            "location_state": request.state,
+            "location_district": request.district,
+            "address_taluka": request.taluka,
+            "address_full": request.full_address,
+        }
+        
+        update_resp = await supabase.table("users").update(user_update).eq("id", victim.id).execute()
+        if not update_resp.data:
+            logger.warning(f"Failed to update user {victim.id} with grievance details.")
+            
+        # 2. Create a case
+        case_data = {
+            "user_id": victim.id,
+            "case_type": "criminal",
+            "intake_channel": "app",
+            "grievance_related_to": request.grievance_related_to,
+            "has_fir": request.has_fir,
+            "submitter_role": request.submitter_role,
+            "cnr_number": request.cnr_number,
+            "grievance_description": request.grievance_description,
+            "case_stage": "registered",
+            "priority_rank": 50
+        }
+        
+        case_resp = await supabase.table("cases").insert(case_data).execute()
+        if not case_resp.data:
+            raise HTTPException(status_code=500, detail="Failed to create case.")
+            
+        return {"success": True, "case": case_resp.data[0]}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error submitting grievance: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")

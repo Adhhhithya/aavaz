@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     BOLNA_API_KEY: str = ""
     BOLNA_AGENT_ID: str = ""
     PUSHBULLET_API_KEY: str = ""
+    PUSHBULLET_TARGET_DEVICE_IDEN: str = ""
     GROQ_API_KEY: str = ""
     PUBLIC_WEBHOOK_BASE_URL: str = ""
     ECOURTS_API_KEY: str = ""
