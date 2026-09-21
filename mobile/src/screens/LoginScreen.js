@@ -13,7 +13,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HeartHandshake, ShieldCheck, ChevronDown } from 'lucide-react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { DS } from '../theme/designSystem';
+import HapticButton from '../components/HapticButton';
+import ScalePressable from '../components/ScalePressable';
 
 export default function LoginScreen({ onSendOTP }) {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -38,8 +41,9 @@ export default function LoginScreen({ onSendOTP }) {
           style={styles.container}
         >
           <View style={styles.inner}>
+            
             {/* Branding / Header */}
-            <View style={styles.header}>
+            <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.header}>
               <View style={styles.iconCircle}>
                 <HeartHandshake size={36} color={DS.primary.main} />
               </View>
@@ -47,10 +51,10 @@ export default function LoginScreen({ onSendOTP }) {
               <Text style={styles.subheadline}>
                 Continuous psychological care, support, and legal guidance.
               </Text>
-            </View>
+            </Animated.View>
 
             {/* Input Card Container */}
-            <View style={styles.formContainer}>
+            <Animated.View entering={FadeInDown.duration(600).delay(100).springify()} style={styles.formContainer}>
               <Text style={styles.inputLabel}>Mobile Phone Number</Text>
               <View
                 style={[
@@ -59,10 +63,10 @@ export default function LoginScreen({ onSendOTP }) {
                 ]}
               >
                 {/* Country Code Selector */}
-                <TouchableOpacity style={styles.countryCodeBadge} activeOpacity={0.7}>
+                <ScalePressable style={styles.countryCodeBadge}>
                   <Text style={styles.countryCodeText}>{countryCode}</Text>
                   <ChevronDown size={14} color={DS.text.muted} style={{ marginLeft: 2 }} />
-                </TouchableOpacity>
+                </ScalePressable>
 
                 <View style={styles.divider} />
 
@@ -81,30 +85,22 @@ export default function LoginScreen({ onSendOTP }) {
               </View>
 
               {/* Pill-shaped Send OTP CTA Button */}
-              <TouchableOpacity
-                style={[
-                  styles.ctaButton,
-                  phoneNumber.trim().length < 6 && styles.ctaButtonDisabled,
-                ]}
-                onPress={handleSend}
+              <HapticButton
+                title={loading ? "Sending..." : "Send OTP"}
                 disabled={loading || phoneNumber.trim().length < 6}
-                activeOpacity={0.85}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.ctaButtonText}>Send OTP</Text>
-                )}
-              </TouchableOpacity>
+                onPress={handleSend}
+                variant="primary"
+                style={styles.ctaButton}
+              />
 
               {/* Confidentiality & Privacy Micro-copy */}
-              <View style={styles.privacyNoteWrap}>
+              <Animated.View entering={FadeInDown.duration(600).delay(200).springify()} style={styles.privacyNoteWrap}>
                 <ShieldCheck size={16} color={DS.text.muted} style={{ marginRight: 6 }} />
                 <Text style={styles.privacyNote}>
-                  Your data is protected under end-to-end encryption. All communications remain completely strictly confidential.
+                  Your data is protected under end-to-end encryption. All communications remain strictly confidential.
                 </Text>
-              </View>
-            </View>
+              </Animated.View>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
@@ -115,7 +111,7 @@ export default function LoginScreen({ onSendOTP }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: DS.canvas.base, // Cloud Mist #F8F9FC
+    backgroundColor: DS.canvas.base,
   },
   container: {
     flex: 1,
@@ -140,13 +136,14 @@ const styles = StyleSheet.create({
   },
   headline: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
     color: DS.text.primary,
     textAlign: 'center',
     marginBottom: DS.spacing.xs,
   },
   subheadline: {
     fontSize: 14,
+    fontFamily: 'Inter-Medium',
     color: DS.text.muted,
     textAlign: 'center',
     paddingHorizontal: DS.spacing.md,
@@ -157,7 +154,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Inter-Bold',
     color: DS.text.primary,
     marginBottom: DS.spacing.xs,
   },
@@ -166,14 +163,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: DS.canvas.surface,
     borderWidth: 1.5,
-    borderColor: DS.canvas.border, // #EBE8F6
+    borderColor: DS.canvas.border,
     borderRadius: DS.radius.lg,
     paddingHorizontal: DS.spacing.md,
     height: 56,
     marginBottom: DS.spacing.xl,
   },
   phoneInputRowFocused: {
-    borderColor: DS.primary.main, // Lavender #8A79B8 active focus ring
+    borderColor: DS.primary.main,
   },
   countryCodeBadge: {
     flexDirection: 'row',
@@ -182,7 +179,7 @@ const styles = StyleSheet.create({
   },
   countryCodeText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Inter-Bold',
     color: DS.text.primary,
   },
   divider: {
@@ -194,25 +191,12 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 16,
+    fontFamily: 'Inter-Medium',
     color: DS.text.primary,
     height: '100%',
   },
   ctaButton: {
-    backgroundColor: DS.primary.main, // #8A79B8
-    height: 54,
-    borderRadius: DS.radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...DS.shadow.hover,
-  },
-  ctaButtonDisabled: {
-    opacity: 0.55,
-  },
-  ctaButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: DS.text.light, // #FFFFFF
-    letterSpacing: 0.2,
+    width: '100%',
   },
   privacyNoteWrap: {
     flexDirection: 'row',
@@ -223,7 +207,8 @@ const styles = StyleSheet.create({
   privacyNote: {
     flex: 1,
     fontSize: 12,
-    color: DS.text.muted, // #636774
+    fontFamily: 'Inter-Medium',
+    color: DS.text.muted,
     lineHeight: 17,
   },
 });

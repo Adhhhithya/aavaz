@@ -18,8 +18,8 @@ from fastapi.testclient import TestClient
 
 from main import app as real_app
 
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_SCRIPTS_DIR = os.path.join(_REPO_ROOT, "scripts")
+_BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_SCRIPTS_DIR = os.path.join(_BACKEND_DIR, "scripts")
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 

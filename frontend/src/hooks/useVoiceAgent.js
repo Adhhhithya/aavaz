@@ -123,7 +123,10 @@ export function useVoiceAgent({ getSystemPrompt, onUserTranscript, onAssistantSt
   const start = useCallback(async () => {
     setStatus('connecting');
     try {
-      const systemPrompt = await getSystemPrompt();
+      const voiceContext = await getSystemPrompt();
+      const systemPrompt = typeof voiceContext === 'object' ? voiceContext.system_prompt : voiceContext;
+      const victimId = typeof voiceContext === 'object' ? voiceContext.victim_id : undefined;
+      const caseId = typeof voiceContext === 'object' ? voiceContext.case_id : undefined;
 
       const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const ws = new WebSocket(`${proto}://${window.location.host}/voice-ws`);
@@ -148,7 +151,12 @@ export function useVoiceAgent({ getSystemPrompt, onUserTranscript, onAssistantSt
         switch (msg.type) {
           case 'ready':
             ttsRateRef.current = msg.output_sample_rate;
-            ws.send(JSON.stringify({ type: 'context', system_prompt: systemPrompt }));
+            ws.send(JSON.stringify({
+              type: 'context',
+              system_prompt: systemPrompt,
+              victim_id: victimId,
+              case_id: caseId,
+            }));
             break;
           case 'context_ok':
             await startMic();

@@ -55,9 +55,19 @@ async def trigger_sos(
         if not sos_resp.data:
             raise HTTPException(status_code=500, detail="Failed to create SOS event")
             
-        # 3. Schedule 30-minute escalation (Mocked)
-        # In a real system, this would push a task to Celery/Redis Queue, or use a cron job.
-        logger.info(f"SOS triggered for case {request.case_id}. 30-minute escalation timer started.")
+        # 3. Schedule 30-minute escalation
+        from datetime import timedelta
+        task_data = {
+            "user_id": current_victim.id,
+            "case_id": request.case_id,
+            "type": "SOS_ESCALATION",
+            "priority": "CRITICAL",
+            "status": "OPEN",
+            "assignee_staff_id": assigned_counsellor,
+            "sla_due_at": (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat()
+        }
+        await supabase.table("tasks").insert(task_data).execute()
+        logger.info(f"SOS triggered for case {request.case_id}. 30-minute escalation task created.")
         
         return {"status": "success", "sos_id": sos_resp.data[0]["id"]}
 

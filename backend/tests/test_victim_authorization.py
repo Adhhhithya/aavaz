@@ -84,23 +84,14 @@ def test_victim_a_cannot_be_impersonated_via_request_body(client, token_a, monke
     async def _fake_get_supabase():
         return fake
 
-    async def _fake_generate_chat_response(*_args, **_kwargs):
-        return "a supportive reply"
-
-    async def _fake_calculate_dynamic_score(*_args, **_kwargs):
-        return {
-            "final_score": 10,
-            "escalation_risk": "low",
-            "case_type": "general_inquiry",
-            "recommended_intervention": "none",
-            "reasoning": "test",
-        }
+    async def _fake_process_turn(*_args, **_kwargs):
+        state = _args[0] if _args else _kwargs.get("state")
+        return state, "a supportive reply"
 
     # chatbot_routes imports get_supabase locally inside the function body, so
     # it must be patched at its source module, not as a chatbot_routes attribute.
     monkeypatch.setattr("services.supabase_client.get_supabase", _fake_get_supabase)
-    monkeypatch.setattr(chatbot_routes, "generate_chat_response", _fake_generate_chat_response)
-    monkeypatch.setattr(chatbot_routes, "calculate_dynamic_score", _fake_calculate_dynamic_score)
+    monkeypatch.setattr("services.agents.supervisor.execute_turn", _fake_process_turn)
 
     response = client.post(
         "/api/v1/intake/chatbot/message",
@@ -108,7 +99,7 @@ def test_victim_a_cannot_be_impersonated_via_request_body(client, token_a, monke
         json={"session_id": "s1", "message": "hello", "user_id": VICTIM_B},  # extra field, must be ignored
     )
     assert response.status_code == 200
-    # No case exists for VICTIM_A in the fake store, so nothing gets updated —
+    # No case exists for VICTIM_A in the fake store, so nothing gets updated -
     # the important assertion is that no case belonging to VICTIM_B was touched.
     assert fake._store.get("cases", []) == []
 

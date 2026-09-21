@@ -1,29 +1,32 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-export default defineConfig({
-  plugins: [
-    tailwindcss(),
-    react(),
-  ],
-  server: {
-    allowedHosts: [
-      '<your-ngrok-domain>.ngrok-free.dev'
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
+    plugins: [
+      tailwindcss(),
+      react(),
     ],
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true
-      },
-      // Voice agent (separate service, see /voice-agent) — proxied so the
-      // browser talks to one origin, same pattern as /api above.
-      '/voice-ws': {
-        target: 'http://localhost:8090',
-        ws: true,
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/voice-ws/, '/ws')
+    server: {
+      allowedHosts: [
+        env.VITE_API_URL ? new URL(env.VITE_API_URL).hostname : '127.0.0.1'
+      ],
+      proxy: {
+        '/api': {
+          target: env.VITE_API_URL,
+          changeOrigin: true
+        },
+        // Voice agent (separate service, see /voice-agent) — proxied so the
+        // browser talks to one origin, same pattern as /api above.
+        '/voice-ws': {
+          target: env.VITE_VOICE_WS_URL,
+          ws: true,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/voice-ws/, '/ws')
+        }
       }
     }
-  }
-})
+  };
+});

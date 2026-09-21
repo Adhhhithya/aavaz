@@ -62,6 +62,9 @@ class SyntheticOtpProvider(OtpProvider):
             channel,
             code,
         )
+        print(f"\n=======================================================\n[DEV OTP] Verification code for {phone_number}: {code}\n=======================================================\n", flush=True)
+
+
 
 
 class PushbulletOtpProvider(OtpProvider):

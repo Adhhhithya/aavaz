@@ -1,8 +1,13 @@
-// mobile/src/services/api.js
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
-// IMPORTANT: Replace this with your actual local IP (e.g. 192.168.1.X) or Ngrok URL when testing on a real device.
-const NGROK_URL = 'http://192.168.1.6:8000'; // PC's Wi-Fi LAN IP — phone must be on the same Wi-Fi network
-export const API_BASE_URL = NGROK_URL;
+import config from '../config';
+
+function getApiBaseUrl() {
+  return config.apiUrl;
+}
+
+export const API_BASE_URL = config.apiUrl;
 
 // S2: the backend now enforces real victim authentication on victim-facing
 // endpoints. This module-level token is attached as an Authorization header on
@@ -33,7 +38,8 @@ function buildHeaders(extra = {}) {
 export const api = {
   get: async (endpoint) => {
     try {
-      const res = await fetch(`${NGROK_URL}${endpoint}`, {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}${endpoint}`, {
         method: 'GET',
         headers: buildHeaders(),
       });
@@ -47,7 +53,8 @@ export const api = {
 
   post: async (endpoint, data, { authorization } = {}) => {
     try {
-      const res = await fetch(`${NGROK_URL}${endpoint}`, {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
         headers: buildHeaders(authorization ? { Authorization: `Bearer ${authorization}` } : {}),
         body: JSON.stringify(data),

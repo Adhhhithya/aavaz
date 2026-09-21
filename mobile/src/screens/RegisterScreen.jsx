@@ -39,8 +39,7 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
         name: fullName.trim(),
         role_type: 'victim',
         consent_given: true,
-        preferred_language: 'en',
-        location: { lat: 18.5204, lng: 73.8567 } // Optional location mock
+        preferred_language: 'en'
       };
 
       const res = await api.post('/api/v1/intake/app/register', data, {

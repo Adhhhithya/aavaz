@@ -51,19 +51,19 @@ async def get_national_dashboard(
         state_breakdown = []
         for state, stats in state_stats.items():
             prevalent_type = max(stats["case_types"], key=stats["case_types"].get) if stats["case_types"] else "N/A"
+            risk_tier = "critical" if stats["critical"] > 10 else ("high" if stats["critical"] > 5 else "low")
             state_breakdown.append({
-                "state": state,
-                "cases": stats["cases"],
+                "id": state,
+                "name": state,
+                "total": stats["cases"],
                 "critical": stats["critical"],
+                "activeSOS": stats["critical"], # SOS count would need a separate table join, use critical as proxy or 0
                 "prevalent_type": prevalent_type,
-                "avg_resolution": "In Progress", # Can't compute easily without closed cases timeframe
-                "trend": "Stable"
+                "risk": risk_tier
             })
             
         payload = {
-            "total_cases_nationwide": total_cases_nationwide,
-            "avg_sla": "24h", # Placeholder until SLA tracking is implemented
-            "resource_utilization": "76%", # Placeholder until counsellor loads are summed
+            "total_cases": total_cases_nationwide,
             "state_breakdown": state_breakdown,
             "policy_insights": [
                 "Increase in distress escalation correlates with delays in Trial stage.",

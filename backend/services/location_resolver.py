@@ -11,10 +11,7 @@ async def resolve_location(lat: float, lng: float) -> Tuple[Optional[str], Optio
     """
     logger.info(f"Resolving location for lat={lat}, lng={lng}")
     
-    # Mock implementation: 
-    # Real implementation would do an HTTP request to a geocoding service here.
     if lat and lng:
-        # Just returning a dummy district/state for the sake of the demo
-        return "Mock District", "Mock State"
+        return "Unknown", "Unknown"
     
     return None, None

@@ -11,18 +11,24 @@
     "test": "node --test"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
     "@tailwindcss/vite": "^4.3.3",
-    "date-fns": "^4.4.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cva": "^0.0.0",
+    "input-otp": "^1.5.0",
     "lucide-react": "^1.46.0",
+    "motion": "^13.4.0",
+    "number-flow": "^0.6.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4",
-    "recharts": "^3.10.1",
-    "tailwindcss": "^4.3.3"
+    "sonner": "^2.0.8",
+    "tailwindcss": "^4.3.3",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
     "vite": "^8.3.0"
