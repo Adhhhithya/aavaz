@@ -84,7 +84,7 @@ def run_gate():
 
     # 4. Trigger SOS
     logger.info("[App] Triggering SOS Distress Signal...")
-    res = client.post("/api/v1/intake/app/sos", headers={"Authorization": f"Bearer {victim_token}"})
+    res = client.post("/api/v1/cases/sos/sos", headers={"Authorization": f"Bearer {victim_token}"}, json={"case_id": "test", "location_lat": 0, "location_lng": 0})
     assert res.status_code == 200, f"SOS trigger failed: {res.text}"
     sos_data = res.json()
     if sos_data.get("case_id"):

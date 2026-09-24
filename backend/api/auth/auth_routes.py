@@ -123,16 +123,24 @@ async def login(payload: LoginRequest):
         if not auth_resp.user:
             raise HTTPException(status_code=401, detail="Invalid credentials")
             
-        # 2. Fetch user's role from the users table using their auth.uid
-        user_record = await supabase.table("users").select("*").eq("id", auth_resp.user.id).execute()
-        
-        if not user_record.data:
-            # Fallback for staff who might not have a profile yet
-            role = "counsellor"
-            name = payload.username
-        else:
-            role = user_record.data[0].get("role_type", "counsellor")
-            name = user_record.data[0].get("name", payload.username)
+        # 2. Fetch user's role from user_metadata, users table, or staff table
+        meta = getattr(auth_resp.user, "user_metadata", {}) or {}
+        role = meta.get("role")
+        name = meta.get("name")
+
+        if not role:
+            user_record = await supabase.table("users").select("*").eq("id", auth_resp.user.id).execute()
+            if user_record.data:
+                role = user_record.data[0].get("role_type")
+                name = name or user_record.data[0].get("name")
+
+        if not role:
+            staff_record = await supabase.table("staff").select("*").eq("user_id", auth_resp.user.id).execute()
+            if staff_record.data:
+                role = staff_record.data[0].get("role")
+
+        role = role or "counsellor"
+        name = name or payload.username
             
         return {
             "access_token": auth_resp.session.access_token,

@@ -20,6 +20,7 @@ from __future__ import annotations
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
+from models.contracts import DistressResult, RiskLevel, EmotionTag, InterventionType, ScoreComponent
 
 from main import app
 
@@ -128,13 +129,15 @@ async def test_bolna_webhook_creates_new_user_and_case():
          patch("api.intake.ivr_webhook.calculate_dynamic_score", new_callable=AsyncMock) as mock_score:
 
         mock_sup.return_value = fake_db
-        mock_score.return_value = {
-            "final_score": 35.0,
-            "escalation_risk": "low",
-            "case_type": "general_inquiry",
-            "recommended_intervention": "none",
-            "reasoning": "test",
-        }
+        mock_score.return_value = DistressResult(
+            distress_score=35.0,
+            confidence=0.9,
+            risk_level=RiskLevel.LOW,
+            emotion_tag=EmotionTag.NEUTRAL,
+            intervention=InterventionType.NONE,
+            signals=["test"],
+            score_breakdown={}
+        )
 
         payload = {
             "call_id": "call-abc-001",
@@ -168,11 +171,15 @@ async def test_bolna_webhook_updates_existing_case():
          patch("api.intake.ivr_webhook.calculate_dynamic_score", new_callable=AsyncMock) as mock_score:
 
         mock_sup.return_value = fake_db
-        mock_score.return_value = {
-            "final_score": 45.0, "escalation_risk": "medium",
-            "case_type": "physical_assault", "recommended_intervention": "counselling",
-            "reasoning": "distress signals",
-        }
+        mock_score.return_value = DistressResult(
+            distress_score=45.0,
+            confidence=0.9,
+            risk_level=RiskLevel.MEDIUM,
+            emotion_tag=EmotionTag.SADNESS,
+            intervention=InterventionType.COUNSELLING,
+            signals=["distress signals"],
+            score_breakdown={}
+        )
 
         payload = {
             "call_id": "call-abc-002",
@@ -205,11 +212,15 @@ async def test_bolna_webhook_high_distress_logs_warning(caplog):
          patch("api.intake.ivr_webhook.calculate_dynamic_score", new_callable=AsyncMock) as mock_score:
 
         mock_sup.return_value = fake_db
-        mock_score.return_value = {
-            "final_score": 78.0, "escalation_risk": "high",
-            "case_type": "physical_assault", "recommended_intervention": "counselling",
-            "reasoning": "high distress",
-        }
+        mock_score.return_value = DistressResult(
+            distress_score=78.0,
+            confidence=0.9,
+            risk_level=RiskLevel.HIGH,
+            emotion_tag=EmotionTag.FEAR,
+            intervention=InterventionType.COUNSELLING,
+            signals=["high distress"],
+            score_breakdown={}
+        )
 
         from api.intake.ivr_webhook import bolna_webhook
         from models.intake_models import BolnaWebhookPayload
@@ -234,11 +245,15 @@ async def test_bolna_webhook_empty_transcript_does_not_crash():
          patch("api.intake.ivr_webhook.calculate_dynamic_score", new_callable=AsyncMock) as mock_score:
 
         mock_sup.return_value = fake_db
-        mock_score.return_value = {
-            "final_score": 0.0, "escalation_risk": "low",
-            "case_type": "general_inquiry", "recommended_intervention": "none",
-            "reasoning": "",
-        }
+        mock_score.return_value = DistressResult(
+            distress_score=0.0,
+            confidence=0.0,
+            risk_level=RiskLevel.LOW,
+            emotion_tag=EmotionTag.NEUTRAL,
+            intervention=InterventionType.NONE,
+            signals=[],
+            score_breakdown={}
+        )
 
         from api.intake.ivr_webhook import bolna_webhook
         from models.intake_models import BolnaWebhookPayload

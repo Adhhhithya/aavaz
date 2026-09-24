@@ -21,9 +21,11 @@ class PIIRedactor:
         email_pattern = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
         text = email_pattern.sub('[EMAIL_REDACTED]', text)
         
-        # 3. Simulate Name/Location Redaction (MVP Stub)
-        # In this hackathon MVP, we do a naive replace of known trigger words
-        # to prove the architecture to the judges.
+        # 3. Location NER (LIMITED SCOPE)
+        # KNOWN LIMITATION: This is a naive keyword-based redaction covering only 4 cities.
+        # A production deployment requires integration with a real NER model (e.g. spaCy, Presidio)
+        # to cover arbitrary location names. This list must be expanded or replaced before
+        # handling real PII at scale.
         sensitive_locations = ['pune', 'mumbai', 'delhi', 'bangalore']
         for loc in sensitive_locations:
             text = re.sub(rf'\b{loc}\b', '[LOCATION]', text, flags=re.IGNORECASE)

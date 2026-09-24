@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { Home, FileText, MessageCircle, User, AlertTriangle, Globe } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
+import { cn } from '../../lib/utils';
+import { Button } from '../../components/ui/Button';
 
 const LANGUAGES = [
   { code: 'en', name: 'English' },
@@ -13,7 +15,7 @@ const LANGUAGES = [
   { code: 'mr', name: 'Marathi (मराठी)' },
   { code: 'ta', name: 'Tamil (தமிழ்)' },
   { code: 'ur', name: 'Urdu (اردو)' },
-  { code: 'gu', name: 'Gujarati (ગુジરાتী)' },
+  { code: 'gu', name: 'Gujarati (ગુજરાતી)' },
   { code: 'kn', name: 'Kannada (ಕನ್ನಡ)' },
   { code: 'or', name: 'Odia (ଓଡ଼ିଆ)' },
   { code: 'ml', name: 'Malayalam (മലയാളം)' },
@@ -22,14 +24,14 @@ const LANGUAGES = [
 
 const NAV_ITEMS = [
   { to: '/victim/dashboard', icon: Home, label: 'Home' },
-  { to: '/victim/case', icon: FileText, label: 'Case' },
+  { to: '/victim/register-grievance', icon: FileText, label: 'Case' },
   { to: '/victim/chat', icon: MessageCircle, label: 'AI Chat' },
 ];
 
 const PAGE_VARIANTS = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] } },
-  exit:    { opacity: 0, y: -8,  transition: { duration: 0.16, ease: [0.22, 1, 0.36, 1] } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.16, ease: [0.22, 1, 0.36, 1] } },
 };
 
 export default function VictimLayout() {
@@ -45,13 +47,11 @@ export default function VictimLayout() {
     const toastId = toast.loading('Activating SOS — locating you…');
 
     try {
-      // Get GPS coords
       const position = await new Promise((resolve, reject) =>
         navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
       );
       const { latitude, longitude } = position.coords;
 
-      // Get case_id for this user
       const casesRes = await authFetch(`/api/v1/intake/app/cases/${user?.id}`, {
         headers: { 'ngrok-skip-browser-warning': '1' }
       });
@@ -60,7 +60,6 @@ export default function VictimLayout() {
 
       if (!caseId) throw new Error('No active case found');
 
-      // Fire the real SOS endpoint
       const sosRes = await authFetch('/api/v1/cases/sos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
@@ -71,7 +70,6 @@ export default function VictimLayout() {
 
       toast.success('SOS Activated — Emergency contacts and authorities notified.', { id: toastId, duration: 8000 });
     } catch (err) {
-      // Degrade gracefully — geolocation blocked or network failure
       console.error('SOS error:', err);
       toast.error(
         err.message === 'No active case found'
@@ -82,67 +80,63 @@ export default function VictimLayout() {
       setSosActive(false);
     }
 
-    // Auto-reset after 30s
     setTimeout(() => setSosActive(false), 30000);
   }, [sosActive, authFetch, user]);
 
   return (
-    <div className="min-h-screen bg-canvas-base flex flex-col md:flex-row">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
 
       {/* ─── Mobile Header ────────────────────────────────────────── */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-canvas-surface border-b border-canvas-border sticky top-0 z-10">
-        <div className="font-black text-lg text-text-primary tracking-tight">AAVAZ</div>
+      <div className="md:hidden flex items-center justify-between p-4 bg-surface border-b border-border sticky top-0 z-30 shadow-sm">
+        <div className="font-bold text-lg text-text-main tracking-tight">AAVAZ</div>
         <div className="flex items-center gap-3">
           <div className="relative flex items-center">
             <Globe size={14} className="text-text-muted absolute left-2 pointer-events-none" />
             <select
               value={lang}
               onChange={e => setLang(e.target.value)}
-              className="pl-6 pr-5 py-1 bg-canvas-base border border-canvas-border rounded-lg text-xs font-bold text-text-secondary focus:outline-none appearance-none"
+              className="pl-7 pr-4 py-1 bg-background border border-border rounded-lg text-xs font-semibold text-text-secondary focus:outline-none appearance-none"
             >
               {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
             </select>
           </div>
-          <button onClick={logout} className="text-xs font-bold text-text-muted px-3 py-1 bg-canvas-surfaceSubtle rounded-full">
-            Exit
-          </button>
+          <Button variant="ghost" size="sm" onClick={logout} className="text-xs h-7 px-2">Exit</Button>
         </div>
       </div>
 
       {/* ─── Desktop Sidebar ──────────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-64 bg-canvas-surface border-r border-canvas-border p-6 sticky top-0 h-screen">
-        <div className="font-black text-2xl text-text-primary tracking-tight mb-10">AAVAZ</div>
+      <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-border p-6 sticky top-0 h-screen shadow-sm z-20">
+        <div className="font-bold text-2xl text-text-main tracking-tight mb-8">AAVAZ</div>
 
-        {/* Language selector */}
         <div className="mb-6 relative">
           <Globe size={16} className="text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <select
             value={lang}
             onChange={e => setLang(e.target.value)}
-            className="w-full pl-9 pr-8 py-2.5 bg-canvas-base border border-canvas-border rounded-xl text-sm font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-main/20 appearance-none"
+            className="w-full pl-9 pr-8 py-2.5 bg-background border border-border rounded-xl text-sm font-semibold text-text-main focus:outline-none focus:ring-2 focus:ring-primary-base appearance-none transition-shadow"
           >
             {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
           </select>
         </div>
 
-        {/* Nav items with spring sliding indicator */}
         <nav className="flex-1 space-y-1 relative">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `relative flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-colors duration-[160ms] z-10 ${
-                  isActive ? 'text-primary-main' : 'text-text-muted hover:text-text-primary hover:bg-canvas-surfaceSubtle'
-                }`
+                cn(
+                  "relative flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200 z-10",
+                  isActive ? "text-primary-base" : "text-text-secondary hover:text-text-main hover:bg-surface-hover"
+                )
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
                     <motion.div
-                      layoutId="sidebar-indicator"
-                      className="absolute inset-0 rounded-xl bg-primary-muted -z-[1]"
+                      layoutId="victim-sidebar-indicator"
+                      className="absolute inset-0 rounded-xl bg-primary-muted -z-10"
                       transition={{ type: 'spring', stiffness: 320, damping: 28 }}
                     />
                   )}
@@ -154,52 +148,42 @@ export default function VictimLayout() {
           ))}
         </nav>
 
-        {/* SOS + User footer */}
         <div className="mt-auto space-y-4">
-          {/* SOS Button with CSS pulse ring */}
           <div className="relative">
             {!sosActive && (
               <div
-                className="absolute inset-0 rounded-xl bg-accent-sos/30"
-                style={{ animation: 'sos-pulse 2s ease-out infinite' }}
+                className="absolute inset-0 rounded-xl bg-critical-muted animate-pulse-critical"
                 aria-hidden
               />
             )}
             <button
               onClick={triggerSOS}
               disabled={sosActive}
-              className="relative w-full py-4 rounded-xl font-black text-white flex justify-center items-center gap-2 disabled:opacity-75"
-              style={{
-                background: sosActive ? 'var(--color-accent-terracotta)' : 'var(--color-accent-sos)',
-                transform: sosActive ? 'scale(0.97)' : undefined,
-                transition: `transform var(--duration-instant) var(--ease-out-quint), background-color var(--duration-fast) var(--ease-out-quint)`,
-                boxShadow: 'var(--shadow-sos)',
-              }}
-              onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; }}
-              onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              className={cn(
+                "relative w-full py-4 rounded-xl font-bold text-text-inverse flex justify-center items-center gap-2 transition-all duration-200 active:scale-95",
+                sosActive ? "bg-critical-hover opacity-90 scale-[0.97]" : "bg-critical-base shadow-critical hover:bg-critical-hover"
+              )}
             >
               <AlertTriangle size={20} />
-              {sosActive ? 'SOS ACTIVE' : 'SOS EMERGENCY'}
+              {sosActive ? 'SOS ACTIVE' : 'EMERGENCY SOS'}
             </button>
           </div>
 
-          {/* User pill */}
-          <div className="flex items-center gap-3 p-3 bg-canvas-base rounded-xl border border-canvas-border">
+          <div className="flex items-center gap-3 p-3 bg-background rounded-xl border border-border">
             <div className="w-9 h-9 rounded-full bg-primary-muted flex items-center justify-center shrink-0">
-              <User size={18} className="text-primary-main" />
+              <User size={18} className="text-primary-base" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-text-primary truncate">{user?.name}</div>
+              <div className="text-sm font-bold text-text-main truncate">{user?.name}</div>
               <div className="text-xs font-medium text-text-muted truncate">{user?.phone_number}</div>
             </div>
-            <button onClick={logout} className="text-xs font-bold text-accent-sos hover:underline shrink-0">Exit</button>
+            <button onClick={logout} className="text-xs font-bold text-danger-base hover:underline shrink-0">Exit</button>
           </div>
         </div>
       </aside>
 
-      {/* ─── Main Content with AnimatePresence page transitions ─── */}
-      <div className="flex-1 overflow-auto pb-24 md:pb-0 relative">
+      {/* ─── Main Content ─── */}
+      <div className="flex-1 overflow-auto pb-24 md:pb-0 relative bg-background">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -207,7 +191,7 @@ export default function VictimLayout() {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="h-full"
+            className="h-full max-w-5xl mx-auto"
           >
             <Outlet />
           </motion.div>
@@ -218,32 +202,29 @@ export default function VictimLayout() {
       <button
         onClick={triggerSOS}
         disabled={sosActive}
-        className="md:hidden fixed right-4 bottom-24 w-14 h-14 rounded-full flex justify-center items-center shadow-sos z-20 disabled:opacity-75"
-        style={{
-          background: sosActive ? 'var(--color-accent-terracotta)' : 'var(--color-accent-sos)',
-          transition: `transform var(--duration-instant) var(--ease-out-quint)`,
-        }}
-        onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.93)'; }}
-        onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+        className={cn(
+          "md:hidden fixed right-4 bottom-20 w-14 h-14 rounded-full flex justify-center items-center z-30 transition-all duration-200 active:scale-95",
+          sosActive ? "bg-critical-hover opacity-90 scale-[0.97]" : "bg-critical-base shadow-critical"
+        )}
       >
-        <AlertTriangle size={24} color="#FFF" />
+        <AlertTriangle size={24} className="text-text-inverse" />
       </button>
 
       {/* ─── Mobile Bottom Nav ───────────────────────────────────── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-canvas-surface/90 border-t border-canvas-border px-6 py-3 flex justify-around items-center z-10 backdrop-blur-[8px]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface/95 border-t border-border px-6 py-2 flex justify-around items-center z-20 backdrop-blur-md pb-safe">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 transition-colors duration-[160ms] ${
-                isActive ? 'text-primary-main' : 'text-text-muted'
-              }`
+              cn(
+                "flex flex-col items-center gap-1 p-2 transition-colors",
+                isActive ? "text-primary-base" : "text-text-secondary"
+              )
             }
           >
-            <item.icon size={22} />
-            <span className="text-[10px] font-bold">{item.label}</span>
+            <item.icon size={20} />
+            <span className="text-[10px] font-semibold">{item.label}</span>
           </NavLink>
         ))}
       </div>

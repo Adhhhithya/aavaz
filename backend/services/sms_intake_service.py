@@ -174,20 +174,54 @@ User message: "{clean_msg}"
         if case_id:
             try:
                 now_iso = datetime.now(timezone.utc).isoformat()
+                
+                try:
+                    from api.scoring.fusion import calculate_dynamic_score
+                    fusion_result = await calculate_dynamic_score(
+                        transcript=clean_msg,
+                        call_duration=0
+                    )
+                    
+                    breakdown_dict = {
+                        k: {
+                            "weight": v.weight,
+                            "raw_value": v.raw_value,
+                            "contribution": v.contribution,
+                            "notes": v.notes,
+                            "available": v.available
+                        } for k, v in fusion_result.score_breakdown.items()
+                    }
+                    emotion_tag = fusion_result.emotion_tag.value
+                    final_score = fusion_result.distress_score
+                    intervention = fusion_result.intervention.value
+                    sentiment = breakdown_dict.get("sentiment", {}).get("raw_value", 0.0)
+                    engagement = breakdown_dict.get("engagement", {}).get("raw_value", 0.0)
+                except Exception as ml_err:
+                    logger.warning("ML Scoring failed for SMS intake: %s", ml_err)
+                    breakdown_dict = {}
+                    emotion_tag = "neutral"
+                    final_score = 0.0
+                    intervention = "none"
+                    sentiment = 0.0
+                    engagement = 0.0
+                
+                # Log victim inbound message with calculated score
                 await supabase.table("interactions").insert({
                     "case_id": case_id,
                     "channel": "sms",
                     "timestamp": now_iso,
                     "transcript_ref": f"Victim: {clean_msg}",
-                    "emotion_tag": "neutral",
-                    "sentiment_score": 0.0,
-                    "engagement_score": 100.0,
+                    "emotion_tag": emotion_tag,
+                    "sentiment_score": sentiment,
+                    "engagement_score": engagement,
                     "history_score": 0.0,
-                    "final_score": 0.0,
-                    "score_breakdown": {"channel": "sms", "direction": "inbound"},
-                    "intervention_recommended": "none"
+                    "acoustic_score": 0.0,
+                    "final_score": final_score,
+                    "score_breakdown": breakdown_dict,
+                    "intervention_recommended": intervention
                 }).execute()
 
+                # Log bot outbound message
                 await supabase.table("interactions").insert({
                     "case_id": case_id,
                     "channel": "sms",
@@ -201,6 +235,14 @@ User message: "{clean_msg}"
                     "score_breakdown": {"channel": "sms", "direction": "outbound"},
                     "intervention_recommended": "none"
                 }).execute()
+                
+                # Update case score dynamically based on the inbound message
+                if final_score > 0.0:
+                    await supabase.table("cases").update({
+                        "current_distress_score": final_score,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }).eq("id", case_id).execute()
+                
             except Exception as db_err:
                 logger.warning("Failed to log SMS interaction to DB: %s", db_err)
 

@@ -4,6 +4,10 @@ import { Search, Download, Plus, FileText, CheckCircle2, Circle } from 'lucide-r
 import { toast } from 'sonner';
 import NumberFlow from '@number-flow/react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { cn } from '../../lib/utils';
 
 const STAGES = [
   { id: 'registered', title: 'Case Registered', desc: 'Your complaint has been successfully recorded.' },
@@ -143,7 +147,7 @@ export default function VictimCase() {
   if (loading) {
     return (
       <div className="p-10 flex justify-center">
-        <div className="w-8 h-8 border-4 border-primary-muted border-t-primary-main rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-primary-muted border-t-primary-base rounded-full animate-spin" />
       </div>
     );
   }
@@ -153,64 +157,61 @@ export default function VictimCase() {
   const currentIdx = STAGES.findIndex(s => s.id === currentStageId) === -1 ? 0 : STAGES.findIndex(s => s.id === currentStageId);
 
   return (
-    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 animate-[card-in_400ms_var(--ease-out-quint)_both]">
+    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
 
       {/* ─── Header & Actions ──────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-text-primary tracking-tight">Case Status</h1>
+          <h1 className="text-3xl font-bold text-text-main tracking-tight">Case Status</h1>
           <p className="text-text-secondary mt-1 font-medium">Manage your active legal matters.</p>
         </div>
         <div className="shrink-0 flex gap-3">
-          <button
-            onClick={() => setShowFileModal(true)}
-            className="px-5 py-2.5 bg-primary-main text-white font-bold rounded-xl shadow-sm hover:-translate-y-0.5 hover:shadow-hover active:scale-95 transition-all flex items-center gap-2"
-          >
+          <Button onClick={() => setShowFileModal(true)} className="gap-2">
             <Plus size={18} />
             File Complaint
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* ─── Link eCourts Case Card ────────────────────────────── */}
-      <div className="bg-canvas-surface border border-canvas-border rounded-2xl p-6 shadow-card">
+      <Card className="p-6">
         <h2 className="text-sm font-bold text-text-secondary uppercase tracking-wider mb-4 flex items-center gap-2">
           <Search size={16} /> Link eCourts Case
         </h2>
         <form onSubmit={handleCnrSearch} className="flex gap-3">
-          <input
+          <Input
             type="text"
             value={cnrInput}
             onChange={(e) => setCnrInput(e.target.value)}
             placeholder="Enter 16-digit CNR Number"
-            className="flex-1 px-4 py-2.5 bg-canvas-base border border-canvas-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-main/20 font-medium transition-colors"
+            className="flex-1"
           />
-          <button
+          <Button
             type="submit"
+            variant="secondary"
             disabled={isSearching || !cnrInput.trim()}
-            className="px-6 py-2.5 bg-text-primary text-white font-bold rounded-xl hover:bg-black active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap"
           >
             {isSearching ? 'Searching...' : 'Search'}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
 
       {!activeCase ? (
-        <div className="text-center py-16 bg-canvas-surfaceSubtle border border-canvas-border border-dashed rounded-2xl">
-          <FileText size={48} className="mx-auto text-canvas-borderActive mb-4 opacity-50" />
-          <h3 className="text-xl font-bold text-text-primary mb-2">No Active Case</h3>
+        <div className="text-center py-16 bg-surface-hover border border-border border-dashed rounded-2xl">
+          <FileText size={48} className="mx-auto text-text-muted mb-4 opacity-50" />
+          <h3 className="text-xl font-bold text-text-main mb-2">No Active Case</h3>
           <p className="text-text-secondary font-medium">File a new complaint or link an existing eCourts case above.</p>
         </div>
       ) : (
         <>
           {/* ─── Case Summary Card ─────────────────────────────── */}
-          <div className="bg-canvas-surface border border-canvas-border rounded-2xl p-6 md:p-8 shadow-card relative overflow-hidden">
+          <Card className="p-6 md:p-8 relative overflow-hidden">
             {/* Top decorative bar */}
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary-main" />
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-primary-base" />
 
             <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
               <div>
-                <h2 className="text-2xl font-black text-text-primary mb-1">{activeCase.title || 'Case Report'}</h2>
+                <h2 className="text-2xl font-bold text-text-main mb-1">{activeCase.title || 'Case Report'}</h2>
                 <p className="text-text-muted font-medium font-mono text-sm">
                   {activeCase.cnr ? `CNR: ${activeCase.cnr}` : `ID: ${activeCase.id}`}
                 </p>
@@ -218,7 +219,7 @@ export default function VictimCase() {
               {caseProgress && (
                 <div className="text-right">
                   <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Distress Index</p>
-                  <div className="inline-flex items-baseline gap-1 text-3xl font-black text-accent-sos">
+                  <div className="inline-flex items-baseline gap-1 text-3xl font-black text-critical-base">
                     <NumberFlow value={caseProgress.latestScore || 0} />
                     <span className="text-sm font-bold text-text-muted">/100</span>
                   </div>
@@ -229,21 +230,21 @@ export default function VictimCase() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <div>
                 <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Status</p>
-                <p className="text-base font-bold text-primary-main capitalize">{activeCase.status || 'Pending'}</p>
+                <p className="text-base font-bold text-primary-base capitalize">{activeCase.status || 'Pending'}</p>
               </div>
               <div>
                 <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Date Filed</p>
-                <p className="text-base font-bold text-text-primary">{activeCase.dateFiled || 'N/A'}</p>
+                <p className="text-base font-bold text-text-main">{activeCase.dateFiled || 'N/A'}</p>
               </div>
               {activeCase.ecourts_data && (
                 <>
                   <div>
                     <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Next Hearing</p>
-                    <p className="text-base font-bold text-text-primary">{activeCase.ecourts_data.nextHearingDate || 'N/A'}</p>
+                    <p className="text-base font-bold text-text-main">{activeCase.ecourts_data.nextHearingDate || 'N/A'}</p>
                   </div>
                   <div className="sm:col-span-2 lg:col-span-3">
                     <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Court</p>
-                    <p className="text-base font-bold text-text-primary">{activeCase.ecourts_data.courtCode || 'N/A'}</p>
+                    <p className="text-base font-bold text-text-main">{activeCase.ecourts_data.courtCode || 'N/A'}</p>
                   </div>
                 </>
               )}
@@ -251,41 +252,42 @@ export default function VictimCase() {
 
             {/* Extended Grievance Details */}
             {activeCase.grievance_related_to && (
-              <div className="mt-6 pt-6 border-t border-canvas-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="mt-6 pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                   <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Grievance Type</p>
-                  <p className="text-base font-bold text-text-primary">{activeCase.grievance_related_to}</p>
+                  <p className="text-base font-bold text-text-main">{activeCase.grievance_related_to}</p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Submitter Role</p>
-                  <p className="text-base font-bold text-text-primary capitalize">{activeCase.submitter_role}</p>
+                  <p className="text-base font-bold text-text-main capitalize">{activeCase.submitter_role}</p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">FIR Registered</p>
-                  <p className="text-base font-bold text-text-primary">{activeCase.has_fir ? 'Yes' : 'No'}</p>
+                  <p className="text-base font-bold text-text-main">{activeCase.has_fir ? 'Yes' : 'No'}</p>
                 </div>
                 <div className="sm:col-span-2 lg:col-span-3">
                   <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Description</p>
-                  <p className="text-sm font-medium text-text-primary leading-relaxed">{activeCase.grievance_description}</p>
+                  <p className="text-sm font-medium text-text-main leading-relaxed">{activeCase.grievance_description}</p>
                 </div>
               </div>
             )}
 
-            <div className="pt-6 border-t border-canvas-border flex justify-between items-center">
-              <button
+            <div className="pt-6 border-t border-border flex justify-between items-center">
+              <Button
+                variant="ghost"
                 onClick={handleDownloadReport}
-                className="flex items-center gap-2 text-sm font-bold text-primary-main hover:text-primary-hover active:scale-95 transition-all"
+                className="gap-2 font-bold text-primary-base hover:text-primary-hover px-0"
               >
                 <Download size={16} />
                 Download Official Report PDF
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           {/* ─── Animated Timeline ─────────────────────────────── */}
           <div>
-            <h2 className="text-xl font-bold text-text-primary mb-6">Lifecycle Progress</h2>
-            <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-canvas-border">
+            <h2 className="text-xl font-bold text-text-main mb-6">Lifecycle Progress</h2>
+            <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-border">
 
               {STAGES.map((stage, idx) => {
                 const isCompleted = idx < currentIdx;
@@ -300,21 +302,22 @@ export default function VictimCase() {
                     className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active py-4"
                   >
                     {/* Circle Node */}
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-canvas-base bg-canvas-surface shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-colors duration-300">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-background bg-surface shadow-sm shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 transition-colors duration-300">
                       {isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5 text-accent-sage" />
+                        <CheckCircle2 className="w-5 h-5 text-success-base" />
                       ) : isCurrent ? (
-                        <Circle className="w-5 h-5 text-primary-main fill-primary-main/20 animate-pulse" />
+                        <Circle className="w-5 h-5 text-primary-base fill-primary-base/20 animate-pulse" />
                       ) : (
-                        <Circle className="w-5 h-5 text-canvas-borderActive" />
+                        <Circle className="w-5 h-5 text-text-muted" />
                       )}
                     </div>
 
                     {/* Content Card */}
-                    <div className={`w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border ${isCurrent ? 'bg-primary-muted border-primary-main shadow-sm' : 'bg-canvas-surface border-canvas-border'
-                      } transition-colors duration-300`}>
+                    <div className={cn("w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border transition-colors duration-300", 
+                      isCurrent ? 'bg-primary-muted border-primary-base shadow-sm' : 'bg-surface border-border'
+                    )}>
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className={`font-bold ${isCurrent ? 'text-primary-main' : 'text-text-primary'}`}>
+                        <h3 className={cn("font-bold", isCurrent ? 'text-primary-base' : 'text-text-main')}>
                           {stage.title}
                         </h3>
                       </div>
@@ -334,7 +337,7 @@ export default function VictimCase() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-text-primary/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-text-main/40 backdrop-blur-sm"
               onClick={() => setShowFileModal(false)}
             />
             <motion.div
@@ -342,9 +345,9 @@ export default function VictimCase() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-              className="relative w-full max-w-md bg-canvas-surface rounded-2xl shadow-hover border border-canvas-border p-6"
+              className="relative w-full max-w-md bg-surface rounded-2xl shadow-lg border border-border p-6"
             >
-              <h2 className="text-2xl font-black text-text-primary mb-2">File a Complaint</h2>
+              <h2 className="text-2xl font-bold text-text-main mb-2">File a Complaint</h2>
               <p className="text-text-secondary text-sm font-medium mb-6">
                 Describe your situation briefly. Our system will prioritize and assign it to a counsellor immediately.
               </p>
@@ -353,24 +356,23 @@ export default function VictimCase() {
                   value={newCaseDesc}
                   onChange={e => setNewCaseDesc(e.target.value)}
                   placeholder="I want to report an incident regarding..."
-                  className="w-full h-32 px-4 py-3 bg-canvas-base border border-canvas-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-main/20 resize-none font-medium mb-6"
+                  className="w-full h-32 px-4 py-3 bg-background border border-border rounded-xl text-text-main focus:outline-none focus:ring-2 focus:ring-primary-base/20 resize-none font-medium mb-6"
                   required
                 />
                 <div className="flex gap-3 justify-end">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => setShowFileModal(false)}
-                    className="px-5 py-2.5 font-bold text-text-muted hover:text-text-primary transition-colors"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
                     disabled={isSubmitting || !newCaseDesc.trim()}
-                    className="px-5 py-2.5 bg-primary-main text-white font-bold rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                   >
                     {isSubmitting ? 'Submitting...' : 'Submit Complaint'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </motion.div>

@@ -9,34 +9,34 @@
 // ─── Color Palette ───────────────────────────────────────────────
 export const Colors = {
   // System backgrounds (light mode)
-  systemBackground: '#F2F2F7',
+  systemBackground: '#F8FAFC',
   secondarySystemBackground: '#FFFFFF',
-  tertiarySystemBackground: '#F2F2F7',
+  tertiarySystemBackground: '#F1F5F9',
 
   // System labels
-  label: '#000000',
-  secondaryLabel: 'rgba(60, 60, 67, 0.6)',
-  tertiaryLabel: 'rgba(60, 60, 67, 0.3)',
-  quaternaryLabel: 'rgba(60, 60, 67, 0.18)',
+  label: '#0F172A',
+  secondaryLabel: '#475569',
+  tertiaryLabel: '#94A3B8',
+  quaternaryLabel: 'rgba(15, 23, 42, 0.18)',
 
   // System fills
-  systemFill: 'rgba(120, 120, 128, 0.2)',
-  secondarySystemFill: 'rgba(120, 120, 128, 0.16)',
-  tertiarySystemFill: 'rgba(118, 118, 128, 0.12)',
-  quaternarySystemFill: 'rgba(116, 116, 128, 0.08)',
+  systemFill: 'rgba(59, 130, 246, 0.1)',
+  secondarySystemFill: 'rgba(59, 130, 246, 0.08)',
+  tertiarySystemFill: 'rgba(59, 130, 246, 0.05)',
+  quaternarySystemFill: 'rgba(15, 23, 42, 0.05)',
 
-  // Tint colors (Apple system palette)
-  systemBlue: '#007AFF',
-  systemGreen: '#34C759',
-  systemRed: '#FF3B30',
-  systemOrange: '#FF9500',
-  systemYellow: '#FFCC00',
-  systemPurple: '#AF52DE',
-  systemTeal: '#5AC8FA',
+  // Tint colors (Unified UI semantic palette)
+  systemBlue: '#3B82F6', // Primary base
+  systemGreen: '#10B981', // Success
+  systemRed: '#EF4444', // Danger
+  systemOrange: '#F59E0B', // Warning
+  systemYellow: '#F59E0B', // Warning
+  systemPurple: '#8A79B8', // Legacy primary
+  systemTeal: '#0EA5E9', // Info
 
   // Separator
-  separator: 'rgba(60, 60, 67, 0.12)',
-  opaqueSeparator: '#C6C6C8',
+  separator: '#E2E8F0',
+  opaqueSeparator: '#CBD5E1',
 
   // Glass effects
   glassBorder: 'rgba(255, 255, 255, 0.18)',

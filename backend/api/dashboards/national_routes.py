@@ -48,6 +48,22 @@ async def get_national_dashboard(
                 ctype = c.get("case_type", "Unknown")
                 state_stats[state]["case_types"][ctype] = state_stats[state]["case_types"].get(ctype, 0) + 1
                 
+        # Fetch actual active SOS counts grouped by state
+        # (Requires joining cases and sos_events, but we do it manually in Python for the MVP to match existing pattern)
+        sos_resp = await supabase.table("sos_events")\
+            .select("id, case_id")\
+            .eq("resolved", False)\
+            .execute()
+            
+        active_sos_by_case = {s["case_id"] for s in sos_resp.data}
+        state_sos_counts = {state: 0 for state in state_stats.keys()}
+        
+        for c in cases:
+            if c["id"] in active_sos_by_case:
+                user = c.get("users")
+                if user:
+                    state_sos_counts[user["location_state"]] += 1
+
         state_breakdown = []
         for state, stats in state_stats.items():
             prevalent_type = max(stats["case_types"], key=stats["case_types"].get) if stats["case_types"] else "N/A"
@@ -57,11 +73,10 @@ async def get_national_dashboard(
                 "name": state,
                 "total": stats["cases"],
                 "critical": stats["critical"],
-                "activeSOS": stats["critical"], # SOS count would need a separate table join, use critical as proxy or 0
+                "activeSOS": state_sos_counts.get(state, 0),
                 "prevalent_type": prevalent_type,
                 "risk": risk_tier
             })
-            
         payload = {
             "total_cases": total_cases_nationwide,
             "state_breakdown": state_breakdown,

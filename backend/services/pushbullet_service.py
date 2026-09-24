@@ -17,6 +17,7 @@ import websockets
 import json
 import re
 from datetime import datetime, timezone
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, RetryCallState
 
 from config import settings
 
@@ -80,6 +81,15 @@ async def get_sms_device_iden(api_key: Optional[str] = None) -> Optional[str]:
     return None
 
 
+def _return_false_on_error(retry_state: RetryCallState) -> bool:
+    return False
+
+@retry(
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type(Exception),
+    retry_error_callback=_return_false_on_error
+)
 async def send_sms(
     phone_number: str,
     message: str,
@@ -116,21 +126,15 @@ async def send_sms(
 
     masked_phone = _mask_phone(clean_phone)
 
-    # Attempt dispatch with single retry
-    for attempt in range(1, 3):
-        try:
-            async with httpx.AsyncClient(timeout=12.0) as client:
-                resp = await client.post(f"{PUSHBULLET_API_BASE}/texts", headers=headers, json=payload)
-                resp.raise_for_status()
-                logger.info("Successfully queued SMS to %s via Pushbullet (device: %s)", masked_phone, device_iden)
-                return True
-        except Exception as e:
-            logger.warning("Pushbullet send_sms attempt %d failed for %s: %s", attempt, masked_phone, e)
-            if attempt < 2:
-                await asyncio.sleep(1.0)
-
-    logger.error("All attempts to send SMS to %s via Pushbullet failed.", masked_phone)
-    return False
+    try:
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            resp = await client.post(f"{PUSHBULLET_API_BASE}/texts", headers=headers, json=payload)
+            resp.raise_for_status()
+            logger.info("Successfully queued SMS to %s via Pushbullet (device: %s)", masked_phone, device_iden)
+            return True
+    except Exception as e:
+        logger.warning("Pushbullet send_sms failed for %s: %s", masked_phone, e)
+        raise e
 
 
 async def fetch_latest_sms_threads(
@@ -163,6 +167,12 @@ async def fetch_latest_sms_threads(
     return []
 
 
+@retry(
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type(Exception),
+    retry_error_callback=_return_false_on_error
+)
 async def send_push_notification(title: str, body: str, api_key: Optional[str] = None) -> bool:
     """
     Sends a push notification via Pushbullet.
@@ -193,7 +203,7 @@ async def send_push_notification(title: str, body: str, api_key: Optional[str] =
             return True
     except Exception as e:
         logger.error("Failed to send Pushbullet notification: %s", e)
-        return False
+        raise e
 
 
 class PushbulletSMSListener:
@@ -403,19 +413,19 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
     async def default_handler(from_num: str, msg: str, ts: str):
-        print(f"\n[INCOMING SMS] From: {_mask_phone(from_num)} | Message: {msg}\n")
+        logger.info(f"Incoming SMS Received from: {_mask_phone(from_num)}")
         # Try processing via sms_intake_service if available
         try:
             from services.sms_intake_service import process_incoming_sms
             res = await process_incoming_sms(from_num, msg, ts)
-            print(f"[AI RESPONSE] Result: {res.get('status')} | Reply: {res.get('reply')}\n")
+            logger.info(f"[AI RESPONSE] Result: {res.get('status')} | SMS Dispatched: {res.get('sms_dispatched')}")
         except Exception as err:
-            print(f"[ERROR] Could not run intake: {err}")
+            logger.error(f"[ERROR] Could not run intake: {err}")
 
-    print("=== Starting Pushbullet SMS Real-time Listener ===")
+    logger.info("=== Starting Pushbullet SMS Real-time Listener ===")
     listener = PushbulletSMSListener(callback=default_handler)
     try:
         asyncio.run(listener.start())
     except KeyboardInterrupt:
         listener.stop()
-        print("Listener stopped.")
+        logger.info("Listener stopped.")

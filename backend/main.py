@@ -8,48 +8,56 @@ from config import settings
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
+from core.logging import setup_logging
+setup_logging()
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    asyncio.create_task(check_and_escalate_sos())
+    asyncio.create_task(run_check_in_scheduler())
+    if settings.PUSHBULLET_API_KEY:
+        from services.pushbullet_service import start_pushbullet_sms_listener, stop_pushbullet_sms_listener
+        from services.sms_intake_service import process_incoming_sms
+        start_pushbullet_sms_listener(callback=process_incoming_sms)
+    yield
+    # Shutdown
+    if settings.PUSHBULLET_API_KEY:
+        stop_pushbullet_sms_listener()
+
 app = FastAPI(
     title="Mental Health Monitoring API",
     version="1.0.0",
-    description="API for SIH 26094 Distress Prediction System"
+    description="API for SIH 26094 Distress Prediction System",
+    lifespan=lifespan
 )
 
 # CORS middleware for dashboards and mobile app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict to specific origins
+    allow_origins=[settings.FRONTEND_URL] if hasattr(settings, "FRONTEND_URL") and settings.FRONTEND_URL else ["http://localhost:5173", "http://localhost:8081"], 
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+from api.middleware.correlation import CorrelationIdMiddleware
+app.add_middleware(CorrelationIdMiddleware)
 
 from api import health_routes
 app.include_router(health_routes.router, tags=["health"])
 
 from api.intake import app_routes, ivr_webhook, sms_webhook, chatbot_routes, voice_routes
 from api.cases import sos_routes, case_routes, lifecycle_routes, ecourts_routes, report_routes
-from api.dashboards import district_routes, counsellor_routes, state_routes, national_routes, superadmin_routes
+from api.dashboards import district_routes, counsellor_routes, state_routes, national_routes, superadmin_routes, rit_routes
 from api.auth import auth_routes
 from api.assignment.escalation import check_and_escalate_sos
 from services.telephony_scheduler import run_check_in_scheduler
 import asyncio
 
-from services.pushbullet_service import start_pushbullet_sms_listener, stop_pushbullet_sms_listener
-from services.sms_intake_service import process_incoming_sms
 
-@app.on_event("startup")
-async def startup_event():
-    # Start the background escalation engine
-    asyncio.create_task(check_and_escalate_sos())
-    # Start the outbound check-in telephony scheduler
-    asyncio.create_task(run_check_in_scheduler())
-    # Start the real-time Pushbullet SMS listener for 2-way incoming SMS
-    if settings.PUSHBULLET_API_KEY:
-        start_pushbullet_sms_listener(callback=process_incoming_sms)
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    stop_pushbullet_sms_listener()
 
 app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["auth"])
 
@@ -70,4 +78,5 @@ app.include_router(district_routes.router, prefix="/api/v1/dashboards", tags=["d
 app.include_router(state_routes.router, prefix="/api/v1/dashboards/state", tags=["dashboards", "state"])
 app.include_router(national_routes.router, prefix="/api/v1/dashboards/national", tags=["dashboards", "national"])
 app.include_router(superadmin_routes.router, prefix="/api/v1/dashboards/superadmin", tags=["dashboards", "superadmin"])
+app.include_router(rit_routes.router, prefix="/rit", tags=["superadmin", "rit"])
 

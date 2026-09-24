@@ -1,6 +1,10 @@
 import json
 from groq import AsyncGroq
 from config import settings
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Initialize Groq client
 client = AsyncGroq(api_key=settings.GROQ_API_KEY)
@@ -98,6 +102,12 @@ def build_system_prompt(case_context: dict = None, voice: bool = False) -> str:
     return system_prompt
 
 
+@retry(
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(3),
+    retry=retry_if_exception_type(Exception),
+    reraise=True
+)
 async def generate_chat_response(messages: list, case_context: dict = None) -> str:
     """
     Generate a response for the chatbot based on conversation history.
@@ -111,13 +121,16 @@ async def generate_chat_response(messages: list, case_context: dict = None) -> s
         role = "assistant" if msg.get("role") == "model" else msg.get("role", "user")
         formatted_messages.append({"role": role, "content": msg.get("content", "")})
     
-    response = await client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=formatted_messages,
-        # Lower than the API default: this assistant makes factual claims about
-        # legal/compensation matters to a vulnerable user, where a "creative"
-        # completion is a fabricated scheme name, not a harmless stylistic choice.
-        temperature=0.3,
-    )
-    
-    return response.choices[0].message.content.strip()
+    try:
+        response = await client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=formatted_messages,
+            # Lower than the API default: this assistant makes factual claims about
+            # legal/compensation matters to a vulnerable user, where a "creative"
+            # completion is a fabricated scheme name, not a harmless stylistic choice.
+            temperature=0.3,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"Error in LLM completion: {e}")
+        raise

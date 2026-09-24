@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, User, LogIn, ArrowLeft, AlertTriangle } from 'lucide-react';
@@ -71,7 +71,7 @@ function StepPane({ stepKey, children }) {
 const INPUT_CLASS = `
   w-full px-4 py-3 bg-white/8 border border-white/15 rounded-xl
   text-white placeholder-white/40 font-medium
-  focus:outline-none focus:ring-2 focus:ring-primary-main/40 focus:border-primary-main/60
+  focus:outline-none focus:ring-2 focus:ring-primary-base/40 focus:border-primary-base/60
   transition-colors duration-[160ms]
   backdrop-blur-sm
 `.replace(/\n/g, ' ').trim();
@@ -93,6 +93,8 @@ export default function Login() {
   const [name, setName] = useState('');
   const [phoneVerifiedToken, setPhoneVerifiedToken] = useState(null);
 
+  const isSubmitting = useRef(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -101,38 +103,37 @@ export default function Login() {
 
   const handleVictimLogin = async (e) => {
     e.preventDefault();
+    if (isSubmitting.current) return;
+    isSubmitting.current = true;
     setLoading(true);
     setError('');
 
-    if (!showOtpInput && !showOnboarding) {
-      if (phone.length < 10) {
-        setError('Please enter a valid phone number.');
-        setLoading(false);
+    try {
+      if (!showOtpInput && !showOnboarding) {
+        if (phone.length < 10) {
+          setError('Please enter a valid phone number.');
+          return;
+        }
+        try {
+          const response = await fetch('/api/v1/auth/otp/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
+            body: JSON.stringify({ phone_number: phone })
+          });
+          if (!response.ok) {
+            setError(response.status === 429 ? 'Too many attempts. Please try again later.' : 'Could not send a verification code.');
+          } else {
+            setShowOtpInput(true);
+          }
+        } catch {
+          setError('Failed to connect. Please check your network.');
+        }
         return;
       }
-      try {
-        const response = await fetch('/api/v1/auth/otp/request', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
-          body: JSON.stringify({ phone_number: phone })
-        });
-        if (!response.ok) {
-          setError(response.status === 429 ? 'Too many attempts. Please try again later.' : 'Could not send a verification code.');
-        } else {
-          setShowOtpInput(true);
-        }
-      } catch {
-        setError('Failed to connect. Please check your network.');
-      }
-      setLoading(false);
-      return;
-    }
 
-    try {
       if (showOtpInput && !showOnboarding) {
         if (otp.length !== 6) {
           setError('Please enter the full 6-digit code.');
-          setLoading(false);
           return;
         }
         const response = await fetch('/api/v1/auth/otp/verify', {
@@ -142,7 +143,6 @@ export default function Login() {
         });
         if (!response.ok) {
           setError('Incorrect or expired code.');
-          setLoading(false);
           return;
         }
         const data = await response.json();
@@ -157,7 +157,6 @@ export default function Login() {
       } else if (showOnboarding) {
         if (!phoneVerifiedToken) {
           setError('Your phone verification expired. Please start over.');
-          setLoading(false);
           return;
         }
         const regResponse = await fetch('/api/v1/intake/app/register', {
@@ -175,12 +174,16 @@ export default function Login() {
       }
     } catch {
       setError('Failed to connect to authentication server.');
+    } finally {
+      isSubmitting.current = false;
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleStaffLogin = async (e) => {
     e.preventDefault();
+    if (isSubmitting.current) return;
+    isSubmitting.current = true;
     setLoading(true);
     setError('');
     try {
@@ -202,8 +205,10 @@ export default function Login() {
       else navigate('/');
     } catch (err) {
       setError(err.message);
+    } finally {
+      isSubmitting.current = false;
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const resetVictim = () => {
@@ -220,7 +225,7 @@ export default function Login() {
 
       {/* Brand */}
       <div className="mb-8 text-center">
-        <div className="w-16 h-16 bg-primary-main rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-hover">
+        <div className="w-16 h-16 bg-primary-base rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-hover">
           <ShieldCheck size={32} color="#FFFFFF" />
         </div>
         <h1 className="text-4xl font-black text-white tracking-tight">AAVAZ</h1>

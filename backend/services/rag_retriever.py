@@ -68,6 +68,7 @@ async def retrieve_legal_context(
         query_vector = vectors[0]
     except Exception as exc:
         logger.error("Embedding failed for legal query: %s", exc)
+        return []  # Cannot proceed without a query vector
     try:
         supabase = await get_supabase()
         params: dict = {

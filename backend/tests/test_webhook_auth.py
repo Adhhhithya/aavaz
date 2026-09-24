@@ -35,17 +35,16 @@ SMS_PAYLOAD = {
 }
 
 
-def test_ivr_webhook_allowed_without_secret_in_development(client, monkeypatch):
+def test_ivr_webhook_rejected_without_secret_in_development(client, monkeypatch):
     from config import settings
 
     monkeypatch.setattr(settings, "ENVIRONMENT", "development")
     monkeypatch.setattr(settings, "BOLNA_WEBHOOK_SECRET", "")
 
     response = client.post("/api/v1/intake/ivr/webhook", json=IVR_PAYLOAD)
-    # Passes the AUTH layer in dev with no secret configured (may still 200 or
-    # error downstream depending on Supabase availability — that's not what's
-    # under test here; a 401/503 here would mean the auth layer itself blocked it).
-    assert response.status_code not in (401, 503)
+    # The development bypass was removed in Phase 2 for security reasons.
+    # It must now strictly fail with 503 if unconfigured.
+    assert response.status_code == 503
 
 
 def test_ivr_webhook_rejected_without_secret_outside_development(client, monkeypatch):

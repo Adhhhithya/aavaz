@@ -10,9 +10,7 @@ export default defineConfig(({ mode }) => {
       react(),
     ],
     server: {
-      allowedHosts: [
-        env.VITE_API_URL ? new URL(env.VITE_API_URL).hostname : '127.0.0.1'
-      ],
+      allowedHosts: true,
       proxy: {
         '/api': {
           target: env.VITE_API_URL,

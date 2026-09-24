@@ -25,6 +25,7 @@ matching. This function only computes the numeric score and classification tier.
 from __future__ import annotations
 
 import logging
+import math
 from typing import Optional
 
 from models.contracts import (
@@ -191,10 +192,18 @@ async def calculate_dynamic_score(
         acoustic_task, sentiment_task, engagement_task
     )
 
-    # 3. Determine signal availability
-    acoustic_score = acoustic_result.get("score")  # None if failed
+    # 3. Determine signal availability with NaN guards
+    acoustic_score = acoustic_result.get("score")
+    if acoustic_score is not None and math.isnan(acoustic_score):
+        acoustic_score = None
+        
     sentiment_score: float = sentiment_result.get("sentiment_score", 0.0)
+    if math.isnan(sentiment_score):
+        sentiment_score = 0.0
+        
     engagement_score: float = engagement_result.get("engagement_score", 0.0)
+    if math.isnan(engagement_score):
+        engagement_score = 0.0
 
     acoustic_available = acoustic_score is not None
     sentiment_available = True  # text always available (even if empty -> score=0)
@@ -214,7 +223,7 @@ async def calculate_dynamic_score(
     acoustic_conf = acoustic_result.get("confidence", 0.0) if acoustic_available else 0.0
     confidence = (
         acoustic_conf * W_ACOUSTIC + 0.9 * W_SENTIMENT + 0.9 * W_ENGAGEMENT
-    ) / 1.0  # weighted average, bounded to 1.0
+    )  # weighted average, bounded to 1.0
     confidence = min(confidence, 1.0) if acoustic_available else 0.7
 
     # 7. Emotion tag and risk classification

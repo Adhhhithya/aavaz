@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlertTriangle, Clock, MapPin, ChevronRight, CheckCircle } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
+import * as Location from 'expo-location';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { DS, glassCard } from '../theme/designSystem';
 import ScalePressable from '../components/ScalePressable';
 import { api } from '../services/api';
+
 
 const { width } = Dimensions.get('window');
 const SOS_SIZE = 140;
@@ -63,10 +65,38 @@ export default function SOSScreen() {
   const handleActivation = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsActive(true);
-    
+
     // Hit the backend SOS endpoint
     try {
-      await api.post('/api/v1/intake/app/sos', {});
+      // Load the case_id that was stored during registration / sign-in
+      const { storage } = await import('../services/storage');
+      const session = await storage.getSession();
+      const caseId = session?.userProfile?.case_id;
+
+      if (!caseId) {
+        console.error('SOS: no case_id in session — cannot send SOS without a registered case');
+        return;
+      }
+
+      // Request coarse location for the SOS payload; degrade gracefully if denied
+      let lat = 0;
+      let lng = 0;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        }
+      } catch (locErr) {
+        console.warn('SOS: location unavailable, sending 0/0 coordinates', locErr);
+      }
+
+      await api.post('/api/v1/cases/sos/sos', {
+        case_id: caseId,
+        location_lat: lat,
+        location_lng: lng,
+      });
       console.log('SOS sent to backend successfully');
     } catch (e) {
       console.error('Failed to send SOS to backend', e);

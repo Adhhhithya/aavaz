@@ -33,7 +33,6 @@ async def handle_incoming_sms(from_number: str, message_body: str, timestamp: st
     masked = _mask_phone(from_number)
     print("\n" + "=" * 60)
     print(f"[INCOMING SMS RECEIVED] From: {masked}")
-    print(f"[CONTENT]: {message_body}")
     print(f"[TIME]: {timestamp}")
     print("=" * 60)
 
@@ -41,7 +40,7 @@ async def handle_incoming_sms(from_number: str, message_body: str, timestamp: st
         print("[AI INTAKE] Running demographic check and distress assessment...")
         result = await process_incoming_sms(from_number, message_body, timestamp)
         reply = result.get("reply", "")
-        print(f"[AI GENERATED REPLY]: {reply}")
+        print(f"[AI GENERATED REPLY DISPATCHED]")
         print(f"[STATUS]: {result.get('status')} | Dispatched: {result.get('sms_dispatched')}")
         print("=" * 60 + "\n")
     except Exception as e:

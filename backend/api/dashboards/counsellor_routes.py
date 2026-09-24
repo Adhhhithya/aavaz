@@ -72,10 +72,20 @@ async def get_case_detail(
         
         # Compute engagement profile based on recent interactions
         interactions = interactions_resp.data
-        missed = sum(1 for i in interactions if i["engagement_score"] > 50)
+        total_interactions = len(interactions)
+        
+        # In engagement.py, high engagement_score indicates high disengagement risk (bad).
+        missed = sum(1 for i in interactions if i.get("engagement_score", 0) > 50 or i.get("status") == "missed")
+        
+        if total_interactions > 0:
+            rate = int(((total_interactions - missed) / total_interactions) * 100)
+            response_rate_str = f"{rate}%"
+        else:
+            response_rate_str = "N/A"
+            
         profile = {
             "missed_calls": missed,
-            "response_rate": "65%" if missed > 0 else "95%",
+            "response_rate": response_rate_str,
             "risk_level": "High" if missed > 1 else "Low",
             "nudge": "Consider manual SMS" if missed > 1 else "Active engagement"
         }

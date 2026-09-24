@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 
 class Location(BaseModel):
@@ -50,10 +50,13 @@ class ChatbotRequest(BaseModel):
     channel: str # app|sms
 
 class BolnaDistressAssessment(BaseModel):
-    caller_identity: str
-    estimated_distress_score: int
-    immediate_threat_detected: bool
-    summary_notes: str
+    caller_identity: Optional[str] = "Unknown"
+    estimated_distress_score: Optional[int] = 0
+    immediate_threat_detected: Optional[bool] = False
+    summary_notes: Optional[str] = ""
+
+    class Config:
+        extra = "allow"
 
 class BolnaPreCallPayload(BaseModel):
     call_id: Optional[str] = None

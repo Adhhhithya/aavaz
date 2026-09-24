@@ -118,74 +118,61 @@ async def quick_checkin(
 
         case_id = cases_resp.data[0]["id"] if cases_resp.data else None
 
+        from api.scoring.fusion import calculate_dynamic_score
+        
+        # Determine sentiment via simple transcript for checkin
+        transcript = f"User reported mood: {request.mood}"
+        fusion_result = await calculate_dynamic_score(
+            transcript=transcript,
+            call_duration=0
+        )
+        
+        breakdown_dict = {
+            k: {
+                "weight": v.weight,
+                "raw_value": v.raw_value,
+                "contribution": v.contribution,
+                "notes": v.notes,
+                "available": v.available
+            } for k, v in fusion_result.score_breakdown.items()
+        }
+
         interaction = {
             "case_id": case_id,
             "channel": "app",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "transcript_ref": f"User reported mood: {request.mood}",
-            "emotion_tag": "neutral" if request.mood == "calm" else "fear",
-            "sentiment_score": 0.5,
-            "engagement_score": 0.5,
-            "history_score": 0.5,
-            "final_score": 0.5,
-            "score_breakdown": {"sentiment": 0.5, "engagement": 0.5, "history": 0.5}
+            "transcript_ref": transcript,
+            "emotion_tag": fusion_result.emotion_tag.value,
+            "sentiment_score": breakdown_dict.get("sentiment", {}).get("raw_value", 0.0),
+            "engagement_score": breakdown_dict.get("engagement", {}).get("raw_value", 0.0),
+            "history_score": 0.0,
+            "acoustic_score": breakdown_dict.get("acoustic", {}).get("raw_value", 0.0),
+            "final_score": fusion_result.distress_score,
+            "score_breakdown": breakdown_dict,
+            "intervention_recommended": fusion_result.intervention.value
         }
 
-        await supabase.table("interactions").insert(interaction).execute()
-        return {"status": "success"}
+        # Use idempotency constraints internally if triggered concurrently
+        try:
+            await supabase.table("interactions").insert(interaction).execute()
+            
+            # Update case score dynamically based on new checkin
+            await supabase.table("cases").update({
+                "current_distress_score": fusion_result.distress_score,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }).eq("id", case_id).execute()
+
+        except Exception as insert_e:
+            if "duplicate key value violates unique constraint" in str(insert_e).lower() or "23505" in str(insert_e):
+                logger.info(f"Duplicate checkin for case {case_id} ignored.")
+            else:
+                raise insert_e
+
+        return {"status": "success", "distress_score": fusion_result.distress_score}
     except Exception as e:
         logger.error(f"Checkin error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/sos")
-async def trigger_sos(
-    current_victim: CurrentVictim = Depends(get_current_victim),
-):
-    """
-    Triggers an immediate SOS for the victim's active case.
-    Updates the case to high priority and creates a critical interaction.
-    """
-    try:
-        supabase = await get_supabase()
-
-        # Get active case
-        cases_resp = await supabase.table("cases").select("id").eq("user_id", current_victim.id).order("created_at", desc=True).limit(1).execute()
-        case_id = cases_resp.data[0]["id"] if cases_resp.data else None
-
-        if not case_id:
-            raise HTTPException(status_code=400, detail="No active case found for SOS")
-
-        # Flag the case
-        await supabase.table("cases").update({
-            "current_distress_score": 90, # Force high risk
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }).eq("id", case_id).execute()
-
-        # Log the SOS interaction
-        interaction = {
-            "case_id": case_id,
-            "channel": "app",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "transcript_ref": "VICTIM TRIGGERED SOS BUTTON IN APP",
-            "emotion_tag": "fear",
-            "sentiment_score": 1.0,
-            "engagement_score": 1.0,
-            "history_score": 1.0,
-            "final_score": 0.95,
-            "score_breakdown": {"sentiment": 1.0, "engagement": 1.0, "history": 1.0}
-        }
-        await supabase.table("interactions").insert(interaction).execute()
-
-        # Fire push notification to Counsellor
-        await send_push_notification(
-            title="CRITICAL: SOS Activated",
-            body=f"Victim {current_victim.id} has triggered an SOS alert in the mobile app. Immediate action required. Case ID: {case_id}"
-        )
-
-        return {"status": "success", "message": "SOS Activated. Authorities notified."}
-    except Exception as e:
-        logger.error(f"SOS error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 class NewCaseRequest(BaseModel):
@@ -222,18 +209,43 @@ async def create_case(
         case_resp = await supabase.table("cases").insert(case_data).execute()
 
         # Log the description as an interaction
+        from api.scoring.fusion import calculate_dynamic_score
+        transcript = f"User filed complaint: {request.description}"
+        fusion_result = await calculate_dynamic_score(
+            transcript=transcript,
+            call_duration=0
+        )
+        
+        breakdown_dict = {
+            k: {
+                "weight": v.weight,
+                "raw_value": v.raw_value,
+                "contribution": v.contribution,
+                "notes": v.notes,
+                "available": v.available
+            } for k, v in fusion_result.score_breakdown.items()
+        }
+
         await supabase.table("interactions").insert({
             "case_id": case_resp.data[0]["id"],
             "channel": "app",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "transcript_ref": f"User filed complaint: {request.description}",
-            "emotion_tag": "fear",
-            "sentiment_score": 0.8,
-            "engagement_score": 0.8,
-            "history_score": 0.8,
-            "final_score": 0.8,
-            "score_breakdown": {"sentiment": 0.8, "engagement": 0.8, "history": 0.8}
+            "transcript_ref": transcript,
+            "emotion_tag": fusion_result.emotion_tag.value,
+            "sentiment_score": breakdown_dict.get("sentiment", {}).get("raw_value", 0.0),
+            "engagement_score": breakdown_dict.get("engagement", {}).get("raw_value", 0.0),
+            "history_score": 0.0,
+            "acoustic_score": breakdown_dict.get("acoustic", {}).get("raw_value", 0.0),
+            "final_score": fusion_result.distress_score,
+            "score_breakdown": breakdown_dict,
+            "intervention_recommended": fusion_result.intervention.value
         }).execute()
+        
+        # Update case score dynamically
+        await supabase.table("cases").update({
+            "current_distress_score": fusion_result.distress_score,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }).eq("id", case_resp.data[0]["id"]).execute()
 
         return {"status": "success", "case": case_resp.data[0]}
     except Exception as e:
@@ -348,7 +360,14 @@ async def submit_grievance(
         if not update_resp.data:
             logger.warning(f"Failed to update user {victim.id} with grievance details.")
             
-        # 2. Create a case
+        # 2. Auto-assign counsellor based on district & language
+        from api.assignment.auto_assign import assign_counsellor
+        counsellor_id = await assign_counsellor(
+            district=request.district,
+            language="hi"  # fallback default
+        )
+            
+        # 3. Create a case
         case_data = {
             "user_id": victim.id,
             "case_type": "criminal",
@@ -359,14 +378,60 @@ async def submit_grievance(
             "cnr_number": request.cnr_number,
             "grievance_description": request.grievance_description,
             "case_stage": "registered",
+            "assigned_counsellor_id": counsellor_id,
             "priority_rank": 50
         }
         
         case_resp = await supabase.table("cases").insert(case_data).execute()
         if not case_resp.data:
             raise HTTPException(status_code=500, detail="Failed to create case.")
+
+        created_case = case_resp.data[0]
+
+        # 4. Log the grievance statement as an interaction for distress scoring
+        if request.grievance_description:
+            try:
+                from api.scoring.fusion import calculate_dynamic_score
+                transcript = f"Filed Grievance ({request.grievance_related_to}): {request.grievance_description}"
+                fusion_result = await calculate_dynamic_score(
+                    transcript=transcript,
+                    call_duration=0
+                )
+                
+                breakdown_dict = {
+                    k: {
+                        "weight": v.weight,
+                        "raw_value": v.raw_value,
+                        "contribution": v.contribution,
+                        "notes": v.notes,
+                        "available": v.available
+                    } for k, v in fusion_result.score_breakdown.items()
+                }
+
+                await supabase.table("interactions").insert({
+                    "case_id": created_case["id"],
+                    "channel": "app",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "transcript_ref": transcript,
+                    "emotion_tag": fusion_result.emotion_tag.value,
+                    "sentiment_score": breakdown_dict.get("sentiment", {}).get("raw_value", 0.0),
+                    "engagement_score": breakdown_dict.get("engagement", {}).get("raw_value", 0.0),
+                    "history_score": 0.0,
+                    "acoustic_score": breakdown_dict.get("acoustic", {}).get("raw_value", 0.0),
+                    "final_score": fusion_result.distress_score,
+                    "score_breakdown": breakdown_dict,
+                    "intervention_recommended": fusion_result.intervention.value
+                }).execute()
+                
+                # Update case score dynamically
+                await supabase.table("cases").update({
+                    "current_distress_score": fusion_result.distress_score,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }).eq("id", created_case["id"]).execute()
+            except Exception as ie:
+                logger.warning(f"Could not log initial grievance interaction: {ie}")
             
-        return {"success": True, "case": case_resp.data[0]}
+        return {"success": True, "case": created_case}
         
     except HTTPException:
         raise

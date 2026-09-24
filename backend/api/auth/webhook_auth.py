@@ -58,24 +58,16 @@ async def verify_bolna_webhook(
         or request.query_params.get("secret")
     )
 
-    if secret and provided:
-        if hmac.compare_digest(provided, secret) or (x_bolna_signature and _is_dev()):
-            return
-
-    if _is_dev():
-        logger.info(
-            "Bolna webhook accepted in development mode (headers: %s).",
-            list(request.headers.keys())
+    if not secret:
+        logger.error("BOLNA_WEBHOOK_SECRET is not configured!")
+        raise HTTPException(
+            status_code=503,
+            detail="Bolna webhook is not configured for this environment",
         )
-        return
 
-    if secret:
+    if not provided or not hmac.compare_digest(provided, secret):
+        logger.warning("Bolna webhook rejected: Invalid signature.")
         raise HTTPException(status_code=401, detail="Invalid webhook credentials")
-
-    raise HTTPException(
-        status_code=503,
-        detail="Bolna webhook is not configured for this environment",
-    )
 
 
 async def verify_pushbullet_webhook(
@@ -90,17 +82,13 @@ async def verify_pushbullet_webhook(
         or request.query_params.get("secret")
     )
 
-    if secret and provided:
-        if hmac.compare_digest(provided, secret):
-            return
+    if not secret:
+        logger.error("PUSHBULLET_WEBHOOK_SECRET is not configured!")
+        raise HTTPException(
+            status_code=503,
+            detail="Pushbullet webhook is not configured for this environment",
+        )
 
-    if _is_dev():
-        return
-
-    if secret:
+    if not provided or not hmac.compare_digest(provided, secret):
+        logger.warning("Pushbullet webhook rejected: Invalid signature.")
         raise HTTPException(status_code=401, detail="Invalid webhook credentials")
-
-    raise HTTPException(
-        status_code=503,
-        detail="Pushbullet webhook is not configured for this environment",
-    )

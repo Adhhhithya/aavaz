@@ -10,13 +10,14 @@ import VictimCase from './pages/Victim/CaseLifecycle';
 import VictimChatbot from './pages/Victim/Chatbot';
 import GrievanceRegistration from './pages/Victim/GrievanceRegistration';
 
+import GlobalLayout from './components/ui/GlobalLayout';
+
 import CounsellorQueue from './pages/Counsellor/Queue';
 import CaseDetail from './pages/Counsellor/CaseDetail';
 
 import DistrictAdmin from './pages/Admin/DistrictDashboard';
 import StateAdmin from './pages/Admin/StateDashboard';
 import NationalAdmin from './pages/Admin/NationalDashboard';
-import SuperAdmin from './pages/Admin/SuperAdminDashboard';
 
 export default function App() {
   return (
@@ -41,55 +42,51 @@ export default function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
-          {/* Counsellor Routes */}
+          {/* Admin & Counsellor Routes with Global Layout */}
           <Route
-            path="/counsellor/*"
-            element={
-              <ProtectedRoute allowedRoles={['counsellor']}>
-                <React.Fragment>
-                  <Routes>
-                    <Route path="queue" element={<CounsellorQueue />} />
-                    <Route path="case/:caseId" element={<CaseDetail />} />
-                    <Route index element={<Navigate to="queue" replace />} />
-                  </Routes>
-                </React.Fragment>
-              </ProtectedRoute>
-            }
-          />
+            path="/"
+            element={<GlobalLayout />}
+          >
+            {/* Counsellor */}
+            <Route
+              path="counsellor"
+              element={
+                <ProtectedRoute allowedRoles={['counsellor']}>
+                  <OutletWrapper />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="queue" element={<CounsellorQueue />} />
+              <Route path="case/:caseId" element={<CaseDetail />} />
+              <Route index element={<Navigate to="queue" replace />} />
+            </Route>
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin/district"
-            element={
-              <ProtectedRoute allowedRoles={['admin_district', 'admin_state', 'admin_national']}>
-                <DistrictAdmin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/state"
-            element={
-              <ProtectedRoute allowedRoles={['admin_state', 'admin_national']}>
-                <StateAdmin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/national"
-            element={
-              <ProtectedRoute allowedRoles={['admin_national']}>
-                <NationalAdmin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/superadmin"
-            element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
-                <SuperAdmin />
-              </ProtectedRoute>
-            }
-          />
+            {/* Admin */}
+            <Route
+              path="admin/district"
+              element={
+                <ProtectedRoute allowedRoles={['admin_district', 'admin_state', 'admin_national']}>
+                  <DistrictAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/state"
+              element={
+                <ProtectedRoute allowedRoles={['admin_state', 'admin_national']}>
+                  <StateAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/national"
+              element={
+                <ProtectedRoute allowedRoles={['admin_national']}>
+                  <NationalAdmin />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
 
           {/* Default Route */}
           <Route path="*" element={<Navigate to="/login" replace />} />
@@ -97,4 +94,9 @@ export default function App() {
       </Router>
     </AuthProvider>
   );
+}
+
+import { Outlet } from 'react-router-dom';
+function OutletWrapper() {
+  return <Outlet />;
 }
