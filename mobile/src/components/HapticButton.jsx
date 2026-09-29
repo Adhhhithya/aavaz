@@ -48,6 +48,7 @@ export default function HapticButton({
     <ScalePressable
       onPress={handlePress}
       disabled={disabled}
+      haptic={false}
       style={[styles.button, getContainerStyle(), style]}
       {...props}
     >

@@ -1,7 +1,7 @@
 {
   "name": "mobile",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "expo-router/entry",
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "^3.1.1",
@@ -11,8 +11,12 @@
     "expo-constants": "~57.0.18",
     "expo-haptics": "^57.0.3",
     "expo-linear-gradient": "~57.0.2",
+    "expo-linking": "^57.0.10",
+    "expo-router": "^57.0.22",
     "expo-secure-store": "~57.0.4",
+    "expo-speech": "~57.0.3",
     "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.23",
     "lucide-react-native": "^1.46.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -28,11 +32,14 @@
     "react-native-worklets-core": "^1.6.3"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "node --test"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@expo/ngrok": "^4.1.3"
+  }
 }

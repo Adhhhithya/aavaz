@@ -57,12 +57,10 @@ class SyntheticOtpProvider(OtpProvider):
 
     async def send_otp(self, phone_number: str, code: str, channel: str = "sms") -> None:
         logger.warning(
-            "[DEV ONLY — NEVER DO THIS IN PRODUCTION] Synthetic OTP for %s via %s: %s",
+            "[DEV ONLY — NEVER DO THIS IN PRODUCTION] Synthetic OTP dispatched for %s via %s",
             phone_number,
             channel,
-            code,
         )
-        print(f"\n=======================================================\n[DEV OTP] Verification code for {phone_number}: {code}\n=======================================================\n", flush=True)
 
 
 
@@ -79,8 +77,7 @@ class PushbulletOtpProvider(OtpProvider):
             raise OtpDeliveryError("PUSHBULLET_API_KEY is not configured")
 
         if settings.ENVIRONMENT.strip().lower() == "development":
-            print(f"\n=======================================================\n[DEV OTP] Verification code for {phone_number}: {code}\n=======================================================\n", flush=True)
-            logger.info("[DEV OTP] Verification code for %s: %s", phone_number, code)
+            logger.info("[DEV OTP] Verification code dispatched to %s", phone_number)
 
         message = f"Your verification code is {code}. It expires in {settings.OTP_TTL_SECONDS // 60} minutes."
         from services.pushbullet_service import send_sms

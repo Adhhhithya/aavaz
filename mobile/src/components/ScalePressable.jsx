@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 // Animated.createAnimatedComponent wraps Pressable to allow Reanimated styles
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -16,6 +17,7 @@ export default function ScalePressable({
   style,
   scaleTo = 0.95,
   disabled = false,
+  haptic = true, // By default provide haptics
   ...props
 }) {
   const scale = useSharedValue(1);
@@ -28,6 +30,9 @@ export default function ScalePressable({
 
   const handlePressIn = (e) => {
     if (!disabled) {
+      if (haptic) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
       scale.value = withSpring(scaleTo, {
         stiffness: 400,
         damping: 20,

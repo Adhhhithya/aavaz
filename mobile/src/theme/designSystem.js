@@ -1,76 +1,96 @@
 const canvasTokens = {
-  base: '#F8F9FC', // Cloud Mist
+  base: '#F8FAFC', // Slate 50
   surface: '#FFFFFF',
-  surfaceSubtle: '#F4F5FA',
-  card: '#FFFFFF',
-  border: '#EBE8F6', // Soft Periwinkle
-  borderActive: '#8A79B8', // Lavender highlight
-  deep: '#0F172A',
+  surfaceHover: '#F1F5F9', // Slate 100
+  surfaceSubtle: '#F8FAFC', // Slate 50
+  border: '#E2E8F0', // Slate 200
+  deep: '#0F172A', // Slate 900
 };
 
 const primaryTokens = {
-  main: '#8A79B8', // Lavender
-  hover: '#7A68A7',
-  muted: '#F0EDF8',
-  glow: 'rgba(138, 121, 184, 0.25)',
+  main: '#3B82F6', // Blue 500
+  hover: '#2563EB', // Blue 600
+  muted: '#EFF6FF', // Blue 50
+};
+
+const secondaryTokens = {
+  main: '#64748B', // Slate 500
+  hover: '#475569', // Slate 600
+  muted: '#F8FAFC', // Slate 50
 };
 
 const accentTokens = {
-  // SOS / Danger
-  sos: '#D95D5D', // Muted terracotta/coral
-  sosLight: '#E06A6A',
-  sosBg: 'rgba(217, 93, 93, 0.12)',
+  success: '#10B981',
+  successHover: '#059669',
+  successMuted: '#ECFDF5',
+  
+  warning: '#F59E0B',
+  warningHover: '#D97706',
+  warningMuted: '#FFFBEB',
+  
+  danger: '#EF4444',
+  dangerHover: '#DC2626',
+  dangerMuted: '#FEF2F2',
 
-  // Gauge Colors
-  sage: '#68B087', // Calm / Normal
-  amber: '#E5A962', // Moderate / Elevated
-  terracotta: '#D96B6B', // Critical / High
-
-  // Extended Accents
+  critical: '#991B1B', // Red 800
+  criticalHover: '#7F1D1D',
+  criticalMuted: '#FEF2F2',
+  
+  info: '#0EA5E9',
+  infoHover: '#0284C7',
+  infoMuted: '#F0F9FF',
+  
+  // Legacy mappings to prevent breaks
+  sos: '#EF4444', 
+  sosBg: 'rgba(239, 68, 68, 0.12)',
+  sage: '#10B981',
+  amber: '#F59E0B',
+  terracotta: '#EF4444',
   blue: '#3B82F6',
-  crimson: '#EF4444',
+  crimson: '#991B1B',
   emerald: '#10B981',
   indigo: '#6366F1',
   teal: '#14B8A6',
-
-  // Status badges
   periwinkle: '#EBE8F6',
-  periwinkleText: '#5F548A',
+  periwinkleText: '#4F46E5',
 };
 
 const textTokens = {
-  primary: '#1E1F24', // Charcoal
-  secondary: '#4A4D57',
-  muted: '#636774', // Slate
-  light: '#FFFFFF',
-  lavender: '#8A79B8',
+  primary: '#0F172A', // Slate 900
+  secondary: '#475569', // Slate 600
+  muted: '#94A3B8', // Slate 400
+  light: '#94A3B8', // Slate 400
+  subtle: '#64748B', // Slate 500
+  white: '#FFFFFF',
+  inverse: '#FFFFFF',
 };
 
 const radiusTokens = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  sm: 6,
+  md: 8,
+  lg: 12,
+  xl: 16,
   pill: 9999,
   full: 9999,
 };
 
 const typographyTokens = {
-  hero: { fontSize: 32, fontWeight: '700', color: '#1E1F24' },
-  heroDisplay: { fontSize: 40, fontWeight: '800', color: '#1E1F24' },
-  display: { fontSize: 26, fontWeight: '700', color: '#1E1F24' },
-  title: { fontSize: 22, fontWeight: '700', color: '#1E1F24' },
-  headline: { fontSize: 18, fontWeight: '600', color: '#1E1F24' },
-  subheadline: { fontSize: 15, fontWeight: '600', color: '#1E1F24' },
-  body: { fontSize: 15, fontWeight: '400', color: '#4A4D57' },
-  bodyMuted: { fontSize: 13, fontWeight: '400', color: '#636774' },
-  label: { fontSize: 14, fontWeight: '500', color: '#1E1F24' },
-  caption: { fontSize: 12, fontWeight: '400', color: '#636774' },
+  hero: { fontSize: 32, fontWeight: '700', color: textTokens.primary },
+  heroDisplay: { fontSize: 40, fontWeight: '800', color: textTokens.primary },
+  display: { fontSize: 26, fontWeight: '700', color: textTokens.primary },
+  title: { fontSize: 22, fontWeight: '700', color: textTokens.primary },
+  headline: { fontSize: 18, fontWeight: '600', color: textTokens.primary },
+  subheadline: { fontSize: 15, fontWeight: '600', color: textTokens.primary },
+  body: { fontSize: 15, fontWeight: '400', color: textTokens.secondary },
+  bodyMuted: { fontSize: 13, fontWeight: '400', color: textTokens.muted },
+  label: { fontSize: 14, fontWeight: '500', color: textTokens.primary },
+  caption: { fontSize: 12, fontWeight: '400', color: textTokens.muted },
 };
 
 export const DS = {
   canvas: canvasTokens,
   primary: primaryTokens,
+  secondary: secondaryTokens,
   accent: accentTokens,
   text: textTokens,
   spacing: {
@@ -84,34 +104,56 @@ export const DS = {
   radius: radiusTokens,
   borderRadius: radiusTokens,
   shadow: {
-    card: {
-      shadowColor: '#1E1F24',
+    sm: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    md: {
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.04,
-      shadowRadius: 12,
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
       elevation: 2,
     },
-    hover: {
-      shadowColor: '#8A79B8',
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
+    lg: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 15,
       elevation: 4,
     },
-    sos: {
-      shadowColor: '#D95D5D',
+    critical: {
+      shadowColor: '#EF4444',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 10,
-      elevation: 3,
+      shadowOpacity: 0.3,
+      shadowRadius: 14,
+      elevation: 4,
     },
     ambient: {
-      shadowColor: '#1E1F24',
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.12,
       shadowRadius: 24,
-      elevation: 8,
+      elevation: 6,
     },
+    hover: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      elevation: 3,
+    },
+    // legacy support
+    card: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    }
   },
   type: typographyTokens,
   typography: typographyTokens,
@@ -120,12 +162,13 @@ export const DS = {
     surface: 'rgba(255, 255, 255, 0.08)',
   },
   gradient: {
-    background: ['#0F172A', '#1E293B'],
-    cta: ['#8A79B8', '#6366F1'],
-    danger: ['#EF4444', '#B91C1C'],
+    background: ['#F8FAFC', '#EFF6FF'],
+    cta: ['#3B82F6', '#2563EB'],
+    danger: ['#EF4444', '#DC2626'],
   },
   colors: {
     primary: primaryTokens,
+    secondary: secondaryTokens,
     background: canvasTokens,
     ui: canvasTokens,
     accent: accentTokens,
@@ -135,7 +178,7 @@ export const DS = {
 
 export const glassCard = {
   backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  borderRadius: 16,
+  borderRadius: 12,
   borderWidth: 1,
   borderColor: 'rgba(255, 255, 255, 0.12)',
   padding: 16,

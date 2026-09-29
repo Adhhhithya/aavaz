@@ -77,8 +77,15 @@ test('all DS property accesses across mobile src resolve to defined values', () 
   }
 
   const srcDir = path.resolve(__dirname, '..', '..');
-  const files = getFiles(srcDir);
-  files.push(path.resolve(srcDir, '..', 'App.js'));
+  const appDir = path.resolve(srcDir, '..', 'app');
+  let files = getFiles(srcDir);
+  if (fs.existsSync(appDir)) {
+    files = files.concat(getFiles(appDir));
+  }
+  const appJs = path.resolve(srcDir, '..', 'App.js');
+  if (fs.existsSync(appJs)) {
+    files.push(appJs);
+  }
 
   const dsAccessRegex = /DS(\.[a-zA-Z0-9_]+)+/g;
   let accessCount = 0;

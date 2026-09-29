@@ -25,37 +25,19 @@ import DistressGauge from '../components/DistressGauge';
 import SOSModal from '../components/SOSModal';
 import ScalePressable from '../components/ScalePressable';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
-const MOODS = [
-  { id: 'calm', label: 'Calm', emoji: '😌', color: DS.accent.sage },
-  { id: 'content', label: 'Content', emoji: '🙂', color: '#7EB693' },
-  { id: 'neutral', label: 'Neutral', emoji: '😐', color: DS.accent.amber },
-  { id: 'anxious', label: 'Anxious', emoji: '😟', color: '#E89269' },
-  { id: 'distressed', label: 'Distressed', emoji: '😣', color: DS.accent.terracotta },
-];
-
-
-
+import WeeklyTrendGraph from '../components/WeeklyTrendGraph';
 export default function HomeScreen({
   userName = 'User',
   userProfile,
+  score = 0,
   onNavigateToCases,
   onNavigateToAssistant,
   onNavigateToBreathing,
 }) {
-  const [selectedMood, setSelectedMood] = useState(null);
+  const { t } = useLanguage();
   const [sosModalVisible, setSosModalVisible] = useState(false);
-
-  const handleMoodSelect = async (moodId) => {
-    setSelectedMood(moodId);
-    try {
-      // S2: user_id is no longer sent — the backend derives the case owner
-      // from the authenticated victim's session (see api/intake/app_routes.py).
-      await api.post('/api/v1/intake/app/checkin', { mood: moodId });
-    } catch (e) {
-      console.error("Failed to log mood:", e);
-    }
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -66,8 +48,8 @@ export default function HomeScreen({
         {/* Header Area */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.greetingMeta}>HI, {userName.toUpperCase()}</Text>
-            <Text style={styles.largeTitle}>Today</Text>
+            <Text style={styles.greetingMeta}>{t('greetingHi', { name: (userName || 'User').toUpperCase() })}</Text>
+            <Text style={styles.largeTitle}>{t('greetingToday')}</Text>
           </View>
 
           {/* Right: Dedicated SOS Pill Button */}
@@ -76,7 +58,7 @@ export default function HomeScreen({
             onPress={() => setSosModalVisible(true)}
           >
             <ShieldAlert size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={styles.sosPillText}>SOS</Text>
+            <Text style={styles.sosPillText}>{t('btnSOS') || 'SOS'}</Text>
           </ScalePressable>
         </View>
 
@@ -84,65 +66,24 @@ export default function HomeScreen({
         <ScalePressable style={styles.card} onPress={() => {}}>
           <View style={styles.cardHeader}>
             <View>
-              <Text style={styles.cardTitle}>Distress Index & Prediction</Text>
+              <Text style={styles.cardTitle}>{t('distressPrediction')}</Text>
               <View style={styles.liveIndicator}>
                 <View style={styles.liveDot} />
-                <Text style={styles.liveText}>Live Multimodal Score</Text>
+                <Text style={styles.liveText}>{t('liveMultimodalScore')}</Text>
               </View>
             </View>
             
             <View style={styles.metricRow}>
-              <Text style={styles.metricValue}>0</Text>
-              <Text style={styles.metricUnit}>pts</Text>
+              <Text style={styles.metricValue}>{Math.round(score)}</Text>
+              <Text style={styles.metricUnit}>{t('pts')}</Text>
             </View>
           </View>
           <View style={styles.divider} />
-          <DistressGauge score={0} maxScore={100} />
+          <DistressGauge score={score} maxScore={100} />
         </ScalePressable>
 
-        {/* Secondary Card 1: Quick Check-in */}
-        <ScalePressable style={styles.card} onPress={() => {}}>
-          <View style={styles.cardHeaderGroup}>
-            <Sparkles size={20} color={DS.primary.main} style={{ marginRight: 8 }} />
-            <Text style={styles.cardTitle}>Quick Check-in</Text>
-          </View>
-          <Text style={styles.cardSubtitle}>How are you feeling right now?</Text>
-
-          <View style={styles.moodRow}>
-            {MOODS.map((m) => {
-              const isSelected = selectedMood === m.id;
-              return (
-                <ScalePressable
-                  key={m.id}
-                  style={[
-                    styles.moodPill,
-                    isSelected && styles.moodPillSelected,
-                  ]}
-                  onPress={() => handleMoodSelect(m.id)}
-                >
-                  <Text style={styles.moodEmoji}>{m.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.moodLabel,
-                      isSelected && styles.moodLabelSelected,
-                    ]}
-                  >
-                    {m.label}
-                  </Text>
-                </ScalePressable>
-              );
-            })}
-          </View>
-
-          {selectedMood && (
-            <View style={styles.moodLoggedNotice}>
-              <CheckCircle2 size={16} color={DS.primary.main} style={{ marginRight: 8 }} />
-              <Text style={styles.moodLoggedText}>
-                Recorded. Baseline models adjusted.
-              </Text>
-            </View>
-          )}
-        </ScalePressable>
+        {/* Secondary Card: Weekly Trend Graph */}
+        <WeeklyTrendGraph />
       </ScrollView>
 
       {/* SOS Modal */}
@@ -256,56 +197,5 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(60, 60, 67, 0.15)', // iOS hairline
     marginVertical: 16,
-  },
-  cardHeaderGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    color: 'rgba(60, 60, 67, 0.6)',
-    marginBottom: 16,
-  },
-  moodRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  moodPill: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginHorizontal: 3,
-    backgroundColor: '#F2F2F7', // iOS nested grouped background
-    borderRadius: 12,
-  },
-  moodPillSelected: {
-    backgroundColor: 'rgba(138, 121, 184, 0.12)', // Subtle lavender tint highlight
-  },
-  moodEmoji: {
-    fontSize: 22,
-    marginBottom: 6,
-  },
-  moodLabel: {
-    fontSize: 11,
-    color: 'rgba(60, 60, 67, 0.6)',
-    fontWeight: '500',
-  },
-  moodLabelSelected: {
-    color: DS.primary.main,
-    fontWeight: '700',
-  },
-  moodLoggedNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(60, 60, 67, 0.15)',
-  },
-  moodLoggedText: {
-    fontSize: 13,
-    color: 'rgba(60, 60, 67, 0.6)',
-    flex: 1,
   },
 });

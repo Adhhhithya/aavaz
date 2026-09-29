@@ -10,15 +10,19 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { HeartHandshake, ShieldCheck, ChevronDown } from 'lucide-react-native';
+import { HeartHandshake, ShieldCheck, ChevronDown, Globe } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { DS } from '../theme/designSystem';
 import HapticButton from '../components/HapticButton';
 import ScalePressable from '../components/ScalePressable';
+import { useLanguage } from '../context/LanguageContext';
+import { LANGUAGES } from '../i18n/translations';
 
 export default function LoginScreen({ onSendOTP }) {
+  const { language, changeLanguage, t } = useLanguage();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [isFocused, setIsFocused] = useState(false);
@@ -40,6 +44,30 @@ export default function LoginScreen({ onSendOTP }) {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
         >
+          {/* Language Selector Bar */}
+          <View style={styles.langSelectorWrap}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.langScroll}>
+              <View style={styles.langIconBadge}>
+                <Globe size={14} color={DS.primary.main} />
+              </View>
+              {LANGUAGES.map((item) => {
+                const isSelected = language === item.code;
+                return (
+                  <TouchableOpacity
+                    key={item.code}
+                    onPress={() => changeLanguage(item.code)}
+                    style={[styles.langChip, isSelected && styles.langChipActive]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.langChipText, isSelected && styles.langChipTextActive]}>
+                      {item.nativeName}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+
           <View style={styles.inner}>
             
             {/* Branding / Header */}
@@ -47,15 +75,15 @@ export default function LoginScreen({ onSendOTP }) {
               <View style={styles.iconCircle}>
                 <HeartHandshake size={36} color={DS.primary.main} />
               </View>
-              <Text style={styles.headline}>Welcome to a safer space.</Text>
+              <Text style={styles.headline}>{t('mobileWelcomeHeadline')}</Text>
               <Text style={styles.subheadline}>
-                Continuous psychological care, support, and legal guidance.
+                {t('mobileWelcomeSub')}
               </Text>
             </Animated.View>
 
             {/* Input Card Container */}
             <Animated.View entering={FadeInDown.duration(600).delay(100).springify()} style={styles.formContainer}>
-              <Text style={styles.inputLabel}>Mobile Phone Number</Text>
+              <Text style={styles.inputLabel}>{t('mobilePhoneLabel')}</Text>
               <View
                 style={[
                   styles.phoneInputRow,
@@ -73,7 +101,7 @@ export default function LoginScreen({ onSendOTP }) {
                 {/* Phone Number Input */}
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Enter 10-digit number"
+                  placeholder={t('mobilePhonePlaceholder')}
                   placeholderTextColor={DS.text.muted}
                   keyboardType="phone-pad"
                   value={phoneNumber}
@@ -86,7 +114,7 @@ export default function LoginScreen({ onSendOTP }) {
 
               {/* Pill-shaped Send OTP CTA Button */}
               <HapticButton
-                title={loading ? "Sending..." : "Send OTP"}
+                title={loading ? t('btnSendingOtp') : t('btnSendOtp')}
                 disabled={loading || phoneNumber.trim().length < 6}
                 onPress={handleSend}
                 variant="primary"
@@ -97,7 +125,7 @@ export default function LoginScreen({ onSendOTP }) {
               <Animated.View entering={FadeInDown.duration(600).delay(200).springify()} style={styles.privacyNoteWrap}>
                 <ShieldCheck size={16} color={DS.text.muted} style={{ marginRight: 6 }} />
                 <Text style={styles.privacyNote}>
-                  Your data is protected under end-to-end encryption. All communications remain strictly confidential.
+                  {t('mobileEncryptionNote')}
                 </Text>
               </Animated.View>
             </Animated.View>
@@ -112,6 +140,47 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: DS.canvas.base,
+  },
+  langSelectorWrap: {
+    paddingVertical: DS.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: DS.canvas.border,
+    backgroundColor: DS.canvas.surface,
+  },
+  langScroll: {
+    paddingHorizontal: DS.spacing.md,
+    alignItems: 'center',
+    gap: 6,
+  },
+  langIconBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: DS.primary.muted,
+    marginRight: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  langChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: DS.radius.pill,
+    backgroundColor: DS.canvas.base,
+    borderWidth: 1,
+    borderColor: DS.canvas.border,
+  },
+  langChipActive: {
+    backgroundColor: DS.primary.main,
+    borderColor: DS.primary.main,
+  },
+  langChipText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: DS.text.secondary,
+  },
+  langChipTextActive: {
+    color: '#ffffff',
+    fontFamily: 'Inter-Bold',
   },
   container: {
     flex: 1,

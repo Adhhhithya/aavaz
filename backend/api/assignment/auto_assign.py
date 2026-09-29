@@ -27,20 +27,28 @@ async def assign_counsellor(district: str, language: str) -> str:
         # Filter by language support
         for c in counsellors:
             if language in c.get("languages", []):
-                # Update caseload
-                await supabase.table("counsellors")\
+                # Update caseload with optimistic locking
+                upd = await supabase.table("counsellors")\
                     .update({"current_caseload": c["current_caseload"] + 1})\
                     .eq("id", c["id"])\
+                    .eq("current_caseload", c["current_caseload"])\
                     .execute()
-                return c["id"]
+                if len(upd.data) > 0:
+                    return c["id"]
+                else:
+                    # Concurrent modification occurred, fallback/retry logic should ideally be handled upstream
+                    pass
                 
         # If no language match, just assign to the one with lowest caseload in district
         best_fallback = counsellors[0]
-        await supabase.table("counsellors")\
+        upd = await supabase.table("counsellors")\
             .update({"current_caseload": best_fallback["current_caseload"] + 1})\
             .eq("id", best_fallback["id"])\
+            .eq("current_caseload", best_fallback["current_caseload"])\
             .execute()
-        return best_fallback["id"]
+        if len(upd.data) > 0:
+            return best_fallback["id"]
+        return None
 
     except Exception as e:
         logger.error(f"Error in auto-assignment: {e}")

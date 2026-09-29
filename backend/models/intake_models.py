@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 
 class Location(BaseModel):
@@ -22,9 +22,12 @@ class AppRegistrationRequest(BaseModel):
     consent_given: bool
     location: Optional[Location] = None
     preferred_language: str = Field(..., description="hi, ta, ml, or en")
+    emergencyContact: Optional[dict] = None
 
 class BolnaWebhookPayload(BaseModel):
+    id: Optional[str] = None
     call_id: Optional[str] = "unknown_call"
+    user_number: Optional[str] = None
     user_phone: Optional[str] = None
     phone_number: Optional[str] = None
     recipient_phone_number: Optional[str] = None
@@ -32,11 +35,22 @@ class BolnaWebhookPayload(BaseModel):
     audio_url: Optional[str] = None
     language_detected: Optional[str] = None
     duration_seconds: Optional[float] = 0.0
+    status: Optional[str] = "completed"
     call_status: Optional[str] = "completed"
 
+    model_config = ConfigDict(extra='allow')
+
     @property
-    def caller_phone(self) -> str:
-        return (self.user_phone or self.phone_number or self.recipient_phone_number or "").strip()
+    def get_caller_phone(self) -> str:
+        return (self.user_number or self.user_phone or self.phone_number or self.recipient_phone_number or "").strip()
+
+    @property
+    def get_call_id(self) -> str:
+        return self.id or self.call_id or "unknown_call"
+
+    @property
+    def get_status(self) -> str:
+        return self.status or self.call_status or "completed"
 
 class PushbulletWebhookPayload(BaseModel):
     from_number: str
@@ -50,10 +64,13 @@ class ChatbotRequest(BaseModel):
     channel: str # app|sms
 
 class BolnaDistressAssessment(BaseModel):
-    caller_identity: str
-    estimated_distress_score: int
-    immediate_threat_detected: bool
-    summary_notes: str
+    caller_identity: Optional[str] = "Unknown"
+    estimated_distress_score: Optional[int] = 0
+    immediate_threat_detected: Optional[bool] = False
+    summary_notes: Optional[str] = ""
+
+    class Config:
+        extra = "allow"
 
 class BolnaPreCallPayload(BaseModel):
     call_id: Optional[str] = None

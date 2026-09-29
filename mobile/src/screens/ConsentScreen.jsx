@@ -4,8 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ShieldCheck, FileKey, EyeOff } from 'lucide-react-native';
 import { DS, glassCard } from '../theme/designSystem';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ConsentScreen({ onConsent }) {
+  const { t } = useLanguage();
   const [agreed, setAgreed] = useState(false);
 
   return (
@@ -15,37 +17,37 @@ export default function ConsentScreen({ onConsent }) {
       <View style={styles.container}>
         <View style={styles.header}>
           <ShieldCheck size={32} color={DS.accent.emerald} />
-          <Text style={styles.title}>Data Protection</Text>
+          <Text style={styles.title}>{t('consentDataProtection')}</Text>
         </View>
 
-        <Text style={styles.body}>This app aligns with the DPDP Act. Your data is encrypted and strictly access-controlled.</Text>
+        <Text style={styles.body}>{t('consentBody')}</Text>
 
         <View style={[glassCard, styles.tiers]}>
           <View style={styles.tierRow}>
             <EyeOff size={20} color={DS.accent.indigo} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.tierTitle}>Tier 1: Redacted View</Text>
-              <Text style={styles.tierDesc}>District Dashboards see anonymized stats only.</Text>
+              <Text style={styles.tierTitle}>{t('consentTier1Title')}</Text>
+              <Text style={styles.tierDesc}>{t('consentTier1Desc')}</Text>
             </View>
           </View>
           <View style={styles.divider} />
           <View style={styles.tierRow}>
             <FileKey size={20} color={DS.accent.teal} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.tierTitle}>Tier 2: Protected View</Text>
-              <Text style={styles.tierDesc}>Only your assigned Counsellor can see case details.</Text>
+              <Text style={styles.tierTitle}>{t('consentTier2Title')}</Text>
+              <Text style={styles.tierDesc}>{t('consentTier2Desc')}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.toggleRow}>
           <Switch value={agreed} onValueChange={setAgreed} trackColor={{ true: DS.accent.emerald }} />
-          <Text style={styles.toggleText}>I consent to protected telemetry tracking</Text>
+          <Text style={styles.toggleText}>{t('consentCheckboxLabel')}</Text>
         </View>
 
         <TouchableOpacity style={[styles.cta, !agreed && styles.ctaDisabled]} onPress={onConsent} disabled={!agreed}>
           <LinearGradient colors={agreed ? DS.gradient.cta : ['#334155', '#1e293b']} style={styles.ctaGrad}>
-            <Text style={styles.ctaText}>Accept & Enter Dashboard</Text>
+            <Text style={styles.ctaText}>{t('consentBtnAccept')}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>

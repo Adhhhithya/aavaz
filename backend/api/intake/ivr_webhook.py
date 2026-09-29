@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from models.intake_models import BolnaWebhookPayload, BolnaDistressAssessment, BolnaPreCallPayload
 from services.supabase_client import get_supabase
-from api.scoring.fusion import calculate_dynamic_score_legacy as calculate_dynamic_score
+from api.scoring.fusion import calculate_dynamic_score
 from api.auth.webhook_auth import verify_bolna_webhook
 import logging
 
@@ -17,24 +17,25 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
     try:
         supabase = await get_supabase()
         
-        event_id = payload.call_id or "unknown_call"
+        event_id = payload.get_call_id
         
         # --- Idempotency Check ---
-        # If bolna retries the exact same call completion event, we must not duplicate cases or scores.
-        idemp_resp = await supabase.table("webhook_events").select("id").eq("provider", "bolna").eq("external_event_id", event_id).execute()
-        if idemp_resp.data:
-            logger.info(f"Idempotency: Webhook {event_id} already processed. Skipping.")
-            return {"status": "ok", "message": "Already processed"}
+        # Use an atomic insert. If this fails due to a unique constraint violation,
+        # it means the event was already processed.
+        try:
+            await supabase.table("webhook_events").insert({
+                "provider": "bolna",
+                "external_event_id": event_id,
+                "event_type": payload.get_status,
+                "payload": payload.model_dump()
+            }).execute()
+        except Exception as e:
+            if "duplicate key value violates unique constraint" in str(e).lower() or "23505" in str(e):
+                logger.info(f"Idempotency: Webhook {event_id} already processed. Skipping.")
+                return {"status": "ok", "message": "Already processed"}
+            raise e
         
-        # Lock the event
-        await supabase.table("webhook_events").insert({
-            "provider": "bolna",
-            "external_event_id": event_id,
-            "event_type": payload.call_status or "completed",
-            "payload": payload.dict()
-        }).execute()
-        
-        caller_phone = payload.caller_phone or "Unknown"
+        caller_phone = payload.get_caller_phone or "Unknown"
         # 1. Lookup user by phone number
         user_resp = await supabase.table("users").select("id").eq("phone_number", caller_phone).execute()
         
@@ -46,7 +47,7 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
                 "role_type": "victim",
                 "preferred_language": payload.language_detected or "en",
                 "location_source": "ivr",
-                "consent_given": True # Implied by IVR interaction for demo
+                "consent_given": False  # IVR intake cannot constitute implied consent; must be obtained explicitly in subsequent interaction
             }
             insert_resp = await supabase.table("users").insert(new_user).execute()
             user_id = insert_resp.data[0]["id"]
@@ -68,52 +69,46 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
                 "priority_rank": 0
             }
             case_insert_resp = await supabase.table("cases").insert(new_case).execute()
-            case_id = case_insert_resp.data[0]["id"]
+            case_record = case_insert_resp.data[0] if case_insert_resp.data else {}
+            case_id = case_record.get("id")
             logger.info(f"Registered new case from IVR: {case_id}")
         else:
-            case_id = case_resp.data[0]["id"]
+            case_record = case_resp.data[0]
+            case_id = case_record.get("id")
             
-        # 3. Dynamic Multimodal Scoring (Shadow Mode)
-        # --- Legacy Mock Engine ---
-        # (Simulating the old v1 keyword-based heuristic for the shadow evaluation)
-        text = (payload.transcript or "").lower()
-        legacy_score = 30.0
-        if any(w in text for w in ["help", "scared", "threat", "kill"]): legacy_score += 40.0
-        legacy_risk = "high" if legacy_score > 60 else "medium" if legacy_score > 40 else "low"
+        # 3. Dynamic Multimodal Scoring
+        try:
+            fusion_result = await calculate_dynamic_score(
+                transcript=payload.transcript or "",
+                call_duration=payload.duration_seconds or 0,
+                audio_url=payload.audio_url or None,
+                submitter_role=(case_record.get("submitter_role") if case_record else None) or "victim",
+                history_score=float(case_record.get("current_distress_score") or 0.0)
+            )
+            final_score = fusion_result.distress_score
+            intervention = fusion_result.intervention.value
+            emotion_tag = fusion_result.emotion_tag.value
+            
+            # Extract breakdown components safely
+            breakdown_dict = {
+                k: {
+                    "weight": v.weight,
+                    "raw_value": v.raw_value,
+                    "contribution": v.contribution,
+                    "notes": v.notes,
+                    "available": v.available
+                } for k, v in fusion_result.score_breakdown.items()
+            }
+        except Exception as fusion_err:
+            logger.warning(f"ML Scoring failed for webhook {event_id}. Falling back to default baseline: {fusion_err}")
+            final_score = 0.0
+            intervention = "none"
+            emotion_tag = "neutral"
+            breakdown_dict = {}
         
-        # --- New Fusion Engine ---
-        fusion_result = await calculate_dynamic_score(
-            transcript=payload.transcript or "",
-            call_duration=payload.duration_seconds or 0,
-            audio_url=payload.audio_url or None,
-        )
-        
-        final_score = fusion_result["final_score"]
-        escalation_risk = fusion_result["escalation_risk"]
-        case_type = fusion_result["case_type"]
-        intervention = fusion_result["recommended_intervention"]
-        xai_reasoning = fusion_result["reasoning"]
-        
-        # --- Shadow Logging ---
-        delta = abs(final_score - legacy_score)
-        await supabase.table("shadow_scoring_evaluations").insert({
-            "call_id": event_id,
-            "legacy_score": legacy_score,
-            "legacy_risk": legacy_risk,
-            "fusion_score": final_score,
-            "fusion_risk": escalation_risk,
-            "delta": delta
-        }).execute()
-        
-        if delta > 20:
-            logger.warning(f"SHADOW MODE DELTA ALERT: Call {event_id} | Legacy: {legacy_score} | Fusion: {final_score}")
-        
-        emotion_tag = "fear" if final_score > 60 else "neutral"
-        
-        # Update case with new score and LLM categorizations
+        # Update case with new score
         await supabase.table("cases").update({
             "current_distress_score": final_score,
-            "case_type": case_type,
             "updated_at": "now()"
         }).eq("id", case_id).execute()
         
@@ -123,15 +118,12 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
             "channel": "ivr",
             "transcript_ref": payload.transcript or "IVR call recorded",
             "audio_ref": payload.audio_url,
-            "sentiment_score": final_score * 0.8,
-            "engagement_score": 100.0,
+            "sentiment_score": breakdown_dict.get("sentiment", {}).get("raw_value", 0.0),
+            "engagement_score": breakdown_dict.get("engagement", {}).get("raw_value", 0.0),
             "history_score": 0.0,
-            "acoustic_score": fusion_result.get("breakdown", {}).get("acoustic", {}).get("contribution", 0.0),
+            "acoustic_score": breakdown_dict.get("acoustic", {}).get("raw_value", 0.0),
             "final_score": final_score,
-            "score_breakdown": fusion_result.get("breakdown", {
-                "acoustic": {"contribution": 30, "reason": "Derived from call metadata"}, 
-                "sentiment": {"contribution": 70, "reason": xai_reasoning}
-            }),
+            "score_breakdown": breakdown_dict,
             "emotion_tag": emotion_tag,
             "intervention_recommended": intervention
         }

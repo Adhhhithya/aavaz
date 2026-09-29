@@ -97,7 +97,9 @@ async def score_and_empathy_node(state: dict) -> dict:
         last_turn = conv_state.transcript[-1]
         fusion_res = await calculate_dynamic_score(
             transcript=last_turn.transcript,
-            language=conv_state.language
+            language=conv_state.language,
+            submitter_role=conv_state.submitter_role,
+            history_score=conv_state.history_score
         )
         conv_state.distress = fusion_res
     except Exception as exc:
@@ -205,15 +207,19 @@ def new_conversation(
     victim_id: Optional[str] = None, 
     case_id: Optional[str] = None,
     language: str = "en",
-    channel: str = "chat"
+    channel: str = "chat",
+    submitter_role: str = "victim",
+    history_score: float = 0.0
 ) -> ConversationState:
     return ConversationState(
         conversation_id=f"conv_{uuid.uuid4().hex[:12]}",
         victim_id=victim_id,
         case_id=case_id,
-        language=language,
-        channel=channel,
+        language=language or "en",
+        channel=channel or "chat",
         turn_id=0,
+        submitter_role=submitter_role or "victim",
+        history_score=history_score or 0.0,
     )
 
 async def execute_turn(

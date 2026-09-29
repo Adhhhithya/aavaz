@@ -7,8 +7,16 @@
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Colors, Typography, Radius, Spacing, TouchTargets } from '../theme/tokens';
+import * as Haptics from 'expo-haptics';
 
 export default function SegmentedControl({ options, selectedValue, onValueChange }) {
+  const handleSelect = (value) => {
+    if (value !== selectedValue) {
+      Haptics.selectionAsync();
+      onValueChange(value);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {options.map((option) => {
@@ -20,7 +28,7 @@ export default function SegmentedControl({ options, selectedValue, onValueChange
               styles.segment,
               isSelected && styles.segmentSelected,
             ]}
-            onPress={() => onValueChange(option.value)}
+            onPress={() => handleSelect(option.value)}
           >
             <Text style={[
               styles.segmentLabel,

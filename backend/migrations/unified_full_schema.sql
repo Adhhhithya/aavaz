@@ -471,3 +471,80 @@ DROP POLICY IF EXISTS scheduled_calls_staff_only ON scheduled_calls;
 CREATE POLICY scheduled_calls_staff_only ON scheduled_calls USING (
     auth.jwt() ->> 'role' IN ('counsellor', 'district_officer', 'state_officer', 'national_officer', 'superadmin')
 );
+
+-- -----------------------------------------------------------------------------
+-- RPC Vector Similarity Functions for RAG
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION match_legal_documents(
+    query_embedding VECTOR(1024),
+    match_threshold FLOAT DEFAULT 0.28,
+    match_count INT DEFAULT 5,
+    filter_category TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID,
+    title TEXT,
+    content TEXT,
+    source TEXT,
+    category TEXT,
+    jurisdiction TEXT,
+    language TEXT,
+    distance FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        ld.id,
+        ld.title,
+        ld.content,
+        ld.source,
+        ld.category,
+        ld.jurisdiction,
+        ld.language,
+        (ld.embedding <=> query_embedding)::FLOAT AS distance
+    FROM legal_documents ld
+    WHERE (filter_category IS NULL OR ld.category = filter_category)
+      AND (ld.embedding IS NULL OR (ld.embedding <=> query_embedding) <= match_threshold)
+    ORDER BY (ld.embedding <=> query_embedding) ASC
+    LIMIT match_count;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION match_victim_memories(
+    victim_id_filter UUID,
+    query_embedding VECTOR(1024),
+    match_threshold FLOAT DEFAULT 0.45,
+    match_count INT DEFAULT 8,
+    memory_type_filter TEXT[] DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID,
+    conversation_id TEXT,
+    memory_type TEXT,
+    content TEXT,
+    metadata JSONB,
+    distance FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        vm.id,
+        vm.conversation_id,
+        vm.memory_type,
+        vm.content,
+        vm.metadata,
+        (vm.embedding <=> query_embedding)::FLOAT AS distance
+    FROM victim_memory vm
+    WHERE vm.victim_id = victim_id_filter
+      AND (memory_type_filter IS NULL OR vm.memory_type = ANY(memory_type_filter))
+      AND (vm.embedding IS NULL OR (vm.embedding <=> query_embedding) <= match_threshold)
+    ORDER BY (vm.embedding <=> query_embedding) ASC
+    LIMIT match_count;
+END;
+$$;
+

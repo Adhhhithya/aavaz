@@ -68,6 +68,7 @@ async def retrieve_legal_context(
         query_vector = vectors[0]
     except Exception as exc:
         logger.error("Embedding failed for legal query: %s", exc)
+        return []  # Cannot proceed without a query vector
     try:
         supabase = await get_supabase()
         params: dict = {
@@ -80,40 +81,116 @@ async def retrieve_legal_context(
 
         rpc_resp = await supabase.rpc("match_legal_documents", params).execute()
 
-        if not rpc_resp.data:
-            return []
+        if rpc_resp.data:
+            docs: list[LegalDoc] = []
+            for row in rpc_resp.data:
+                similarity = 1.0 - float(row.get("distance", 1.0))
+                if similarity < LEGAL_CONFIDENCE_GATE:
+                    continue
+                docs.append(LegalDoc(
+                    document_id=str(row["id"]),
+                    title=row["title"],
+                    content=row["content"],
+                    source=row["source"],
+                    category=row["category"],
+                    jurisdiction=row.get("jurisdiction", "IN"),
+                    language=row.get("language", "en"),
+                    similarity=round(similarity, 4),
+                    citation=row.get("source"),
+                ))
 
-        docs: list[LegalDoc] = []
-        for row in rpc_resp.data:
-            similarity = 1.0 - float(row.get("distance", 1.0))
-            if similarity < LEGAL_CONFIDENCE_GATE:
-                continue
-            docs.append(LegalDoc(
-                document_id=str(row["id"]),
-                title=row["title"],
-                content=row["content"],
-                source=row["source"],
-                category=row["category"],
-                jurisdiction=row.get("jurisdiction", "IN"),
-                language=row.get("language", "en"),
-                similarity=round(similarity, 4),
-                citation=row.get("source"),
-            ))
+            if docs:
+                logger.info(
+                    "Legal RAG: query=%r returned %d/%d docs from pgvector above gate=%.2f",
+                    query[:60], len(docs), top_k, LEGAL_CONFIDENCE_GATE,
+                )
+                return docs
 
-        logger.info(
-            "Legal RAG: query=%r returned %d/%d docs above gate=%.2f",
-            query[:60], len(docs), top_k, LEGAL_CONFIDENCE_GATE,
-        )
-        return docs
+        # If RPC returned no results (e.g. unseeded DB), try fallback corpus search
+        return await _fallback_legal_corpus_search(query, query_vector, category, top_k)
 
     except Exception as exc:
-        # pgvector RPC not available (local dev without migration): return empty
         logger.warning(
-            "Legal RAG RPC failed (%s) - pgvector may not be set up. "
-            "Run migrations/004_vector_memory_legal.sql in Supabase.",
+            "Legal RAG RPC unavailable (%s). Falling back to in-memory legal knowledge corpus.",
             exc,
         )
+        return await _fallback_legal_corpus_search(query, query_vector, category, top_k)
+
+
+async def _fallback_legal_corpus_search(
+    query: str,
+    query_vector: list[float],
+    category: Optional[str] = None,
+    top_k: int = MAX_LEGAL_RESULTS,
+) -> list[LegalDoc]:
+    """
+    Robust in-memory fallback semantic search over LEGAL_CORPUS when
+    Supabase pgvector extension is not enabled or RPC is unavailable.
+    """
+    try:
+        from scripts.seed_legal_knowledge import LEGAL_CORPUS
+    except Exception as exc:
+        logger.warning("Could not load fallback LEGAL_CORPUS: %s", exc)
         return []
+
+    import re
+    import numpy as np
+
+    query_tokens = set(re.findall(r"\w+", query.lower()))
+    stopwords = {"what", "is", "the", "a", "an", "and", "or", "for", "to", "in", "of", "how", "much", "can", "i", "get", "my"}
+    query_keywords = query_tokens - stopwords
+
+    scored_docs: list[tuple[float, dict, str]] = []
+    embedder = get_embedder()
+
+    for idx, doc in enumerate(LEGAL_CORPUS):
+        if category and doc.get("category") != category:
+            continue
+
+        doc_text = f"{doc['title']} {doc['content']} {doc.get('source', '')}".lower()
+        doc_tokens = set(re.findall(r"\w+", doc_text))
+
+        keyword_score = 0.0
+        if query_keywords:
+            overlap = query_keywords.intersection(doc_tokens)
+            keyword_score = len(overlap) / len(query_keywords)
+
+        try:
+            doc_vecs = await embedder.embed([doc["content"]])
+            if doc_vecs and len(doc_vecs[0]) == len(query_vector):
+                v1 = np.array(query_vector)
+                v2 = np.array(doc_vecs[0])
+                cos_sim = float(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2) + 1e-9))
+            else:
+                cos_sim = 0.0
+        except Exception:
+            cos_sim = 0.0
+
+        # Confidence blending
+        combined_score = max(cos_sim, min(0.98, 0.72 + (0.26 * keyword_score))) if (keyword_score >= 0.25 or cos_sim >= LEGAL_CONFIDENCE_GATE) else cos_sim
+
+        if combined_score >= LEGAL_CONFIDENCE_GATE:
+            scored_docs.append((combined_score, doc, str(idx + 1)))
+
+    scored_docs.sort(key=lambda x: x[0], reverse=True)
+    results = []
+    for score, doc, doc_id in scored_docs[:top_k]:
+        results.append(LegalDoc(
+            document_id=f"fallback-corpus-{doc_id}",
+            title=doc["title"],
+            content=doc["content"],
+            source=doc["source"],
+            category=doc["category"],
+            jurisdiction=doc.get("jurisdiction", "IN"),
+            language=doc.get("language", "en"),
+            similarity=round(score, 4),
+            citation=doc.get("source"),
+        ))
+    logger.info(
+        "Fallback Legal RAG: query=%r returned %d/%d docs above gate=%.2f",
+        query[:60], len(results), top_k, LEGAL_CONFIDENCE_GATE,
+    )
+    return results
 
 
 # ---------------------------------------------------------------------------

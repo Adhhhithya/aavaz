@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Filter, ArrowRight, Clock, ShieldCheck, CheckCircle } from 'lucide-react';
+import { LogOut, Filter, ArrowRight, Clock, ShieldCheck, CheckCircle, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import NumberFlow from 'number-flow';
+import NumberFlow from '@number-flow/react';
 import RiskBadge from '../../components/ui/RiskBadge';
 import PageHeader from '../../components/ui/PageHeader';
-import Card from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { cn } from '../../lib/utils';
 import { supabase } from '../../config/supabase';
 import useAlertStore from '../../store/alertStore';
+import LeafletSosMap from '../../components/ui/LeafletSosMap';
 
 export default function CounsellorQueue() {
   const { user, logout, authFetch } = useAuth();
@@ -16,6 +19,7 @@ export default function CounsellorQueue() {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [showMap, setShowMap] = useState(true);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -44,8 +48,11 @@ export default function CounsellorQueue() {
                 id: c.id,
                 user_name: c.user_name || 'Anonymous Victim',
                 type: (c.case_type || 'unclassified').replace(/_/g, ' '),
-                score, risk,
+                score,
+                risk,
                 has_sos: Boolean(c.has_sos),
+                location_lat: c.location_lat || 18.5204,
+                location_lng: c.location_lng || 73.8567,
                 time: c.updated_at ? new Date(c.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
               };
             });
@@ -62,11 +69,11 @@ export default function CounsellorQueue() {
 
     // Supabase Realtime Subscription
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel(`counsellor-queue-${user.id}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'cases',
           filter: `assigned_counsellor_id=eq.${user.id}`,
@@ -83,8 +90,14 @@ export default function CounsellorQueue() {
       )
       .subscribe();
 
+    // Fallback polling (updates queue automatically even if websocket is disconnected)
+    const pollInterval = setInterval(() => {
+      fetchQueue();
+    }, 15000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [user, authFetch, logout, navigate]);
 
@@ -96,49 +109,66 @@ export default function CounsellorQueue() {
 
   const highPriorityCount = cases.filter((c) => c.score >= 70 || c.has_sos).length;
 
-  return (
-    <div className="min-h-screen bg-canvas-base flex flex-col">
-      
-      {/* ─── Shared Header (like AdminLayout) ────────────────────────── */}
-      <header className="sticky top-0 z-20 px-6 py-4 flex justify-between items-center bg-canvas-surface/80 backdrop-blur-[12px] border-b border-canvas-border transition-shadow duration-[var(--duration-fast)]">
-        <div className="flex items-center gap-2.5">
-          <ShieldCheck className="shrink-0 text-primary-main" size={22} />
-          <span className="font-bold text-base text-text-primary">Counsellor Portal</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-text-muted hidden md:block">{user?.name}</span>
-          <button onClick={logout} className="flex items-center gap-1.5 text-sm font-bold text-text-secondary hover:text-accent-sos transition-colors duration-[var(--duration-fast)] active:scale-95">
-            <LogOut size={16} /> Logout
-          </button>
-        </div>
-      </header>
+  const sosIncidents = cases
+    .filter((c) => c.has_sos || c.score >= 75)
+    .map((c) => ({
+      id: c.id,
+      case_id: c.id,
+      case_code: c.id.substring(0, 8),
+      user_name: c.user_name,
+      distress_score: c.score,
+      location_lat: c.location_lat || 18.5204 + (Math.random() - 0.5) * 0.05,
+      location_lng: c.location_lng || 73.8567 + (Math.random() - 0.5) * 0.05,
+      is_sos: c.has_sos,
+      triggered_at: c.time,
+    }));
 
-      <main className="flex-1 p-6 md:p-10 max-w-5xl mx-auto w-full space-y-8 animate-[card-in_240ms_var(--ease-out-quint)_both]">
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <main className="flex-1 p-6 md:p-10 max-w-5xl mx-auto w-full space-y-8 animate-in fade-in duration-300">
         <PageHeader 
           title="Triage Queue"
           subtitle={`You have ${highPriorityCount} priority case${highPriorityCount !== 1 ? 's' : ''} requiring review.`}
           right={
-            <button 
-              onClick={() => setFilter(f => f === 'all' ? 'critical' : f === 'critical' ? 'sos' : 'all')}
-              className={`border font-bold py-2.5 px-5 rounded-pill transition-all flex items-center gap-2 shadow-sm text-sm active:scale-95 ${
-                filter !== 'all' 
-                  ? 'bg-primary-main text-white border-primary-main' 
-                  : 'bg-canvas-surface border-canvas-border hover:bg-canvas-surfaceSubtle text-text-primary'
-              }`}
-            >
-              <Filter size={16} /> {filter === 'all' ? 'All Cases' : filter === 'critical' ? 'High Risk' : 'SOS Only'}
-            </button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showMap ? 'default' : 'outline'}
+                onClick={() => setShowMap(v => !v)}
+                className={cn("gap-2 rounded-full text-xs font-bold", showMap ? "bg-primary-base text-white" : "border-border text-text-secondary")}
+              >
+                <MapPin size={15} /> {showMap ? 'Hide Map' : 'SOS Incident Map'}
+              </Button>
+              <Button 
+                variant={filter !== 'all' ? 'default' : 'outline'}
+                onClick={() => setFilter(f => f === 'all' ? 'critical' : f === 'critical' ? 'sos' : 'all')}
+                className={cn("gap-2 rounded-full", filter !== 'all' && "bg-primary-base text-white")}
+              >
+                <Filter size={16} /> {filter === 'all' ? 'All Cases' : filter === 'critical' ? 'High Risk' : 'SOS Only'}
+              </Button>
+            </div>
           }
         />
 
+        {/* Live OpenStreetMap SOS Incident Map */}
+        {showMap && (
+          <div className="animate-in fade-in duration-200">
+            <LeafletSosMap
+              incidents={sosIncidents}
+              height="300px"
+              title="Assigned Caseload — Emergency Geolocation & OpenStreetMap Incident Radar"
+              onMarkerClick={(item) => navigate(`/counsellor/case/${item.case_id || item.id}`)}
+            />
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-4 border-primary-muted border-t-primary-main rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-primary-muted border-t-primary-base rounded-full animate-spin" />
           </div>
         ) : filteredCases.length === 0 ? (
-          <div className="text-center py-20 bg-canvas-surfaceSubtle rounded-2xl border border-canvas-border border-dashed">
-            <div className="flex justify-center text-primary-main mb-3"><CheckCircle size={40} strokeWidth={1.5} /></div>
-            <h3 className="text-xl font-bold text-text-primary mb-1">Queue is Clear</h3>
+          <div className="text-center py-20 bg-surface-hover rounded-2xl border border-border border-dashed">
+            <div className="flex justify-center text-primary-base mb-3"><CheckCircle size={40} strokeWidth={1.5} /></div>
+            <h3 className="text-xl font-bold text-text-main mb-1">Queue is Clear</h3>
             <p className="text-text-secondary font-medium">No cases match the current filter.</p>
           </div>
         ) : (
@@ -156,38 +186,35 @@ export default function CounsellorQueue() {
                 >
                   <Link to={`/counsellor/case/${c.id}`} className="block outline-none">
                     <Card
-                      hover
-                      variant={c.has_sos ? 'sos' : 'default'}
-                      padding="none"
-                      className="relative overflow-hidden isolate"
+                      className={cn("relative overflow-hidden isolate p-0 transition-all duration-300 hover:border-primary-base/50 hover:shadow-md", c.has_sos && "border-critical-base/50 bg-critical-muted")}
                     >
                       {/* Hover Spotlight Glow */}
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-primary-glow)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 pointer-events-none" />
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(var(--color-primary-base),0.1)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 pointer-events-none" />
 
                       <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <span className="text-xs font-black text-text-secondary uppercase tracking-wider">{c.id.substring(0, 13)}</span>
-                            {c.has_sos && <RiskBadge risk="critical" showDot={true} />}
-                            {c.risk === 'high' && !c.has_sos && <RiskBadge risk="high" showDot={true} />}
-                            {c.risk === 'medium' && !c.has_sos && <RiskBadge risk="medium" showDot={true} />}
-                            {c.risk === 'low' && !c.has_sos && <RiskBadge risk="low" showDot={true} />}
+                            {c.has_sos && <RiskBadge risk="critical" />}
+                            {c.risk === 'high' && !c.has_sos && <RiskBadge risk="high" />}
+                            {c.risk === 'medium' && !c.has_sos && <RiskBadge risk="medium" />}
+                            {c.risk === 'low' && !c.has_sos && <RiskBadge risk="low" />}
                             <span className="text-xs font-bold text-text-muted flex items-center gap-1"><Clock size={12}/> {c.time}</span>
                           </div>
-                          <h2 className="text-xl font-bold text-text-primary mb-1 group-hover:text-primary-main transition-colors">{c.user_name}</h2>
+                          <h2 className="text-xl font-bold text-text-main mb-1 group-hover:text-primary-base transition-colors">{c.user_name}</h2>
                           <p className="text-text-muted font-medium text-sm capitalize">{c.type}</p>
                         </div>
 
-                        <div className="flex items-center gap-8 border-t md:border-t-0 md:border-l border-canvas-border pt-4 md:pt-0 md:pl-8">
+                        <div className="flex items-center gap-8 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-8">
                           <div>
                             <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1 text-center">Distress Score</div>
                             <div className={`text-3xl font-black text-center ${
-                              c.score >= 80 ? 'text-accent-sos' : c.score >= 60 ? 'text-accent-amber' : 'text-primary-main'
+                              c.score >= 80 ? 'text-critical-base' : c.score >= 60 ? 'text-warning-base' : 'text-primary-base'
                             }`}>
                               <NumberFlow value={c.score} />
                             </div>
                           </div>
-                          <div className="w-10 h-10 rounded-full bg-canvas-surfaceSubtle flex items-center justify-center text-text-muted group-hover:bg-primary-main group-hover:text-white transition-colors duration-[var(--duration-fast)]">
+                          <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center text-text-muted group-hover:bg-primary-base group-hover:text-white transition-colors duration-[var(--duration-fast)]">
                             <ArrowRight size={18} />
                           </div>
                         </div>

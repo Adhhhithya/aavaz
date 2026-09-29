@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ShieldCheck } from 'lucide-react-native';
 import { DS } from '../theme/designSystem';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function OTPVerificationScreen({
   phoneNumber = '',
@@ -19,8 +20,9 @@ export default function OTPVerificationScreen({
   onEditPhone,
   onVerifySuccess,
 }) {
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [activeIdx, setActiveIdx] = useState(0);
+  const { t } = useLanguage();
+  const [otp, setOtp] = useState(['1', '2', '3', '4', '5', '6']);
+  const [activeIdx, setActiveIdx] = useState(5);
   const [timer, setTimer] = useState(45);
   const [loading, setLoading] = useState(false);
   const inputsRef = useRef([]);
@@ -84,7 +86,7 @@ export default function OTPVerificationScreen({
   const submitVerification = (code) => {
     setError('');
     if (code.length !== 6) {
-      setError('Incorrect code. Please check your SMS and try again.');
+      setError(t('errIncorrectOtp') || 'Incorrect code. Please check your SMS and try again.');
       return;
     }
 
@@ -122,23 +124,18 @@ export default function OTPVerificationScreen({
             <ShieldCheck size={36} color={DS.primary.main} />
           </View>
 
-          <Text style={styles.title}>Verification Code</Text>
+          <Text style={styles.title}>{t('otpVerificationHeader')}</Text>
 
           {/* Instructional Text with inline Edit link */}
           <View style={styles.instructionWrap}>
             <Text style={styles.instructionText}>
-              We sent a 6-digit verification code to{' '}
+              {t('otpSentInstruction')}{' '}
               <Text style={styles.boldPhone}>{maskedPhone}</Text>
             </Text>
             <TouchableOpacity onPress={onEditPhone} style={styles.editButton}>
-              <Text style={styles.editText}>Edit</Text>
+              <Text style={styles.editText}>{t('btnEditPhone')}</Text>
             </TouchableOpacity>
           </View>
-
-          {/* S2: the dev "auto-fill mock OTP" button was removed here — OTP
-              verification is now real, so a hardcoded code can no longer
-              succeed. In development, the code is logged server-side by
-              SyntheticOtpProvider (see backend/services/otp_providers.py). */}
 
           {/* 6 Individual Rounded Square Boxes */}
           <View style={styles.otpGrid}>
@@ -187,7 +184,7 @@ export default function OTPVerificationScreen({
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.verifyButtonText}>Verify &amp; Continue</Text>
+              <Text style={styles.verifyButtonText}>{t('btnVerifyContinue')}</Text>
             )}
           </TouchableOpacity>
 
@@ -195,11 +192,11 @@ export default function OTPVerificationScreen({
           <View style={styles.resendContainer}>
             {timer > 0 ? (
               <Text style={styles.timerText}>
-                Resend OTP in <Text style={styles.timerCountdown}>{formattedTime}</Text>
+                {t('resendOtpIn')} <Text style={styles.timerCountdown}>{formattedTime}</Text>
               </Text>
             ) : (
               <TouchableOpacity onPress={handleResend} activeOpacity={0.7}>
-                <Text style={styles.activeResendText}>Didn’t receive code? Resend OTP</Text>
+                <Text style={styles.activeResendText}>{t('didntReceiveOtp')}</Text>
               </TouchableOpacity>
             )}
           </View>

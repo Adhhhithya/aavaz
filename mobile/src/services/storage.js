@@ -59,12 +59,14 @@ export const storage = {
     try {
       const current = await this.getSession();
       if (current) {
+        const mergedProfile = {
+          ...(current.userProfile || current.user_profile || {}),
+          ...profileUpdates,
+        };
         const updated = {
           ...current,
-          user_profile: {
-            ...(current.user_profile || {}),
-            ...profileUpdates,
-          },
+          userProfile: mergedProfile,
+          user_profile: mergedProfile,
           is_new_user: false,
         };
         await this.saveSession(updated);
@@ -74,5 +76,30 @@ export const storage = {
       console.warn('Failed to update profile in storage', e);
     }
     return null;
+  },
+
+  async getLanguage() {
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('@aavaz_lang') || 'en';
+      } else {
+        const l = await SecureStore.getItemAsync('@aavaz_lang');
+        return l || 'en';
+      }
+    } catch (e) {
+      return 'en';
+    }
+  },
+
+  async saveLanguage(lang) {
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('@aavaz_lang', lang);
+      } else {
+        await SecureStore.setItemAsync('@aavaz_lang', lang);
+      }
+    } catch (e) {
+      console.warn('Failed to save language to storage', e);
+    }
   }
 };

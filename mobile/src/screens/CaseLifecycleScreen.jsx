@@ -26,20 +26,26 @@ import {
   PlusCircle,
   FolderHeart,
   Search,
+  FilePlus,
+  FileText,
   X
 } from 'lucide-react-native';
 import { DS } from '../theme/designSystem';
 import { api, API_BASE_URL } from '../services/api';
 import { useWarningModal } from '../context/WarningModalContext';
+import { useLanguage } from '../context/LanguageContext';
+import GrievanceRegistrationScreen from './GrievanceRegistrationScreen';
 
 export default function CaseLifecycleScreen({ userProfile, onContactCounselor }) {
   const { showWarning, showError, showSuccess } = useWarningModal();
+  const { t } = useLanguage();
   const [cases, setCases] = useState([]);
   const [expandedCaseId, setExpandedCaseId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [cnrNumber, setCnrNumber] = useState('');
   const [cnrModalVisible, setCnrModalVisible] = useState(false);
   const [cnrInput, setCnrInput] = useState('');
+  const [grievanceModalVisible, setGrievanceModalVisible] = useState(false);
   const [pdfModalVisible, setPdfModalVisible] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
 
@@ -154,20 +160,20 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
       >
         {/* Screen Title */}
         <View style={styles.header}>
-          <Text style={styles.screenTitle}>Case Tracking</Text>
+          <Text style={styles.screenTitle}>{t('caseStatusTitle')}</Text>
           <Text style={styles.screenSubtitle}>
-            Track legal progress, official steps, and psychological support
+            {t('caseStatusSubtitle')}
           </Text>
 
           {/* Metric Summary Chips */}
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{activeCount}</Text>
-              <Text style={styles.statLabel}>Active Cases</Text>
+              <Text style={styles.statLabel}>{t('activeCase')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{resolvedCount}</Text>
-              <Text style={styles.statLabel}>Resolved</Text>
+              <Text style={styles.statLabel}>{t('stageResolved')}</Text>
             </View>
           </View>
         </View>
@@ -178,26 +184,37 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
             <View style={styles.emptyIconBox}>
               <FolderHeart size={44} color={DS.primary.main} />
             </View>
-            <Text style={styles.emptyTitle}>No active reports on file</Text>
+            <Text style={styles.emptyTitle}>{t('noActiveCaseTitle')}</Text>
             <Text style={styles.emptySubtitle}>
-              You currently have no ongoing complaints or incidents registered under your profile.
+              {t('noActiveCaseDesc')}
             </Text>
 
-            <TouchableOpacity
-              style={styles.fileNewButton}
-              onPress={handleFileNewComplaint}
-              activeOpacity={0.85}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <>
-                  <Search size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                  <Text style={styles.fileNewButtonText}>Search Case via CNR</Text>
-                </>
-              )}
-            </TouchableOpacity>
+            <View style={styles.actionButtonGroup}>
+              <TouchableOpacity
+                style={styles.fileNewGrievanceButton}
+                onPress={() => setGrievanceModalVisible(true)}
+                activeOpacity={0.85}
+              >
+                <FilePlus size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.fileNewGrievanceButtonText}>{t('actionRegisterNew')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.fileNewButton}
+                onPress={handleFileNewComplaint}
+                activeOpacity={0.85}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color={DS.primary.main} size="small" />
+                ) : (
+                  <>
+                    <Search size={16} color={DS.primary.main} style={{ marginRight: 6 }} />
+                    <Text style={styles.fileNewSecondaryButtonText}>{t('linkEcourtsTitle')}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <View style={styles.casesList}>
@@ -406,24 +423,52 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
             })}
 
             {/* Add Another Case Button at the bottom of the list */}
-            <TouchableOpacity
-              style={styles.addCaseFooterButton}
-              onPress={handleFileNewComplaint}
-              activeOpacity={0.85}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color={DS.primary.main} size="small" />
-              ) : (
-                <>
-                  <PlusCircle size={20} color={DS.primary.main} style={{ marginRight: 8 }} />
-                  <Text style={styles.addCaseFooterText}>Search & Add Another Case</Text>
-                </>
-              )}
-            </TouchableOpacity>
+            <View style={{ gap: 10, marginTop: DS.spacing.md }}>
+              <TouchableOpacity
+                style={styles.fileNewGrievanceButton}
+                onPress={() => setGrievanceModalVisible(true)}
+                activeOpacity={0.85}
+              >
+                <FilePlus size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.fileNewGrievanceButtonText}>File Another Grievance</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.addCaseFooterButton}
+                onPress={handleFileNewComplaint}
+                activeOpacity={0.85}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color={DS.primary.main} size="small" />
+                ) : (
+                  <>
+                    <Search size={18} color={DS.primary.main} style={{ marginRight: 8 }} />
+                    <Text style={styles.addCaseFooterText}>Search & Link via CNR</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>
+
+      {/* Grievance Registration Modal */}
+      <Modal
+        visible={grievanceModalVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setGrievanceModalVisible(false)}
+      >
+        <GrievanceRegistrationScreen
+          userProfile={userProfile}
+          onBack={() => setGrievanceModalVisible(false)}
+          onComplete={(newCase) => {
+            setGrievanceModalVisible(false);
+            fetchCases();
+          }}
+        />
+      </Modal>
 
       {/* PDF Viewer Modal */}
       <Modal
@@ -917,12 +962,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: DS.text.secondary,
   },
-  cnrSearchBtn: {
-    backgroundColor: DS.primary.main,
+  actionButtonGroup: {
+    width: '100%',
+    gap: DS.spacing.sm,
+    marginTop: DS.spacing.md,
   },
-  cnrSearchBtnText: {
-    fontSize: 14,
+  fileNewGrievanceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: DS.primary.main,
+    paddingVertical: 14,
+    borderRadius: DS.radius.pill,
+    shadowColor: DS.primary.main,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  fileNewGrievanceButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  fileNewSecondaryButtonText: {
+    color: DS.primary.main,
+    fontSize: 15,
     fontWeight: '600',
-    color: DS.text.light,
   },
 });

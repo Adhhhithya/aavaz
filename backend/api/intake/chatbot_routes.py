@@ -30,6 +30,12 @@ async def handle_chatbot_message(
     """
     logger.info(f"Received chat from {current_victim.id}")
 
+    reply = "I'm having trouble connecting to my service right now. Please try again in a moment."
+    emotion = "neutral"
+    final_score = 0.0
+    escalation_risk = "unknown"
+    conv_state = None
+    
     try:
         from services.supabase_client import get_supabase
         supabase = await get_supabase()
@@ -53,21 +59,19 @@ async def handle_chatbot_message(
                 "current_distress_score": case_data.get("current_distress_score")
             }
 
-        language = user_data.get("preferred_language", "en") if user_data else "en"
+        language = (user_data.get("preferred_language") if user_data else None) or "en"
+        submitter_role = (case_data.get("submitter_role") if case_data else None) or (user_data.get("role_type") if user_data else None) or "victim"
 
         # --- Multi-Agent Supervisor pipeline ---
-        # Each session_id maps to a fresh ConversationState.
-        # In a production deployment this would be persisted in Redis/DB;
-        # for now we create a per-request state and rely on the transcript
-        # history loaded from the interactions table below.
         conv_state = new_conversation(
             victim_id=current_victim.id,
             case_id=case_id,
             language=language,
             channel="chat",
+            submitter_role=submitter_role,
+            history_score=float(case_data.get("current_distress_score") or 0.0) if case_data else 0.0
         )
 
-        # Inject recent chat history so agents have context
         if case_id:
             from models.contracts import Turn
             interactions = await supabase.table("interactions").select("transcript_ref").eq("case_id", case_id).eq("channel", "chatbot").order("timestamp", desc=False).execute()
@@ -88,13 +92,11 @@ async def handle_chatbot_message(
                         transcript=text[5:],
                     ))
 
-        # Run full agent pipeline
         conv_state, reply = await execute_turn(
             state=conv_state,
             user_text=payload.message
         )
 
-        # Extract scoring outputs from updated state
         distress = conv_state.distress
         final_score = distress.distress_score if distress else 0.0
         escalation_risk = distress.risk_level.value.lower() if distress else "medium"
@@ -105,12 +107,11 @@ async def handle_chatbot_message(
             for k, v in (distress.score_breakdown.items() if distress else {})
         }
 
-        # Persist to interactions table
         if case_id:
             if distress:
                 await supabase.table("cases").update({
                     "current_distress_score": final_score,
-                    "predicted_escalation_risk": escalation_risk,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
                 }).eq("id", case_id).execute()
 
             await supabase.table("interactions").insert({
@@ -146,9 +147,9 @@ async def handle_chatbot_message(
     return {
         "reply": reply,
         "emotion_flagged": emotion,
-        "distress_score": final_score if 'final_score' in dir() else 0.0,
-        "risk_level": escalation_risk if 'escalation_risk' in dir() else "unknown",
-        "escalated": bool(conv_state.escalation) if 'conv_state' in dir() else False,
+        "distress_score": final_score,
+        "risk_level": escalation_risk,
+        "escalated": bool(conv_state.escalation) if conv_state else False,
     }
 
 @router.get("/voice-context")

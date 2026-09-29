@@ -15,9 +15,11 @@ import { User, Calendar, PhoneCall, ShieldCheck, Heart } from 'lucide-react-nati
 import { DS } from '../theme/designSystem';
 import { api } from '../services/api';
 import { useWarningModal } from '../context/WarningModalContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onCompleteSetup }) {
   const { showWarning, showError } = useWarningModal();
+  const { t, lang } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [age, setAge] = useState('');
   const [emergencyName, setEmergencyName] = useState('');
@@ -52,7 +54,7 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
         name: fullName.trim(),
         role_type: 'victim',
         consent_given: true,
-        preferred_language: 'en'
+        preferred_language: lang || 'en'
       };
 
       const res = await api.post('/api/v1/intake/app/register', data, {
@@ -92,9 +94,9 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
             <View style={styles.iconCircle}>
               <Heart size={32} color={DS.primary.main} />
             </View>
-            <Text style={styles.title}>Tell us a bit about you</Text>
+            <Text style={styles.title}>{t('regTellUsTitle')}</Text>
             <Text style={styles.subtitle}>
-              This helps our system calibrate baseline psychological indicators and ensures your safety net is ready.
+              {t('regTellUsSub')}
             </Text>
           </View>
 
@@ -104,11 +106,11 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
                 <User size={16} color={DS.primary.main} style={{ marginRight: 6 }} />
-                <Text style={styles.label}>Full / Preferred Display Name</Text>
+                <Text style={styles.label}>{t('regNameLabel')}</Text>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Priya Sharma"
+                placeholder={t('regNamePlaceholder')}
                 placeholderTextColor={DS.text.muted}
                 value={fullName}
                 onChangeText={setFullName}
@@ -119,18 +121,18 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
                 <Calendar size={16} color={DS.primary.main} style={{ marginRight: 6 }} />
-                <Text style={styles.label}>Age or Date of Birth</Text>
+                <Text style={styles.label}>{t('regAgeLabel')}</Text>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. 26"
+                placeholder={t('regAgePlaceholder')}
                 placeholderTextColor={DS.text.muted}
                 keyboardType="numeric"
                 value={age}
                 onChangeText={setAge}
                 maxLength={3}
               />
-              <Text style={styles.fieldHint}>Used to calibrate emotional distress baselines.</Text>
+              <Text style={styles.fieldHint}>{t('regAgeHint')}</Text>
             </View>
 
             {/* Divider */}
@@ -140,17 +142,17 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
             <View style={styles.sectionHeader}>
               <View style={styles.emergencyTag}>
                 <PhoneCall size={14} color={DS.accent.sos} style={{ marginRight: 4 }} />
-                <Text style={styles.emergencyTagText}>Emergency SOS Fallback</Text>
+                <Text style={styles.emergencyTagText}>{t('regEmergencyTag')}</Text>
               </View>
-              <Text style={styles.sectionTitle}>Emergency Contact Details</Text>
+              <Text style={styles.sectionTitle}>{t('regEmergencyTitle')}</Text>
             </View>
 
             {/* Emergency Contact Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Contact Person Name</Text>
+              <Text style={styles.label}>{t('regEmergencyNameLabel')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Ramesh Kumar (Brother / Lawyer)"
+                placeholder={t('regEmergencyNamePlaceholder')}
                 placeholderTextColor={DS.text.muted}
                 value={emergencyName}
                 onChangeText={setEmergencyName}
@@ -159,16 +161,16 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
 
             {/* Emergency Contact Phone */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Emergency Phone Number</Text>
+              <Text style={styles.label}>{t('regEmergencyPhoneLabel')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="+91 98765 43210"
+                placeholder={t('regEmergencyPhonePlaceholder')}
                 placeholderTextColor={DS.text.muted}
                 keyboardType="phone-pad"
                 value={emergencyPhone}
                 onChangeText={setEmergencyPhone}
               />
-              <Text style={styles.fieldHint}>Will receive immediate SMS alerts when SOS is dispatched.</Text>
+              <Text style={styles.fieldHint}>{t('regEmergencyPhoneHint')}</Text>
             </View>
           </View>
 
@@ -182,7 +184,7 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitButtonText}>Complete Setup</Text>
+              <Text style={styles.submitButtonText}>{t('regBtnCompleteSetup')}</Text>
             )}
           </TouchableOpacity>
 
@@ -190,7 +192,7 @@ export default function RegisterScreen({ phoneNumber, phoneVerifiedToken, onComp
           <View style={styles.privacyNote}>
             <ShieldCheck size={16} color={DS.text.muted} style={{ marginRight: 6 }} />
             <Text style={styles.privacyText}>
-              Your information is strictly protected and never shared with third-party advertisers.
+              {t('regPrivacyNote')}
             </Text>
           </View>
         </ScrollView>

@@ -28,12 +28,18 @@ async def check_and_escalate_sos():
                 if delta_minutes >= 30.0:
                     logger.warning(f"SOS Event {event['id']} unresolved for {delta_minutes:.1f} mins. Escalating to District!")
                     
-                    # Update row to escalated
-                    await supabase.table("sos_events").update({
+                    # Update row to escalated using optimistic locking
+                    # .eq("escalated", False) ensures only the first worker to process this row
+                    # succeeds in escalating it, avoiding race conditions in a multi-worker setup.
+                    res = await supabase.table("sos_events").update({
                         "escalated": True,
                         "escalated_at": now.isoformat()
-                    }).eq("id", event["id"]).execute()
+                    }).eq("id", event["id"]).eq("escalated", False).execute()
                     
+                    if not res.data:
+                        logger.info(f"SOS Event {event['id']} was already escalated by another worker.")
+                        continue
+
                     # In a full production system, trigger SMS/Push to District Officer here
                     
         except Exception as e:
@@ -42,5 +48,6 @@ async def check_and_escalate_sos():
             await asyncio.sleep(30)
             continue
             
-        # Poll every 10 seconds for the sake of the hackathon demo
+        # Poll every 10 seconds — sufficient for 30-minute SOS escalation windows
+        # but should be tuned upward (e.g. 60s) in high-load production deployments
         await asyncio.sleep(10)

@@ -170,5 +170,25 @@ async def resolve_victim_by_phone(phone_number: str) -> Optional[dict]:
     supabase = await get_supabase()
     resp = await supabase.table("users").select("*").eq("phone_number", phone_number).limit(1).execute()
     if resp.data:
-        return resp.data[0]
+        user_dict = dict(resp.data[0])
+        user_dict["phone"] = user_dict.get("phone_number")
+        # Enrich with safety_settings (emergency contact)
+        try:
+            safety_resp = await supabase.table("safety_settings").select("*").eq("user_id", user_dict["id"]).limit(1).execute()
+            if safety_resp.data:
+                s_row = safety_resp.data[0]
+                em_name = s_row.get("trusted_contact_name") or ""
+                em_phone = s_row.get("trusted_contact_phone") or ""
+                user_dict["emergencyContact"] = {"name": em_name, "phone": em_phone}
+                user_dict["emergency_contact_name"] = em_name
+                user_dict["emergency_contact_phone"] = em_phone
+            else:
+                user_dict["emergencyContact"] = {"name": "", "phone": ""}
+                user_dict["emergency_contact_name"] = ""
+                user_dict["emergency_contact_phone"] = ""
+        except Exception:
+            user_dict["emergencyContact"] = {"name": "", "phone": ""}
+            user_dict["emergency_contact_name"] = ""
+            user_dict["emergency_contact_phone"] = ""
+        return user_dict
     return None

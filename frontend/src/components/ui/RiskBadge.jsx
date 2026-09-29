@@ -1,17 +1,17 @@
 import React from 'react';
 import { cva } from 'class-variance-authority';
-import { clsx } from 'clsx';
+import { cn } from '../../lib/utils';
 
 const badge = cva(
   'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold tracking-wide uppercase',
   {
     variants: {
       risk: {
-        critical: 'bg-accent-sosBg text-accent-sos',
-        high:     'bg-orange-100 text-orange-700',
-        medium:   'bg-amber-100 text-amber-700',
-        low:      'bg-green-100 text-green-700',
-        unknown:  'bg-canvas-surfaceSubtle text-text-muted',
+        critical: 'bg-critical-muted text-critical-base',
+        high:     'bg-danger-muted text-danger-hover',
+        medium:   'bg-warning-muted text-warning-hover',
+        low:      'bg-success-muted text-success-hover',
+        unknown:  'bg-secondary-muted text-text-muted',
       },
     },
     defaultVariants: { risk: 'unknown' },
@@ -19,11 +19,11 @@ const badge = cva(
 );
 
 const DOT_COLORS = {
-  critical: 'bg-accent-sos',
-  high:     'bg-orange-500',
-  medium:   'bg-amber-500',
-  low:      'bg-green-500',
-  unknown:  'bg-text-muted',
+  critical: 'bg-critical-base animate-[pulse-critical_2s_infinite]',
+  high:     'bg-danger-base',
+  medium:   'bg-warning-base',
+  low:      'bg-success-base',
+  unknown:  'bg-secondary-base',
 };
 
 /**
@@ -34,9 +34,9 @@ const DOT_COLORS = {
  */
 export default function RiskBadge({ risk = 'unknown', className, showDot = true }) {
   return (
-    <span className={clsx(badge({ risk }), className)}>
+    <span className={cn(badge({ risk }), className)}>
       {showDot && (
-        <span className={clsx('w-1.5 h-1.5 rounded-full shrink-0', DOT_COLORS[risk] ?? DOT_COLORS.unknown)} />
+        <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', DOT_COLORS[risk] ?? DOT_COLORS.unknown)} />
       )}
       {risk}
     </span>

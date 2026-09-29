@@ -611,3 +611,102 @@ CREATE TABLE IF NOT EXISTS shadow_scoring_evaluations (
 -- Index for querying large discrepancies
 CREATE INDEX IF NOT EXISTS idx_shadow_delta ON shadow_scoring_evaluations (delta);
 
+-- -----------------------------------------------------------------------------
+-- RPC Vector Similarity Functions for RAG
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION match_legal_documents(
+    query_embedding VECTOR(1024),
+    match_threshold FLOAT DEFAULT 0.28,
+    match_count INT DEFAULT 5,
+    filter_category TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID,
+    title TEXT,
+    content TEXT,
+    source TEXT,
+    category TEXT,
+    jurisdiction TEXT,
+    language TEXT,
+    distance FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        ld.id,
+        ld.title,
+        ld.content,
+        ld.source,
+        ld.category,
+        ld.jurisdiction,
+        ld.language,
+        (ld.embedding <=> query_embedding)::FLOAT AS distance
+    FROM legal_documents ld
+    WHERE (filter_category IS NULL OR ld.category = filter_category)
+      AND (ld.embedding IS NULL OR (ld.embedding <=> query_embedding) <= match_threshold)
+    ORDER BY (ld.embedding <=> query_embedding) ASC
+    LIMIT match_count;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION match_victim_memories(
+    victim_id_filter UUID,
+    query_embedding VECTOR(1024),
+    match_threshold FLOAT DEFAULT 0.45,
+    match_count INT DEFAULT 8,
+    memory_type_filter TEXT[] DEFAULT NULL
+)
+RETURNS TABLE (
+    id UUID,
+    conversation_id TEXT,
+    memory_type TEXT,
+    content TEXT,
+    metadata JSONB,
+    distance FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        vm.id,
+        vm.conversation_id,
+        vm.memory_type,
+        vm.content,
+        vm.metadata,
+        (vm.embedding <=> query_embedding)::FLOAT AS distance
+    FROM victim_memory vm
+    WHERE vm.victim_id = victim_id_filter
+      AND (memory_type_filter IS NULL OR vm.memory_type = ANY(memory_type_filter))
+      AND (vm.embedding IS NULL OR (vm.embedding <=> query_embedding) <= match_threshold)
+    ORDER BY (vm.embedding <=> query_embedding) ASC
+    LIMIT match_count;
+END;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 4. REALTIME PUBLICATION CONFIGURATION
+-- -----------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'cases'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE cases;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'sos_events'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE sos_events;
+    END IF;
+EXCEPTION
+    WHEN undefined_object THEN NULL;
+END $$;
+
+
+

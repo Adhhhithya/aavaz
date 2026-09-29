@@ -1,18 +1,21 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { Bot, Send, Sparkles, RefreshCw, Mic, MicOff } from 'lucide-react';
 import { useVoiceAgent } from '../../hooks/useVoiceAgent';
 import { motion, AnimatePresence } from 'motion/react';
+import { cn } from '../../lib/utils';
+import { Button } from '../../components/ui/Button';
 
-const PROMPT_CHIPS = [
-  'I feel anxious',
-  'Check my case status',
-  'Need immediate help',
-  'Grounding exercises',
+const PROMPT_CHIP_KEYS = [
+  'chipAnxious',
+  'chipCaseStatus',
+  'chipImmediateHelp',
+  'chipGrounding',
 ];
 
 export default function VictimChatbot() {
   const { user, authFetch } = useAuth();
+  const { t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -61,8 +64,6 @@ export default function VictimChatbot() {
 
     try {
       if (user?.id) {
-        // S2: user_id is no longer sent — the backend derives the sender from
-        // the authenticated victim's session (attached by authFetch).
         const res = await authFetch('/api/v1/intake/chatbot/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
@@ -92,10 +93,6 @@ export default function VictimChatbot() {
   };
 
   // --- Voice mode --------------------------------------------------------
-  // Same conversation, same message list — voice just adds a second way to
-  // produce/consume turns. The grounded system prompt is fetched fresh per
-  // session from the backend (not hardcoded here) so it stays in sync with
-  // whatever this victim's actual case context is.
   const streamingBotIdRef = useRef(null);
 
   const getSystemPrompt = useCallback(async () => {
@@ -143,48 +140,48 @@ export default function VictimChatbot() {
   };
 
   const voiceStatusLabel = {
-    connecting: 'Connecting…',
-    listening: 'Listening…',
-    thinking: 'Thinking…',
-    speaking: 'Speaking…',
-    error: 'Voice error',
+    connecting: t('connecting'),
+    listening: t('listening'),
+    thinking: t('thinking'),
+    speaking: t('speaking'),
+    error: t('voiceError'),
   }[voiceStatus];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] md:h-screen bg-canvas-base animate-in fade-in duration-300">
+    <div className="flex flex-col h-[calc(100vh-140px)] md:h-screen bg-background animate-in fade-in duration-300">
       
       {/* Header */}
-      <div className="flex items-center justify-between p-4 md:p-6 bg-canvas-surface border-b border-canvas-border shrink-0">
+      <div className="flex items-center justify-between p-4 md:p-6 bg-surface border-b border-border shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary-muted flex items-center justify-center">
-            <Bot size={20} className="text-primary-main" />
+            <Bot size={20} className="text-primary-base" />
           </div>
           <div>
-            <h2 className="font-bold text-text-primary">Support Assistant</h2>
-            <p className="text-xs font-semibold text-accent-sage">
-              {voiceStatusLabel || 'Always here to listen'}
+            <h2 className="font-bold text-text-main">{t('chatAssistantTitle')}</h2>
+            <p className="text-xs font-semibold text-secondary-base">
+              {voiceStatusLabel || t('chatAlwaysListening')}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleVoice}
-            className={`p-2 rounded-full transition-colors ${
-              voiceActive
-                ? 'text-white bg-primary-main animate-pulse'
-                : 'text-text-muted hover:text-text-primary hover:bg-canvas-base'
-            }`}
-            title={voiceActive ? 'Stop voice mode' : 'Talk instead of type'}
+            className={cn("rounded-full transition-colors", voiceActive ? "text-white bg-primary-base hover:bg-primary-hover animate-pulse" : "text-text-muted hover:text-text-main")}
+            title={voiceActive ? t('voiceModeStop') : t('voiceModeStart')}
           >
             {voiceActive ? <Mic size={18} /> : <MicOff size={18} />}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleClear}
-            className="p-2 text-text-muted hover:text-text-primary hover:bg-canvas-base rounded-full transition-colors"
-            title="Clear Conversation"
+            className="text-text-muted hover:text-text-main rounded-full"
+            title={t('clearChat')}
           >
             <RefreshCw size={18} />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -202,13 +199,13 @@ export default function VictimChatbot() {
                 initial={{ opacity: 0, y: 16, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-                className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
+                className={cn("flex", isUser ? 'justify-end' : 'justify-start')}
               >
-                <div className={`max-w-[85%] md:max-w-[70%] p-4 rounded-2xl ${
+                <div className={cn("max-w-[85%] md:max-w-[70%] p-4 rounded-2xl",
                   isUser 
-                    ? 'bg-primary-main text-white rounded-br-sm shadow-hover' 
-                    : 'bg-canvas-surface border border-canvas-border text-text-primary rounded-bl-sm shadow-card'
-                }`}>
+                    ? 'bg-primary-base text-white rounded-br-sm shadow-sm' 
+                    : 'bg-surface border border-border text-text-main rounded-bl-sm shadow-sm'
+                )}>
                   <p className="text-sm md:text-base leading-relaxed font-medium">{msg.text}</p>
                 </div>
               </motion.div>
@@ -223,10 +220,10 @@ export default function VictimChatbot() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="flex justify-start"
             >
-              <div className="max-w-[85%] p-4 rounded-2xl bg-canvas-surface border border-canvas-border rounded-bl-sm flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-main/60 animate-[typing-bounce_1.4s_infinite_ease-in-out_both]"></span>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-main/60 animate-[typing-bounce_1.4s_infinite_ease-in-out_both]" style={{animationDelay: '150ms'}}></span>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-main/60 animate-[typing-bounce_1.4s_infinite_ease-in-out_both]" style={{animationDelay: '300ms'}}></span>
+              <div className="max-w-[85%] p-4 rounded-2xl bg-surface border border-border rounded-bl-sm flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-base/60 animate-[typing-bounce_1.4s_infinite_ease-in-out_both]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-base/60 animate-[typing-bounce_1.4s_infinite_ease-in-out_both]" style={{animationDelay: '150ms'}}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-base/60 animate-[typing-bounce_1.4s_infinite_ease-in-out_both]" style={{animationDelay: '300ms'}}></span>
               </div>
             </motion.div>
           )}
@@ -234,46 +231,46 @@ export default function VictimChatbot() {
       </div>
 
       {/* Quick Prompts */}
-      <div className="px-4 py-3 bg-canvas-base flex gap-2 overflow-x-auto no-scrollbar shrink-0 border-t border-canvas-border">
-        {PROMPT_CHIPS.map((chip, idx) => (
-          <motion.button
-            key={idx}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            onClick={() => sendMessage(chip)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-canvas-surface border border-canvas-border rounded-pill text-xs font-bold text-text-primary hover:border-primary-main hover:text-primary-main transition-colors whitespace-nowrap shadow-sm"
-          >
-            <Sparkles size={12} className="text-primary-main" />
-            {chip}
-          </motion.button>
-        ))}
+      <div className="px-4 py-3 bg-background flex gap-2 overflow-x-auto no-scrollbar shrink-0 border-t border-border">
+        {PROMPT_CHIP_KEYS.map((key, idx) => {
+          const chipLabel = t(key);
+          return (
+            <motion.button
+              key={idx}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              onClick={() => sendMessage(chipLabel)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-surface border border-border rounded-full text-xs font-bold text-text-main hover:border-primary-base hover:text-primary-base transition-colors whitespace-nowrap shadow-sm"
+            >
+              <Sparkles size={12} className="text-primary-base" />
+              {chipLabel}
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-canvas-surface border-t border-canvas-border shrink-0">
+      <div className="p-4 bg-surface border-t border-border shrink-0">
         <form 
           onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
-          className="flex items-center gap-2 bg-canvas-base border-2 border-canvas-border rounded-pill p-1.5 focus-within:border-primary-main/50 transition-colors"
+          className="flex items-center gap-2 bg-background border border-border rounded-full p-1.5 focus-within:border-primary-base/50 focus-within:ring-2 focus-within:ring-primary-base/20 transition-all"
         >
           <input
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type your thoughts..."
-            className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-medium text-text-primary"
+            placeholder={t('chatPlaceholder')}
+            className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-medium text-text-main placeholder:text-text-muted"
           />
-          <button 
+          <Button
             type="submit"
             disabled={!inputText.trim() || isTyping}
-            className="w-10 h-10 rounded-full bg-primary-main text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0 shadow-sm"
-            style={{ transition: `transform var(--duration-instant) var(--ease-out-quint)` }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.92)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            size="icon"
+            className="w-10 h-10 rounded-full bg-primary-base text-white hover:bg-primary-hover shadow-sm transition-all active:scale-95 shrink-0 disabled:opacity-50"
           >
             <Send size={16} />
-          </button>
+          </Button>
         </form>
       </div>
 

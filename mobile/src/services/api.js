@@ -83,4 +83,20 @@ export const api = {
       throw e;
     }
   },
+
+  put: async (endpoint, data, { authorization } = {}) => {
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}${endpoint}`, {
+        method: 'PUT',
+        headers: buildHeaders(authorization ? { Authorization: `Bearer ${authorization}` } : {}),
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw await parseErrorResponse(res);
+      return await res.json();
+    } catch (e) {
+      console.error('PUT Error', endpoint, e);
+      throw e;
+    }
+  },
 };

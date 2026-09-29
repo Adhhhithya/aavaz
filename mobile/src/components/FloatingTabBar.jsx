@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Shield, Sparkles, User } from 'lucide-react-native';
+import { Home, Shield, Sparkles, User, Smile } from 'lucide-react-native';
 import Animated, { 
   useAnimatedStyle, 
   withSpring, 
@@ -11,27 +11,30 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { DS } from '../theme/designSystem';
 import ScalePressable from './ScalePressable';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
-const TABS = [
-  { id: 'Home', label: 'Home', icon: Home },
-  { id: 'Cases', label: 'Cases', icon: Shield, badgeCount: 1 },
-  { id: 'Assistant', label: 'Assistant', icon: Sparkles },
-  { id: 'Profile', label: 'Profile', icon: User },
+const TAB_DEFS = [
+  { id: 'Home', labelKey: 'tabHome', icon: Home },
+  { id: 'Checkin', labelKey: 'tabCheckin', icon: Smile },
+  { id: 'Cases', labelKey: 'tabCases', icon: Shield, badgeCount: 1 },
+  { id: 'Assistant', labelKey: 'tabAssistant', icon: Sparkles },
+  { id: 'Profile', labelKey: 'tabProfile', icon: User },
 ];
 
 export default function FloatingTabBar({ activeTab, onTabPress }) {
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   
   // Calculate tab width dynamically
   const containerPadding = 20;
   const ribbonPadding = 8;
   const ribbonWidth = width - (containerPadding * 2);
-  const tabWidth = (ribbonWidth - (ribbonPadding * 2)) / TABS.length;
+  const tabWidth = (ribbonWidth - (ribbonPadding * 2)) / TAB_DEFS.length;
 
   // Find active index for sliding pill
-  const activeIndex = Math.max(0, TABS.findIndex(t => t.id === activeTab));
+  const activeIndex = Math.max(0, TAB_DEFS.findIndex(t => t.id === activeTab));
 
   // Sliding pill animated style
   const pillStyle = useAnimatedStyle(() => {
@@ -55,9 +58,10 @@ export default function FloatingTabBar({ activeTab, onTabPress }) {
         {/* Animated Background Pill */}
         <Animated.View style={[styles.slidingPill, { width: tabWidth }, pillStyle]} />
 
-        {TABS.map((tab, idx) => {
+        {TAB_DEFS.map((tab, idx) => {
           const isActive = activeTab === tab.id;
           const IconComponent = tab.icon;
+          const tabLabel = t(tab.labelKey);
 
           return (
             <ScalePressable
@@ -84,7 +88,7 @@ export default function FloatingTabBar({ activeTab, onTabPress }) {
                 ) : null}
               </View>
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-                {tab.label}
+                {tabLabel}
               </Text>
             </ScalePressable>
           );

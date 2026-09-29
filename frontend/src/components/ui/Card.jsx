@@ -1,42 +1,57 @@
-import { cva } from 'class-variance-authority';
-import { clsx } from 'clsx';
+import { cn } from "../../lib/utils";
 
-const cardVariants = cva(
-  'rounded-2xl border transition-shadow',
-  {
-    variants: {
-      variant: {
-        default:  'bg-canvas-surface border-canvas-border shadow-card',
-        elevated: 'bg-canvas-surface border-canvas-border shadow-hover',
-        subtle:   'bg-canvas-surfaceSubtle border-canvas-border',
-        sos:      'bg-accent-sosBg border-accent-sosLight/30',
-      },
-      padding: {
-        none: '',
-        sm: 'p-4',
-        md: 'p-6',
-        lg: 'p-8',
-      },
-      hover: {
-        true:  'hover:shadow-hover hover:-translate-y-0.5 cursor-pointer',
-        false: '',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      padding: 'md',
-      hover: false,
-    },
-  }
-);
-
-/**
- * Card — base surface component with cva variants.
- */
-export default function Card({ variant, padding, hover, className, children, ...props }) {
+export function Card({ className, ...props }) {
   return (
-    <div className={clsx(cardVariants({ variant, padding, hover }), className)} {...props}>
-      {children}
-    </div>
+    <div
+      className={cn(
+        "rounded-xl border border-border bg-surface text-text-main shadow-sm",
+        className
+      )}
+      {...props}
+    />
   );
 }
+
+export function CardHeader({ className, ...props }) {
+  return (
+    <div
+      className={cn("flex flex-col space-y-1.5 p-6", className)}
+      {...props}
+    />
+  );
+}
+
+export function CardTitle({ className, ...props }) {
+  return (
+    <h3
+      className={cn("font-semibold leading-none tracking-tight", className)}
+      {...props}
+    />
+  );
+}
+
+export function CardDescription({ className, ...props }) {
+  return (
+    <p
+      className={cn("text-sm text-text-secondary", className)}
+      {...props}
+    />
+  );
+}
+
+export function CardContent({ className, ...props }) {
+  return (
+    <div className={cn("p-6 pt-0", className)} {...props} />
+  );
+}
+
+export function CardFooter({ className, ...props }) {
+  return (
+    <div
+      className={cn("flex items-center p-6 pt-0", className)}
+      {...props}
+    />
+  );
+}
+
+export default Card;

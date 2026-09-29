@@ -48,7 +48,7 @@ async def parse_unstructured_case_data(cnr: str, raw_data: dict) -> dict:
         """
 
         response = await client.chat.completions.create(
-            model='openai/gpt-oss-120b',
+            model='qwen/qwen3.8-27b',
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
         )
