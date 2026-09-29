@@ -178,7 +178,16 @@ async def _get_due_cases() -> list[dict]:
         return []
 
     due: list[dict] = []
-    for row in (resp.data or []):
+    seen_users: set[str] = set()
+
+    # Sort so cases with highest distress are processed first when deduplicating
+    sorted_cases = sorted((resp.data or []), key=lambda x: float(x.get("current_distress_score") or 0), reverse=True)
+
+    for row in sorted_cases:
+        user_id = row.get("user_id")
+        if not user_id or user_id in seen_users:
+            continue
+
         user_data = row.get("users") or {}
         phone = user_data.get("phone_number")
         if not phone:
@@ -200,15 +209,16 @@ async def _get_due_cases() -> list[dict]:
 
         due.append({
             "case_id": row["id"],
-            "user_id": row["user_id"],
+            "user_id": user_id,
             "distress_score": score,
             "is_high_risk": is_high_risk,
             "phone_number": phone,
             "name": user_data.get("name") or "Caller",
             "language": user_data.get("preferred_language") or "en",
         })
+        seen_users.add(user_id)
 
-    logger.info("Scheduler: %d case(s) due for check-in", len(due))
+    logger.info("Scheduler: %d victim(s) due for check-in", len(due))
     return due
 
 
@@ -234,10 +244,11 @@ async def _record_call_attempt(
             "attempted_at": now.isoformat(),
         }, on_conflict="case_id,attempted_at").execute()
 
-        # Update last_check_in_at on the case so failed or restricted calls respect interval spacing
+        # Update last_check_in_at on ALL active cases for this user so they don't get called 
+        # again for their other cases in the next polling cycle
         await supabase.table("cases").update({
             "last_check_in_at": now.isoformat(),
-        }).eq("id", case_id).execute()
+        }).eq("user_id", user_id).execute()
 
     except Exception as exc:
         logger.error("Failed to record call attempt for case=%s: %s", case_id, exc)

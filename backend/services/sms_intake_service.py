@@ -76,10 +76,12 @@ async def process_incoming_sms(
 
         # 2. Link or create active case
         case_id: Optional[str] = None
+        case_record = None
         if user_id:
-            case_resp = await supabase.table("cases").select("id").eq("user_id", user_id).neq("case_stage", "closed").limit(1).execute()
+            case_resp = await supabase.table("cases").select("id, submitter_role, current_distress_score").eq("user_id", user_id).neq("case_stage", "closed").limit(1).execute()
             if case_resp.data:
-                case_id = case_resp.data[0]["id"]
+                case_record = case_resp.data[0]
+                case_id = case_record["id"]
             else:
                 case_data = {
                     "user_id": user_id,
@@ -179,7 +181,9 @@ User message: "{clean_msg}"
                     from api.scoring.fusion import calculate_dynamic_score
                     fusion_result = await calculate_dynamic_score(
                         transcript=clean_msg,
-                        call_duration=0
+                        call_duration=0,
+                        submitter_role=(case_record.get("submitter_role") if case_record else None) or "victim",
+                        history_score=float(case_record.get("current_distress_score") or 0.0) if case_record else 0.0
                     )
                     
                     breakdown_dict = {

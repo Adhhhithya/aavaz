@@ -65,6 +65,7 @@ def _redistribute_weights(
     acoustic_available: bool,
     sentiment_available: bool,
     engagement_available: bool,
+    history_available: bool = False,
 ) -> tuple[float, float, float]:
     """
     Redistribute weights proportionally when a signal is unavailable.
@@ -87,7 +88,7 @@ def _redistribute_weights(
     total_active_weight = sum(active.values())
 
     if total_active_weight == 0:
-        return 1.0 / 3, 1.0 / 3, 1.0 / 3
+        return 0.3333333333333333, 0.3333333333333333, 0.3333333333333334
 
     weights: dict[str, float] = {}
     for key, base_w in active.items():
@@ -152,6 +153,8 @@ async def calculate_dynamic_score(
     total_checkins: int = 0,
     last_interaction_days_ago: int = 0,
     language: str = "en",
+    submitter_role: str = "victim",
+    history_score: float = 0.0,
 ) -> DistressResult:
     """
     Compute the fused distress score from acoustic, NLP, and engagement signals.
@@ -166,6 +169,8 @@ async def calculate_dynamic_score(
     total_checkins        : Total scheduled check-ins so far
     last_interaction_days_ago: Days since last engagement
     language              : ISO language code for NLP model selection
+    submitter_role        : Submitter role (e.g. 'victim', 'relative'). Non-victims nullify acoustic weight.
+    history_score         : Distress score carried over from case history.
 
     Returns
     -------
@@ -198,16 +203,22 @@ async def calculate_dynamic_score(
         acoustic_score = None
         
     sentiment_score: float = sentiment_result.get("sentiment_score", 0.0)
-    if math.isnan(sentiment_score):
+    if sentiment_score is None or math.isnan(sentiment_score):
         sentiment_score = 0.0
         
     engagement_score: float = engagement_result.get("engagement_score", 0.0)
-    if math.isnan(engagement_score):
+    if engagement_score is None or math.isnan(engagement_score):
         engagement_score = 0.0
 
     acoustic_available = acoustic_score is not None
-    sentiment_available = True  # text always available (even if empty -> score=0)
+    sentiment_available = True
     engagement_available = True
+
+    # Disable acoustic if it's not the victim (relatives' voice doesn't measure victim's distress)
+    if str(submitter_role).lower() != "victim":
+        acoustic_available = False
+
+    history_available = history_score > 0.0
 
     # 4. Redistribute weights if a signal is unavailable
     w_a, w_s, w_e = _redistribute_weights(
@@ -217,9 +228,12 @@ async def calculate_dynamic_score(
     # 5. Weighted fusion
     a_val = float(acoustic_score) if acoustic_available else 0.0
     final_score = w_a * a_val + w_s * sentiment_score + w_e * engagement_score
+    if history_available:
+        # Subtle adjustment for repeat trauma victims without breaking base weight invariant
+        final_score = max(final_score, min(100.0, final_score * 0.9 + history_score * 0.1))
     final_score = max(0.0, min(100.0, final_score))
 
-    # 6. Confidence: 1.0 only when all three signals are available
+    # 6. Confidence: 1.0 only when all signals are available
     acoustic_conf = acoustic_result.get("confidence", 0.0) if acoustic_available else 0.0
     confidence = (
         acoustic_conf * W_ACOUSTIC + 0.9 * W_SENTIMENT + 0.9 * W_ENGAGEMENT

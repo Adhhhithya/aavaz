@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/services/agents/empathy_agent.py
 
 Empathy / Active-Listening Agent.
@@ -33,7 +33,7 @@ from services.llm_parser import build_system_prompt
 logger = logging.getLogger(__name__)
 
 _groq = AsyncGroq(api_key=settings.GROQ_API_KEY)
-_MODEL = "openai/gpt-oss-120b"   # matches existing llm_parser.py usage
+_MODEL = "qwen/qwen3.8-27b"   # matches existing llm_parser.py usage
 _VOICE_MAX_TOKENS = 150
 _CHAT_MAX_TOKENS = 400
 

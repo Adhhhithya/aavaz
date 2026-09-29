@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "AAVAAZ",
+    "slug": "aavaaz",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,6 +10,14 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.aavaaz.app",
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -24,8 +32,22 @@
     "plugins": [
       "expo-router",
       "expo-asset",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-updates"
     ],
-    "scheme": "aavaz"
+    "scheme": "aavaz",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8d90336d-fb63-4a23-8ec0-38f9224684aa"
+      }
+    },
+    "owner": "flightsofwhisper",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/8d90336d-fb63-4a23-8ec0-38f9224684aa"
+    }
   }
 }

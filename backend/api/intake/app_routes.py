@@ -79,6 +79,17 @@ async def register_user(
         if not case_resp.data:
             raise HTTPException(status_code=400, detail="Failed to create case")
 
+        # Save Emergency Contact if provided
+        if request.emergencyContact and request.emergencyContact.get('name') and request.emergencyContact.get('phone'):
+            try:
+                await supabase.table("safety_settings").insert({
+                    "user_id": user_id,
+                    "trusted_contact_name": request.emergencyContact.get('name'),
+                    "trusted_contact_phone": request.emergencyContact.get('phone')
+                }).execute()
+            except Exception as e:
+                logger.error(f"Failed to save emergency contact during registration: {e}")
+
         session_token = issue_victim_session_token(user_id, phone_number)
 
         return {
@@ -97,6 +108,7 @@ async def register_user(
 
 class CheckinRequest(BaseModel):
     mood: str
+    level: int = None
 
 @router.post("/checkin")
 async def quick_checkin(
@@ -172,6 +184,77 @@ async def quick_checkin(
     except Exception as e:
         logger.error(f"Checkin error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+from datetime import timedelta
+@router.get("/trends")
+async def get_user_trends(
+    current_victim: CurrentVictim = Depends(get_current_victim),
+):
+    """
+    Returns the 7-day multimodal trend breakdown (physiological, vocal, sentiment)
+    as required by the new mobile app Distress Trends UI.
+    """
+    try:
+        supabase = await get_supabase()
+
+        # Get all cases for the user so we can aggregate their distress across all their active issues
+        cases_resp = await supabase.table("cases").select("id").eq("user_id", current_victim.id).execute()
+        case_ids = [c["id"] for c in cases_resp.data]
+
+        if not case_ids:
+            return {"status": "success", "trends": []}
+
+        # Get interactions from the last 7 days across all their cases
+        now = datetime.now(timezone.utc)
+        seven_days_ago = (now - timedelta(days=7)).isoformat()
+
+        interactions_resp = await supabase.table("interactions")\
+            .select("timestamp, sentiment_score, acoustic_score, final_score")\
+            .in_("case_id", case_ids)\
+            .gte("timestamp", seven_days_ago)\
+            .order("timestamp", desc=True)\
+            .execute()
+
+        # Group by day to format as the UI expects (Mon, Tue, Wed...)
+        trends_by_day = {}
+        for d in range(7):
+            target_date = now - timedelta(days=6-d)
+            day_str = target_date.strftime("%a") # 'Mon', 'Tue'
+            date_key = target_date.strftime("%Y-%m-%d")
+            trends_by_day[date_key] = {
+                "day_label": day_str,
+                "sentiment": 0,
+                "vocal": 0,
+                "physiological": 0,
+                "count": 0
+            }
+
+        for ix in interactions_resp.data:
+            dt = datetime.fromisoformat(ix["timestamp"].replace("Z", "+00:00"))
+            date_key = dt.strftime("%Y-%m-%d")
+            if date_key in trends_by_day:
+                # App expects breakdown values for charting
+                trends_by_day[date_key]["sentiment"] += ix.get("sentiment_score") or 0
+                trends_by_day[date_key]["vocal"] += ix.get("acoustic_score") or 0
+                # Using final_score as proxy for physiological/overall impact if engagement not present
+                trends_by_day[date_key]["physiological"] += ix.get("final_score") or 0
+                trends_by_day[date_key]["count"] += 1
+
+        formatted_trends = []
+        for date_key, data in trends_by_day.items():
+            count = data["count"] or 1
+            formatted_trends.append({
+                "day": data["day_label"],
+                "sentiment": round(data["sentiment"] / count, 1),
+                "vocal": round(data["vocal"] / count, 1),
+                "physiological": round(data["physiological"] / count, 1)
+            })
+
+        return {"status": "success", "trends": formatted_trends}
+    except Exception as e:
+        logger.error(f"Trends error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 
@@ -289,8 +372,19 @@ async def get_user_cases(
             elif c.get("cnr"):
                 title = f"CNR: {c['cnr']}"
 
+            is_grievance_filed = bool(
+                c.get("grievance_related_to")
+                or c.get("grievance_description")
+                or c.get("cnr")
+                or c.get("cnr_number")
+                or c.get("has_fir")
+                or (c.get("case_type") and c.get("case_type") != "unspecified")
+            )
+
             formatted.append({
                 "id": c["id"],
+                "case_type": c.get("case_type"),
+                "is_grievance_filed": is_grievance_filed,
                 "title": title,
                 "dateFiled": c["created_at"][:10],
                 "status": c["case_stage"].upper(),
@@ -301,6 +395,7 @@ async def get_user_cases(
                 "grievance_description": c.get("grievance_description"),
                 "has_fir": c.get("has_fir"),
                 "submitter_role": c.get("submitter_role"),
+                "current_distress_score": c.get("current_distress_score"),
                 "days_since_last_interaction": days_since,
                 "ecourts_data": c.get("ecourts_data"),
                 "timeline": [
@@ -316,7 +411,7 @@ async def get_user_cases(
                         "active": c["case_stage"] == "investigating",
                         "completed": c["case_stage"] in ["resolved", "closed"]
                     }
-                ]
+                ] if is_grievance_filed else []
             })
 
         return {"cases": formatted}

@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { DS, glassCard } from '../theme/designSystem';
 import ScalePressable from '../components/ScalePressable';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 
 const { width } = Dimensions.get('window');
@@ -27,6 +28,7 @@ const SOS_SIZE = 140;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function SOSScreen() {
+  const { t } = useLanguage();
   const [isActive, setIsActive] = useState(false);
   
   const holdProgress = useSharedValue(0);
@@ -154,7 +156,7 @@ export default function SOSScreen() {
       <View style={styles.container}>
         {!isActive ? (
           <View style={styles.idleCenter}>
-            <Text style={styles.instruction}>Hold for 3 seconds to activate</Text>
+            <Text style={styles.instruction}>{t('sosHoldInstruction')}</Text>
             
             <View style={styles.btnWrapper}>
               <Animated.View style={[styles.pulseRing, ring1Style]} />
@@ -191,20 +193,20 @@ export default function SOSScreen() {
           </View>
         ) : (
           <Animated.View style={styles.activeCenter} entering={Animated.FadeIn} exiting={Animated.FadeOut}>
-            <Text style={styles.activeTitle}>SOS ACTIVATED</Text>
+            <Text style={styles.activeTitle}>{t('sosActivatedStatus')}</Text>
             
             {/* Live Timer Card */}
             <View style={[glassCard, styles.timerCard]}>
               <Clock size={24} color={DS.accent.crimson} />
               <Text style={styles.timerText}>29:45</Text>
-              <Text style={styles.timerSub}>remaining until district auto-escalation</Text>
+              <Text style={styles.timerSub}>{t('sosRemainingAutoEscalation')}</Text>
             </View>
 
             {/* Telemetry Card */}
             <View style={[glassCard, styles.telemetryCard]}>
               <MapPin size={18} color={DS.accent.teal} />
               <View style={{ marginLeft: 10 }}>
-                <Text style={styles.telemetryTitle}>Location Broadcast Active</Text>
+                <Text style={styles.telemetryTitle}>{t('sosLocationBroadcastActive')}</Text>
                 <Text style={styles.telemetryValue}>28.6139°N, 77.2090°E • Delhi District</Text>
               </View>
             </View>
@@ -213,12 +215,12 @@ export default function SOSScreen() {
             <View style={styles.stepsWrap}>
               <View style={styles.stepRow}>
                 <CheckCircle size={20} color={DS.accent.emerald} />
-                <Text style={styles.stepDone}>Assigned Counsellor Alerted</Text>
+                <Text style={styles.stepDone}>{t('sosCounsellorAlerted')}</Text>
               </View>
               <View style={styles.stepConnector} />
               <View style={styles.stepRow}>
                 <Clock size={20} color={DS.accent.amber} />
-                <Text style={styles.stepPending}>District Dashboard Escalation (Pending)</Text>
+                <Text style={styles.stepPending}>{t('sosDistrictPending')}</Text>
               </View>
             </View>
 
@@ -228,7 +230,7 @@ export default function SOSScreen() {
               onPress={() => setIsActive(false)}
               scaleTo={0.96}
             >
-              <Text style={styles.resolveText}>Tap to Resolve SOS</Text>
+              <Text style={styles.resolveText}>{t('sosTapToResolve')}</Text>
               <ChevronRight size={20} color={DS.accent.crimson} />
             </ScalePressable>
           </Animated.View>

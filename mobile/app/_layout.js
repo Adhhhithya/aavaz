@@ -45,15 +45,19 @@ if (typeof window !== 'undefined') {
   };
 }
 
+import { LanguageProvider } from '../src/context/LanguageContext';
+
 export default function RootLayout() {
   return (
     <ErrorBoundary onReset={() => { /* maybe router.replace('/login') */ }}>
-      <WarningModalProvider>
-        <SafeAreaProvider>
-          <StatusBar barStyle="dark-content" backgroundColor={DS.canvas.base} />
-          <Stack screenOptions={{ headerShown: false }} />
-        </SafeAreaProvider>
-      </WarningModalProvider>
+      <LanguageProvider>
+        <WarningModalProvider>
+          <SafeAreaProvider>
+            <StatusBar barStyle="dark-content" backgroundColor={DS.canvas.base} />
+            <Stack screenOptions={{ headerShown: false }} />
+          </SafeAreaProvider>
+        </WarningModalProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }

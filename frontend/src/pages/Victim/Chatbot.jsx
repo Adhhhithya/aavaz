@@ -1,20 +1,21 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { Bot, Send, Sparkles, RefreshCw, Mic, MicOff } from 'lucide-react';
 import { useVoiceAgent } from '../../hooks/useVoiceAgent';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/Button';
 
-const PROMPT_CHIPS = [
-  'I feel anxious',
-  'Check my case status',
-  'Need immediate help',
-  'Grounding exercises',
+const PROMPT_CHIP_KEYS = [
+  'chipAnxious',
+  'chipCaseStatus',
+  'chipImmediateHelp',
+  'chipGrounding',
 ];
 
 export default function VictimChatbot() {
   const { user, authFetch } = useAuth();
+  const { t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -139,11 +140,11 @@ export default function VictimChatbot() {
   };
 
   const voiceStatusLabel = {
-    connecting: 'Connecting…',
-    listening: 'Listening…',
-    thinking: 'Thinking…',
-    speaking: 'Speaking…',
-    error: 'Voice error',
+    connecting: t('connecting'),
+    listening: t('listening'),
+    thinking: t('thinking'),
+    speaking: t('speaking'),
+    error: t('voiceError'),
   }[voiceStatus];
 
   return (
@@ -156,9 +157,9 @@ export default function VictimChatbot() {
             <Bot size={20} className="text-primary-base" />
           </div>
           <div>
-            <h2 className="font-bold text-text-main">Support Assistant</h2>
+            <h2 className="font-bold text-text-main">{t('chatAssistantTitle')}</h2>
             <p className="text-xs font-semibold text-secondary-base">
-              {voiceStatusLabel || 'Always here to listen'}
+              {voiceStatusLabel || t('chatAlwaysListening')}
             </p>
           </div>
         </div>
@@ -168,7 +169,7 @@ export default function VictimChatbot() {
             size="icon"
             onClick={toggleVoice}
             className={cn("rounded-full transition-colors", voiceActive ? "text-white bg-primary-base hover:bg-primary-hover animate-pulse" : "text-text-muted hover:text-text-main")}
-            title={voiceActive ? 'Stop voice mode' : 'Talk instead of type'}
+            title={voiceActive ? t('voiceModeStop') : t('voiceModeStart')}
           >
             {voiceActive ? <Mic size={18} /> : <MicOff size={18} />}
           </Button>
@@ -177,7 +178,7 @@ export default function VictimChatbot() {
             size="icon"
             onClick={handleClear}
             className="text-text-muted hover:text-text-main rounded-full"
-            title="Clear Conversation"
+            title={t('clearChat')}
           >
             <RefreshCw size={18} />
           </Button>
@@ -231,19 +232,22 @@ export default function VictimChatbot() {
 
       {/* Quick Prompts */}
       <div className="px-4 py-3 bg-background flex gap-2 overflow-x-auto no-scrollbar shrink-0 border-t border-border">
-        {PROMPT_CHIPS.map((chip, idx) => (
-          <motion.button
-            key={idx}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            onClick={() => sendMessage(chip)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-surface border border-border rounded-full text-xs font-bold text-text-main hover:border-primary-base hover:text-primary-base transition-colors whitespace-nowrap shadow-sm"
-          >
-            <Sparkles size={12} className="text-primary-base" />
-            {chip}
-          </motion.button>
-        ))}
+        {PROMPT_CHIP_KEYS.map((key, idx) => {
+          const chipLabel = t(key);
+          return (
+            <motion.button
+              key={idx}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              onClick={() => sendMessage(chipLabel)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-surface border border-border rounded-full text-xs font-bold text-text-main hover:border-primary-base hover:text-primary-base transition-colors whitespace-nowrap shadow-sm"
+            >
+              <Sparkles size={12} className="text-primary-base" />
+              {chipLabel}
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* Input Area */}
@@ -256,7 +260,7 @@ export default function VictimChatbot() {
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type your thoughts..."
+            placeholder={t('chatPlaceholder')}
             className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-medium text-text-main placeholder:text-text-muted"
           />
           <Button

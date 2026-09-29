@@ -1,6 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import sys
+import os
 import asyncio
 from config import settings
 
@@ -37,9 +40,9 @@ app = FastAPI(
 # CORS middleware for dashboards and mobile app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL] if hasattr(settings, "FRONTEND_URL") and settings.FRONTEND_URL else ["http://localhost:5173", "http://localhost:8081"], 
+    allow_origin_regex=r"^https?://.*",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -79,4 +82,42 @@ app.include_router(state_routes.router, prefix="/api/v1/dashboards/state", tags=
 app.include_router(national_routes.router, prefix="/api/v1/dashboards/national", tags=["dashboards", "national"])
 app.include_router(superadmin_routes.router, prefix="/api/v1/dashboards/superadmin", tags=["dashboards", "superadmin"])
 app.include_router(rit_routes.router, prefix="/rit", tags=["superadmin", "rit"])
+
+# --- Frontend Web Serving (Single-Port Hosting for Dashboards & API) ---
+FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+FRONTEND_ASSETS = os.path.join(FRONTEND_DIST, "assets")
+
+if os.path.isdir(FRONTEND_ASSETS):
+    app.mount("/assets", StaticFiles(directory=FRONTEND_ASSETS), name="frontend_assets")
+
+from fastapi import Request
+
+@app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"], include_in_schema=False)
+async def serve_spa(full_path: str, request: Request):
+    # Do not intercept API, RIT, health, docs, or schema endpoints
+    if (
+        full_path.startswith("api/")
+        or full_path == "api"
+        or full_path.startswith("rit")
+        or full_path == "rit"
+        or full_path.startswith("health")
+        or full_path in ("docs", "redoc", "openapi.json")
+    ):
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    if request.method not in ("GET", "HEAD"):
+        raise HTTPException(status_code=405, detail="Method Not Allowed")
+
+    # If an exact static file exists in frontend/dist (e.g. favicon.svg, icons.svg), serve it
+    static_file = os.path.join(FRONTEND_DIST, full_path)
+    if full_path and os.path.isfile(static_file):
+        return FileResponse(static_file)
+
+    # Fallback to SPA index.html for React Router
+    index_file = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.isfile(index_file):
+        return FileResponse(index_file)
+
+    return {"message": "Frontend not built. Run 'npm run build' inside frontend directory."}
+
 

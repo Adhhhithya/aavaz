@@ -7,9 +7,9 @@ const DistressArchGauge = ({
   score = 78,
   maxScore = 100,
   ranges = [
-    { label: 'Normal', min: 0, max: 40, color: DS.accent.blue, share: '40%' },
-    { label: 'Moderate', min: 41, max: 70, color: DS.accent.amber, share: '30%' },
-    { label: 'Critical', min: 71, max: 100, color: DS.accent.crimson, share: '30%' },
+    { label: 'Normal', min: 0, max: 40, color: DS.accent.success, share: '40%' },
+    { label: 'Moderate', min: 41, max: 70, color: DS.accent.warning, share: '30%' },
+    { label: 'Critical', min: 71, max: 100, color: DS.accent.danger, share: '30%' },
   ],
 }) => {
   const size = 320;

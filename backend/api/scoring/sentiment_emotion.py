@@ -22,7 +22,7 @@ async def analyze_sentiment_and_emotion(transcript: str, language: str = 'en') -
     prompt = f"""
     Analyze the following transcript from a caller to a support helpline.
     Respond ONLY with a raw JSON object (no markdown, no backticks) with exactly these keys:
-    - "sentiment_score": A float between 0 and 100 where 100 is extreme distress/negativity and 0 is completely calm/positive.
+    - "sentiment_score": A float between 0.0 and 100.0 measuring caller distress (where 100.0 is severe crisis/panic/threat, 70-95 is high distress/fear, and 0.0 is completely calm/safe).
     - "emotion_tag": One of ["fear", "anger", "sadness", "hopelessness", "neutral"].
     - "notes": A brief 1-sentence reasoning for the score and tag.
 

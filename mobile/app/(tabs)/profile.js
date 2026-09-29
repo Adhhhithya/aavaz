@@ -9,8 +9,13 @@ export default function ProfileRoute() {
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
+    // 1. Initial quick load from local session
     authService.getCurrentUser().then(user => {
-      setUserProfile(user);
+      if (user) setUserProfile(user);
+    });
+    // 2. Fetch fresh profile from backend
+    authService.getProfile().then(user => {
+      if (user) setUserProfile(user);
     });
   }, []);
 
@@ -20,17 +25,25 @@ export default function ProfileRoute() {
   };
 
   const handleUpdateProfile = async (profileData) => {
-    await storage.updateProfile(profileData);
-    const updated = { ...userProfile, ...profileData };
-    setUserProfile(updated);
+    const updated = await authService.updateProfile(profileData);
+    setUserProfile(updated || { ...userProfile, ...profileData });
+  };
+
+  const emContact = userProfile?.emergencyContact || {
+    name: userProfile?.emergency_contact_name || '',
+    phone: userProfile?.emergency_contact_phone || '',
   };
 
   return (
     <ProfileScreen
       user={{
-        name: userProfile?.fullName || userProfile?.name,
-        phone: userProfile?.phone,
-        preferred_language: userProfile?.preferred_language,
+        name: userProfile?.fullName || userProfile?.name || '',
+        phone: userProfile?.phone || userProfile?.phone_number || '',
+        preferred_language: userProfile?.preferred_language || 'en',
+        age: userProfile?.age ? String(userProfile.age) : '',
+        emergencyContact: emContact,
+        emergency_contact_name: emContact.name,
+        emergency_contact_phone: emContact.phone,
       }}
       onLogout={handleLogout}
       onSaveProfile={handleUpdateProfile}

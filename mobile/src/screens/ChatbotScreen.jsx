@@ -23,20 +23,24 @@ import {
 import { DS } from '../theme/designSystem';
 import { api } from '../services/api';
 import { useWarningModal } from '../context/WarningModalContext';
+import { useLanguage } from '../context/LanguageContext';
+import VoiceMode from './VoiceMode';
 
-const PROMPT_CHIPS = [
-  'I feel anxious',
-  'Check my case status',
-  'Need immediate help',
-  'Grounding exercises',
+const PROMPT_CHIP_KEYS = [
+  'chipAnxious',
+  'chipCaseStatus',
+  'chipImmediateHelp',
+  'chipGrounding',
 ];
 
 export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
   const { showWarning, showError } = useWarningModal();
+  const { t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [isListeningMic, setIsListeningMic] = useState(false);
+  const [voiceModeActive, setVoiceModeActive] = useState(false);
+  const [latestBotReply, setLatestBotReply] = useState("Say anything that's on your mind!");
   const [crisisAlert, setCrisisAlert] = useState(null);
   const scrollViewRef = useRef(null);
 
@@ -95,6 +99,7 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
           escalated: res.escalated,
         };
         setMessages((prev) => [...prev, botMsg]);
+        setLatestBotReply(res.reply); // Update Voice Mode context
 
         if (res.escalated || res.distress_score >= 70) {
           setCrisisAlert({
@@ -122,39 +127,20 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
   };
 
   const handleMicToggle = () => {
-    if (!isListeningMic) {
-      setIsListeningMic(true);
-      if (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
-        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRec();
-        recognition.lang = userProfile?.preferred_language === 'hi' ? 'hi-IN' : 'en-IN';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          setIsListeningMic(false);
-          if (transcript) {
-            sendMessage(transcript);
-          }
-        };
-        recognition.onerror = () => setIsListeningMic(false);
-        recognition.onend = () => setIsListeningMic(false);
-        try {
-          recognition.start();
-        } catch (_) {
-          setIsListeningMic(false);
-        }
-      } else {
-        // Voice active check simulation
-        setTimeout(() => {
-          setIsListeningMic(false);
-          setInputText('I am feeling very overwhelmed and scared today.');
-        }, 1200);
-      }
-    } else {
-      setIsListeningMic(false);
-    }
+    setVoiceModeActive(true);
   };
+
+  if (voiceModeActive) {
+    return (
+      <VoiceMode 
+        initialPrompt={latestBotReply} 
+        onClose={() => setVoiceModeActive(false)} 
+        onSend={(voiceText) => {
+          sendMessage(voiceText);
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -169,8 +155,8 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
               <Bot size={22} color={DS.primary.main} />
             </View>
             <View>
-              <Text style={styles.botName}>Support Assistant</Text>
-              <Text style={styles.botStatus}>Always here to listen</Text>
+              <Text style={styles.botName}>{t('chatAssistantTitle')}</Text>
+              <Text style={styles.botStatus}>{t('chatAlwaysListening')}</Text>
             </View>
           </View>
 
@@ -189,7 +175,7 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
               activeOpacity={0.8}
             >
               <LogOut size={14} color={DS.text.muted} style={{ marginRight: 4 }} />
-              <Text style={styles.discreetExitText}>Discreet Exit</Text>
+              <Text style={styles.discreetExitText}>{t('btnExit')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -234,7 +220,7 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
             <View style={[styles.messageRow, styles.botMessageRow]}>
               <View style={[styles.bubble, styles.botBubble, styles.typingBubble]}>
                 <ActivityIndicator size="small" color={DS.primary.main} />
-                <Text style={styles.typingText}>Thinking &amp; composing...</Text>
+                <Text style={styles.typingText}>{t('thinking')}</Text>
               </View>
             </View>
           )}
@@ -258,17 +244,20 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.chipsScroll}
           >
-            {PROMPT_CHIPS.map((chip, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={styles.chipPill}
-                onPress={() => sendMessage(chip)}
-                activeOpacity={0.7}
-              >
-                <Sparkles size={12} color={DS.primary.main} style={{ marginRight: 4 }} />
-                <Text style={styles.chipText}>{chip}</Text>
-              </TouchableOpacity>
-            ))}
+            {PROMPT_CHIP_KEYS.map((key, idx) => {
+              const chipLabel = t(key);
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.chipPill}
+                  onPress={() => sendMessage(chipLabel)}
+                  activeOpacity={0.7}
+                >
+                  <Sparkles size={12} color={DS.primary.main} style={{ marginRight: 4 }} />
+                  <Text style={styles.chipText}>{chipLabel}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
 
@@ -276,15 +265,15 @@ export default function ChatbotScreen({ userProfile, onDiscreetExit }) {
         <View style={styles.bottomBar}>
           <View style={styles.inputContainer}>
             <TouchableOpacity
-              style={[styles.micButton, isListeningMic && styles.micButtonActive]}
+              style={styles.micButton}
               onPress={handleMicToggle}
             >
-              <Mic size={18} color={isListeningMic ? '#FFFFFF' : DS.text.muted} />
+              <Mic size={18} color={DS.text.muted} />
             </TouchableOpacity>
 
             <TextInput
               style={styles.inputField}
-              placeholder="Type your thoughts or ask a question..."
+              placeholder={t('chatPlaceholder')}
               placeholderTextColor={DS.text.muted}
               value={inputText}
               onChangeText={setInputText}

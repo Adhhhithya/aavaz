@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Modal } from 'react-native';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
-  withSpring, 
   withTiming,
   FadeIn,
   FadeOut
@@ -22,7 +21,7 @@ export default function SOSModal({ visible, onClose, onDispatched }) {
 
   useEffect(() => {
     if (visible) {
-      scale.value = withSpring(1, { damping: 20, stiffness: 300 });
+      scale.value = withTiming(1, { duration: 200 });
       opacity.value = withTiming(1, { duration: 250 });
     } else {
       scale.value = withTiming(0.8, { duration: 200 });

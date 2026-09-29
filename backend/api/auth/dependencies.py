@@ -22,7 +22,43 @@ from fastapi import Depends, Header, HTTPException
 
 from services.supabase_client import get_supabase
 
+from datetime import datetime, timedelta, timezone
+import jwt
+from config import settings
+
 logger = logging.getLogger(__name__)
+
+_ALGORITHM = "HS256"
+
+def _staff_secret() -> str:
+    if getattr(settings, "VICTIM_SESSION_SECRET", None):
+        return settings.VICTIM_SESSION_SECRET
+    if getattr(settings, "STAFF_JWT_SECRET", None):
+        return settings.STAFF_JWT_SECRET
+    return "dev-only-insecure-staff-session-secret-do-not-use-in-production"
+
+def issue_staff_token(user_id: str, role: str, name: str = "", district: str = "", state: str = "") -> str:
+    now = datetime.now(timezone.utc)
+    payload = {
+        "purpose": "staff",
+        "sub": user_id,
+        "role": role,
+        "name": name,
+        "district": district,
+        "state": state,
+        "iat": now,
+        "exp": now + timedelta(days=7),
+    }
+    return jwt.encode(payload, _staff_secret(), algorithm=_ALGORITHM)
+
+def decode_staff_token(token: str) -> Optional[dict]:
+    try:
+        claims = jwt.decode(token, _staff_secret(), algorithms=[_ALGORITHM])
+        if claims.get("purpose") == "staff":
+            return claims
+    except jwt.PyJWTError:
+        pass
+    return None
 
 # role_type values that are allowed to authenticate as "staff" at all. Anything else
 # (victim, witness, family) is a survivor-side identity, never a staff identity, even
@@ -45,12 +81,14 @@ ROLE_ALIASES = {
 class CurrentStaffUser:
     """The authenticated, role-resolved staff identity for the current request."""
 
-    __slots__ = ("id", "role", "name")
+    __slots__ = ("id", "role", "name", "district", "state")
 
-    def __init__(self, id: str, role: str, name: Optional[str] = None):
+    def __init__(self, id: str, role: str, name: Optional[str] = None, district: Optional[str] = None, state: Optional[str] = None):
         self.id = id
         self.role = role
         self.name = name
+        self.district = district
+        self.state = state
 
 
 async def get_bearer_token(authorization: Optional[str] = Header(None)) -> str:
@@ -71,13 +109,28 @@ async def get_bearer_token(authorization: Optional[str] = Header(None)) -> str:
 
 async def get_current_staff_user(token: str = Depends(get_bearer_token)) -> CurrentStaffUser:
     """
-    Verifies the bearer token against Supabase Auth and resolves it to a staff
-    identity via user_metadata, the `users` table, or the `staff` table.
+    Verifies the bearer token against internal signed staff JWTs or Supabase Auth
+    and resolves it to a staff identity.
 
     Raises 401 for a missing/invalid/expired token (authentication failure).
     Raises 403 for a valid token whose account has no staff role (authorization
     failure — the caller proved who they are, but they aren't staff).
     """
+    # 1. Try local staff JWT first
+    claims = decode_staff_token(token)
+    if claims and claims.get("sub"):
+        role = claims.get("role", "counsellor")
+        if role not in STAFF_ROLES and ROLE_ALIASES.get(role) not in STAFF_ROLES:
+            raise HTTPException(status_code=403, detail="This account does not have staff access")
+        return CurrentStaffUser(
+            id=claims["sub"],
+            role=role,
+            name=claims.get("name") or "Staff Official",
+            district=claims.get("district"),
+            state=claims.get("state")
+        )
+
+    # 2. Fall back to remote Supabase Auth
     supabase = await get_supabase()
 
     try:
@@ -93,31 +146,36 @@ async def get_current_staff_user(token: str = Depends(get_bearer_token)) -> Curr
     meta = getattr(user, "user_metadata", {}) or {}
     role = meta.get("role")
     name = meta.get("name")
+    district = meta.get("district")
+    state = meta.get("state")
 
-    if not role:
+    if not role or not district or not state:
         profile_resp = (
-            await supabase.table("users").select("id, role_type, name").eq("id", user.id).execute()
+            await supabase.table("users").select("id, role_type, name, location_district, location_state").eq("id", user.id).execute()
         )
         if profile_resp.data:
-            role = profile_resp.data[0].get("role_type")
+            role = role or profile_resp.data[0].get("role_type")
             name = name or profile_resp.data[0].get("name")
+            district = district or profile_resp.data[0].get("location_district")
+            state = state or profile_resp.data[0].get("location_state")
 
     if not role:
         staff_resp = (
-            await supabase.table("staff").select("role").eq("user_id", user.id).execute()
+            await supabase.table("staff").select("role, name").eq("user_id", user.id).execute()
         )
         if staff_resp.data:
             role = staff_resp.data[0].get("role")
+            name = name or staff_resp.data[0].get("name")
 
     if not role:
         # Fallback for staff who might not have an explicit profile yet
         role = "counsellor"
         name = name or "Staff"
 
-    if role not in STAFF_ROLES:
+    if role not in STAFF_ROLES and ROLE_ALIASES.get(role) not in STAFF_ROLES:
         raise HTTPException(status_code=403, detail="This account does not have staff access")
 
-    return CurrentStaffUser(id=user.id, role=role, name=name)
+    return CurrentStaffUser(id=user.id, role=role, name=name, district=district, state=state)
 
 
 def require_roles(*allowed_roles: str):

@@ -13,6 +13,8 @@ class SOSRequest(BaseModel):
     location_lat: float
     location_lng: float
 
+@router.post("")
+@router.post("/")
 @router.post("/sos")
 async def trigger_sos(
     request: SOSRequest,

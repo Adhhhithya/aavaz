@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import GrievanceRegistrationScreen from '../../src/screens/GrievanceRegistrationScreen';
+import CaseLifecycleScreen from '../../src/screens/CaseLifecycleScreen';
 import { authService } from '../../src/auth/authService';
 
 export default function CasesRoute() {
@@ -11,5 +11,5 @@ export default function CasesRoute() {
     });
   }, []);
 
-  return <GrievanceRegistrationScreen userProfile={userProfile} />;
+  return <CaseLifecycleScreen userProfile={userProfile} />;
 }

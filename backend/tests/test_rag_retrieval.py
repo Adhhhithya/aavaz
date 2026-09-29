@@ -209,3 +209,19 @@ async def test_legal_context_injected_into_empathy_prompt():
         system_prompt = messages_sent[0]['content']
         
         assert "Husband or relative of husband of a woman subjecting her to cruelty" in system_prompt
+
+
+@pytest.mark.asyncio
+async def test_retrieve_legal_context_fallback():
+    """Verify that retrieve_legal_context falls back to the in-memory legal knowledge corpus when RPC fails."""
+    from services.rag_retriever import retrieve_legal_context
+    from unittest.mock import patch, AsyncMock
+
+    with patch("services.rag_retriever.get_supabase", side_effect=Exception("pgvector RPC not available")):
+        # Query for compensation
+        docs = await retrieve_legal_context("How much compensation for atrocity victim FIR?")
+        assert len(docs) > 0
+        assert any("compensation" in doc.category.lower() or "compensation" in doc.title.lower() for doc in docs)
+        assert all(doc.similarity >= 0.70 for doc in docs)
+        assert all(doc.source is not None for doc in docs)
+

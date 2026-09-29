@@ -27,6 +27,7 @@ import {
 import { DS } from '../theme/designSystem';
 import { api } from '../services/api';
 import { useWarningModal } from '../context/WarningModalContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const GRIEVANCE_TYPES = [
   'FIR / Police Inaction',
@@ -47,6 +48,7 @@ const ROLES = [
 
 export default function GrievanceRegistrationScreen({ userProfile, onBack, onComplete }) {
   const { showWarning, showError, showSuccess } = useWarningModal();
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -152,8 +154,8 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
             <ArrowLeft size={22} color={DS.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>File Grievance</Text>
-            <Text style={styles.headerSubtitle}>Step {step} of 5</Text>
+            <Text style={styles.headerTitle}>{t('btnFileComplaint') || 'File Grievance'}</Text>
+            <Text style={styles.headerSubtitle}>{t('stepIndicator', { step, total: 5 }) || `Step ${step} of 5`}</Text>
           </View>
           <View style={{ width: 40 }} />
         </View>
@@ -182,7 +184,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
             <View style={styles.stepContainer}>
               <View style={styles.stepHeader}>
                 <FileText size={24} color={DS.primary.main} style={{ marginRight: 8 }} />
-                <Text style={styles.stepTitle}>Grievance Context</Text>
+                <Text style={styles.stepTitle}>{t('step1Title') || 'Grievance Context'}</Text>
               </View>
               <Text style={styles.stepDescription}>
                 Select the primary category of your complaint and your role.
@@ -232,13 +234,13 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
             <View style={styles.stepContainer}>
               <View style={styles.stepHeader}>
                 <User size={24} color={DS.primary.main} style={{ marginRight: 8 }} />
-                <Text style={styles.stepTitle}>Personal Identity</Text>
+                <Text style={styles.stepTitle}>{t('step2Title') || 'Personal Identity'}</Text>
               </View>
               <Text style={styles.stepDescription}>
                 Provide identity details for official verification and witness protection matching.
               </Text>
 
-              <Text style={styles.fieldLabel}>FIRST NAME *</Text>
+              <Text style={styles.fieldLabel}>{t('firstName')} *</Text>
               <TextInput
                 style={styles.input}
                 value={formData.first_name}
@@ -249,7 +251,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
 
               <View style={styles.row}>
                 <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={styles.fieldLabel}>MIDDLE NAME</Text>
+                  <Text style={styles.fieldLabel}>{t('middleName')}</Text>
                   <TextInput
                     style={styles.input}
                     value={formData.middle_name}
@@ -259,7 +261,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                   />
                 </View>
                 <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={styles.fieldLabel}>LAST NAME</Text>
+                  <Text style={styles.fieldLabel}>{t('lastName')}</Text>
                   <TextInput
                     style={styles.input}
                     value={formData.last_name}
@@ -270,7 +272,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                 </View>
               </View>
 
-              <Text style={styles.fieldLabel}>FATHER'S / GUARDIAN'S NAME</Text>
+              <Text style={styles.fieldLabel}>{t('fatherName')}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.father_name}
@@ -279,7 +281,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                 placeholderTextColor={DS.text.muted}
               />
 
-              <Text style={styles.fieldLabel}>DATE OF BIRTH (YYYY-MM-DD)</Text>
+              <Text style={styles.fieldLabel}>{t('dob')}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.dob}
@@ -288,7 +290,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                 placeholderTextColor={DS.text.muted}
               />
 
-              <Text style={styles.fieldLabel}>COMMUNITY / CATEGORY</Text>
+              <Text style={styles.fieldLabel}>{t('category')}</Text>
               <View style={styles.pillRow}>
                 {CATEGORIES.map((c) => {
                   const isSelected = formData.category === c;
@@ -306,7 +308,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                 })}
               </View>
 
-              <Text style={styles.fieldLabel}>AADHAAR NUMBER *</Text>
+              <Text style={styles.fieldLabel}>{t('aadhaarNumber')} *</Text>
               <TextInput
                 style={styles.input}
                 value={formData.aadhaar_number}
@@ -324,13 +326,13 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
             <View style={styles.stepContainer}>
               <View style={styles.stepHeader}>
                 <MapPin size={24} color={DS.primary.main} style={{ marginRight: 8 }} />
-                <Text style={styles.stepTitle}>Residential Address</Text>
+                <Text style={styles.stepTitle}>{t('step3Title') || 'Residential Address'}</Text>
               </View>
               <Text style={styles.stepDescription}>
                 Used to route this case to the appropriate District Magistrate and local counsellor.
               </Text>
 
-              <Text style={styles.fieldLabel}>STATE *</Text>
+              <Text style={styles.fieldLabel}>{t('state')} *</Text>
               <TextInput
                 style={styles.input}
                 value={formData.state}
@@ -341,7 +343,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
 
               <View style={styles.row}>
                 <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={styles.fieldLabel}>DISTRICT *</Text>
+                  <Text style={styles.fieldLabel}>{t('district')} *</Text>
                   <TextInput
                     style={styles.input}
                     value={formData.district}
@@ -351,7 +353,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                   />
                 </View>
                 <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={styles.fieldLabel}>TALUKA / TEHSIL</Text>
+                  <Text style={styles.fieldLabel}>{t('taluka')}</Text>
                   <TextInput
                     style={styles.input}
                     value={formData.taluka}
@@ -362,7 +364,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                 </View>
               </View>
 
-              <Text style={styles.fieldLabel}>PINCODE *</Text>
+              <Text style={styles.fieldLabel}>{t('pincode')} *</Text>
               <TextInput
                 style={styles.input}
                 value={formData.pincode}
@@ -373,7 +375,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                 placeholderTextColor={DS.text.muted}
               />
 
-              <Text style={styles.fieldLabel}>FULL RESIDENTIAL ADDRESS *</Text>
+              <Text style={styles.fieldLabel}>{t('fullAddress')} *</Text>
               <TextInput
                 style={[styles.input, styles.textAreaSmall]}
                 value={formData.full_address}
@@ -391,7 +393,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
             <View style={styles.stepContainer}>
               <View style={styles.stepHeader}>
                 <Scale size={24} color={DS.primary.main} style={{ marginRight: 8 }} />
-                <Text style={styles.stepTitle}>Legal References</Text>
+                <Text style={styles.stepTitle}>{t('step4Title') || 'Legal References'}</Text>
               </View>
               <Text style={styles.stepDescription}>
                 Link police FIR and eCourts details if available.
@@ -410,7 +412,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                 />
               </View>
 
-              <Text style={[styles.fieldLabel, { marginTop: 20 }]}>eCOURTS CNR NUMBER (OPTIONAL)</Text>
+              <Text style={[styles.fieldLabel, { marginTop: 20 }]}>{t('cnrNumber')}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.cnr_number}
@@ -430,13 +432,13 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
             <View style={styles.stepContainer}>
               <View style={styles.stepHeader}>
                 <MessageSquare size={24} color={DS.primary.main} style={{ marginRight: 8 }} />
-                <Text style={styles.stepTitle}>Incident Statement</Text>
+                <Text style={styles.stepTitle}>{t('step5Title') || 'Incident Statement'}</Text>
               </View>
               <Text style={styles.stepDescription}>
                 Describe what happened in detail. Our AI will analyze emotional tone to calibrate support.
               </Text>
 
-              <Text style={styles.fieldLabel}>DETAILED STATEMENT *</Text>
+              <Text style={styles.fieldLabel}>{t('incidentDescription')} *</Text>
               <TextInput
                 style={[styles.input, styles.textAreaLarge]}
                 value={formData.grievance_description}
@@ -463,7 +465,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
           {step > 1 ? (
             <TouchableOpacity onPress={handlePrev} style={styles.prevButton} disabled={loading}>
               <ChevronLeft size={20} color={DS.text.primary} />
-              <Text style={styles.prevButtonText}>Back</Text>
+              <Text style={styles.prevButtonText}>{t('btnBack')}</Text>
             </TouchableOpacity>
           ) : (
             <View style={{ flex: 1 }} />
@@ -471,7 +473,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
 
           {step < 5 ? (
             <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-              <Text style={styles.nextButtonText}>Next</Text>
+              <Text style={styles.nextButtonText}>{t('btnNext')}</Text>
               <ChevronRight size={20} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
@@ -480,7 +482,7 @@ export default function GrievanceRegistrationScreen({ userProfile, onBack, onCom
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Text style={styles.submitButtonText}>Submit Grievance</Text>
+                  <Text style={styles.submitButtonText}>{t('btnSubmitGrievance')}</Text>
                   <CheckCircle2 size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
                 </>
               )}
@@ -750,6 +752,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
+    paddingBottom: 100, // Ensure Next button is reachable above the floating nav bar
     backgroundColor: '#FFFFFF',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: DS.canvas.border,

@@ -14,7 +14,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from typing import Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
@@ -262,6 +262,28 @@ class ConversationState(BaseModel):
     language: str = "en"
     turn_id: int = 0
     channel: Literal["voice", "chat", "sms", "ivr"] = "chat"
+    submitter_role: str = "victim"
+    history_score: float = 0.0
+
+    @field_validator("submitter_role", mode="before")
+    @classmethod
+    def default_submitter_role(cls, v):
+        return v or "victim"
+
+    @field_validator("language", mode="before")
+    @classmethod
+    def default_language(cls, v):
+        return v or "en"
+
+    @field_validator("channel", mode="before")
+    @classmethod
+    def default_channel(cls, v):
+        return v or "chat"
+
+    @field_validator("history_score", mode="before")
+    @classmethod
+    def default_history_score(cls, v):
+        return float(v) if v is not None else 0.0
 
     # Conversation history (bounded - trim to last N turns for context window)
     transcript: list[Turn] = Field(default_factory=list)

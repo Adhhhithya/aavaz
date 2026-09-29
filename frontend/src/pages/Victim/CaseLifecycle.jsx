@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { Search, Download, Plus, FileText, CheckCircle2, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import NumberFlow from '@number-flow/react';
@@ -9,19 +9,20 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { cn } from '../../lib/utils';
 
-const STAGES = [
-  { id: 'registered', title: 'Case Registered', desc: 'Your complaint has been successfully recorded.' },
-  { id: 'investigating', title: 'Investigation', desc: 'Active gathering of evidence and witness statements.' },
-  { id: 'charge_sheet', title: 'Charge Sheet Filed', desc: 'Formal charges have been presented.' },
-  { id: 'trial', title: 'Court Trial', desc: 'The legal proceedings are currently active.' },
-  { id: 'resolved', title: 'Judgement & Resolution', desc: 'Final verdict and rehabilitation measures.' }
-];
-
 export default function VictimCase() {
   const { user, authFetch } = useAuth();
+  const { t } = useLanguage();
   const [activeCase, setActiveCase] = useState(null);
   const [caseProgress, setCaseProgress] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const STAGES = [
+    { id: 'registered', title: t('stageRegistered'), desc: t('stageRegisteredDesc') },
+    { id: 'investigating', title: t('stageInvestigating'), desc: t('stageInvestigatingDesc') },
+    { id: 'charge_sheet', title: t('stageChargeSheet'), desc: t('stageChargeSheetDesc') },
+    { id: 'trial', title: t('stageTrial'), desc: t('stageTrialDesc') },
+    { id: 'resolved', title: t('stageResolved'), desc: t('stageResolvedDesc') }
+  ];
 
   const [cnrInput, setCnrInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -45,16 +46,20 @@ export default function VictimCase() {
       const casesData = await casesRes.json();
 
       if (casesData.cases && casesData.cases.length > 0) {
-        const c = casesData.cases[0];
-        setActiveCase(c);
-
-        // 2. Fetch detailed progress for the active case
-        const progRes = await authFetch(`/api/v1/cases/${c.id}/progress`, {
-          headers: { 'ngrok-skip-browser-warning': '1' }
-        });
-        if (progRes.ok) {
-          const progData = await progRes.json();
-          setCaseProgress(progData);
+        const foundReal = casesData.cases.find(c =>
+          c.grievance_related_to || c.grievance_description || c.cnr || c.cnr_number || (c.case_type && c.case_type.toLowerCase() !== 'unspecified')
+        );
+        if (foundReal) {
+          setActiveCase(foundReal);
+          const progRes = await authFetch(`/api/v1/cases/${foundReal.id}/progress`, {
+            headers: { 'ngrok-skip-browser-warning': '1' }
+          });
+          if (progRes.ok) {
+            const progData = await progRes.json();
+            setCaseProgress(progData);
+          }
+        } else {
+          setActiveCase(null);
         }
       } else {
         setActiveCase(null);
@@ -162,13 +167,13 @@ export default function VictimCase() {
       {/* ─── Header & Actions ──────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-main tracking-tight">Case Status</h1>
-          <p className="text-text-secondary mt-1 font-medium">Manage your active legal matters.</p>
+          <h1 className="text-3xl font-bold text-text-main tracking-tight">{t('caseStatusTitle')}</h1>
+          <p className="text-text-secondary mt-1 font-medium">{t('caseStatusSubtitle')}</p>
         </div>
         <div className="shrink-0 flex gap-3">
           <Button onClick={() => setShowFileModal(true)} className="gap-2">
             <Plus size={18} />
-            File Complaint
+            {t('btnFileComplaint')}
           </Button>
         </div>
       </div>
@@ -176,14 +181,14 @@ export default function VictimCase() {
       {/* ─── Link eCourts Case Card ────────────────────────────── */}
       <Card className="p-6">
         <h2 className="text-sm font-bold text-text-secondary uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Search size={16} /> Link eCourts Case
+          <Search size={16} /> {t('linkEcourtsTitle')}
         </h2>
         <form onSubmit={handleCnrSearch} className="flex gap-3">
           <Input
             type="text"
             value={cnrInput}
             onChange={(e) => setCnrInput(e.target.value)}
-            placeholder="Enter 16-digit CNR Number"
+            placeholder={t('cnrPlaceholder')}
             className="flex-1"
           />
           <Button
@@ -191,7 +196,7 @@ export default function VictimCase() {
             variant="secondary"
             disabled={isSearching || !cnrInput.trim()}
           >
-            {isSearching ? 'Searching...' : 'Search'}
+            {isSearching ? t('btnSearching') : t('btnSearch')}
           </Button>
         </form>
       </Card>
@@ -199,8 +204,8 @@ export default function VictimCase() {
       {!activeCase ? (
         <div className="text-center py-16 bg-surface-hover border border-border border-dashed rounded-2xl">
           <FileText size={48} className="mx-auto text-text-muted mb-4 opacity-50" />
-          <h3 className="text-xl font-bold text-text-main mb-2">No Active Case</h3>
-          <p className="text-text-secondary font-medium">File a new complaint or link an existing eCourts case above.</p>
+          <h3 className="text-xl font-bold text-text-main mb-2">{t('noActiveCaseTitle')}</h3>
+          <p className="text-text-secondary font-medium">{t('noActiveCaseDesc')}</p>
         </div>
       ) : (
         <>
@@ -211,14 +216,14 @@ export default function VictimCase() {
 
             <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
               <div>
-                <h2 className="text-2xl font-bold text-text-main mb-1">{activeCase.title || 'Case Report'}</h2>
+                <h2 className="text-2xl font-bold text-text-main mb-1">{activeCase.title || t('caseReport')}</h2>
                 <p className="text-text-muted font-medium font-mono text-sm">
                   {activeCase.cnr ? `CNR: ${activeCase.cnr}` : `ID: ${activeCase.id}`}
                 </p>
               </div>
               {caseProgress && (
                 <div className="text-right">
-                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Distress Index</p>
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('distressIndexLabel')}</p>
                   <div className="inline-flex items-baseline gap-1 text-3xl font-black text-critical-base">
                     <NumberFlow value={caseProgress.latestScore || 0} />
                     <span className="text-sm font-bold text-text-muted">/100</span>
@@ -229,21 +234,21 @@ export default function VictimCase() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <div>
-                <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Status</p>
+                <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('statusLabel')}</p>
                 <p className="text-base font-bold text-primary-base capitalize">{activeCase.status || 'Pending'}</p>
               </div>
               <div>
-                <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Date Filed</p>
+                <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('dateFiledLabel')}</p>
                 <p className="text-base font-bold text-text-main">{activeCase.dateFiled || 'N/A'}</p>
               </div>
               {activeCase.ecourts_data && (
                 <>
                   <div>
-                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Next Hearing</p>
+                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('nextHearingLabel')}</p>
                     <p className="text-base font-bold text-text-main">{activeCase.ecourts_data.nextHearingDate || 'N/A'}</p>
                   </div>
                   <div className="sm:col-span-2 lg:col-span-3">
-                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Court</p>
+                    <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('courtLabel')}</p>
                     <p className="text-base font-bold text-text-main">{activeCase.ecourts_data.courtCode || 'N/A'}</p>
                   </div>
                 </>
@@ -254,19 +259,19 @@ export default function VictimCase() {
             {activeCase.grievance_related_to && (
               <div className="mt-6 pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Grievance Type</p>
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('grievanceTypeLabel')}</p>
                   <p className="text-base font-bold text-text-main">{activeCase.grievance_related_to}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Submitter Role</p>
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('submitterRoleLabel')}</p>
                   <p className="text-base font-bold text-text-main capitalize">{activeCase.submitter_role}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">FIR Registered</p>
-                  <p className="text-base font-bold text-text-main">{activeCase.has_fir ? 'Yes' : 'No'}</p>
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('firRegisteredLabel')}</p>
+                  <p className="text-base font-bold text-text-main">{activeCase.has_fir ? t('yes') : t('no')}</p>
                 </div>
                 <div className="sm:col-span-2 lg:col-span-3">
-                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Description</p>
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">{t('descriptionLabel')}</p>
                   <p className="text-sm font-medium text-text-main leading-relaxed">{activeCase.grievance_description}</p>
                 </div>
               </div>
@@ -279,14 +284,14 @@ export default function VictimCase() {
                 className="gap-2 font-bold text-primary-base hover:text-primary-hover px-0"
               >
                 <Download size={16} />
-                Download Official Report PDF
+                {t('btnDownloadReport')}
               </Button>
             </div>
           </Card>
 
           {/* ─── Animated Timeline ─────────────────────────────── */}
           <div>
-            <h2 className="text-xl font-bold text-text-main mb-6">Lifecycle Progress</h2>
+            <h2 className="text-xl font-bold text-text-main mb-6">{t('lifecycleProgressTitle')}</h2>
             <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-border">
 
               {STAGES.map((stage, idx) => {
@@ -347,15 +352,15 @@ export default function VictimCase() {
               transition={{ type: 'spring', damping: 26, stiffness: 300 }}
               className="relative w-full max-w-md bg-surface rounded-2xl shadow-lg border border-border p-6"
             >
-              <h2 className="text-2xl font-bold text-text-main mb-2">File a Complaint</h2>
+              <h2 className="text-2xl font-bold text-text-main mb-2">{t('fileComplaintModalTitle')}</h2>
               <p className="text-text-secondary text-sm font-medium mb-6">
-                Describe your situation briefly. Our system will prioritize and assign it to a counsellor immediately.
+                {t('fileComplaintModalDesc')}
               </p>
               <form onSubmit={handleFileCase}>
                 <textarea
                   value={newCaseDesc}
                   onChange={e => setNewCaseDesc(e.target.value)}
-                  placeholder="I want to report an incident regarding..."
+                  placeholder={t('fileComplaintPlaceholder')}
                   className="w-full h-32 px-4 py-3 bg-background border border-border rounded-xl text-text-main focus:outline-none focus:ring-2 focus:ring-primary-base/20 resize-none font-medium mb-6"
                   required
                 />
@@ -365,13 +370,13 @@ export default function VictimCase() {
                     variant="ghost"
                     onClick={() => setShowFileModal(false)}
                   >
-                    Cancel
+                    {t('btnCancel')}
                   </Button>
                   <Button
                     type="submit"
                     disabled={isSubmitting || !newCaseDesc.trim()}
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Complaint'}
+                    {isSubmitting ? t('btnSearching') : t('btnSubmitComplaint')}
                   </Button>
                 </div>
               </form>

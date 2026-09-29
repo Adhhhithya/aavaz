@@ -59,12 +59,70 @@ async def get_case_progress(
             elif case_resp.data["current_distress_score"] < 40:
                 score_explanation = "Your check-ins show you are doing relatively well. Keep it up!"
         
+        # Assigned clinician lookup
+        assigned_clinician_name = None
+        assigned_clinician_role = None
+        assigned_counsellor_id = case_resp.data.get("assigned_counsellor_id")
+        if assigned_counsellor_id:
+            try:
+                co_resp = await supabase.table("counsellors").select("name, role").eq("id", assigned_counsellor_id).single().execute()
+                if co_resp.data:
+                    assigned_clinician_name = co_resp.data.get("name")
+                    assigned_clinician_role = co_resp.data.get("role") or "Counsellor"
+            except Exception as e:
+                logger.debug(f"Could not fetch counsellor details: {e}")
+
+        # Case milestones
+        milestones_list = []
+        try:
+            m_resp = await supabase.table("milestones").select("*").eq("case_id", case_id).order("created_at").execute()
+            for m in (m_resp.data or []):
+                milestones_list.append({
+                    "id": m.get("id"),
+                    "label": m.get("label") or m.get("type", "").replace("_", " ").title(),
+                    "icon": m.get("icon") or "check",
+                    "date": m.get("met_at") or m.get("due_at") or m.get("created_at"),
+                    "description": m.get("description"),
+                    "active": bool(m.get("is_active", False)),
+                    "upcoming": m.get("met_at") is None,
+                })
+        except Exception as e:
+            logger.debug(f"Could not load milestones: {e}")
+
+        # Biomarkers from latest score breakdown
+        acoustic_shimmer = None
+        nlp_valence = None
+        heart_rate = None
+        if interactions:
+            latest_breakdown = interactions[0].get("score_breakdown", {})
+            if isinstance(latest_breakdown, dict):
+                ac = latest_breakdown.get("acoustic", {})
+                if isinstance(ac, dict):
+                    if "shimmer" in ac and ac["shimmer"] is not None:
+                        acoustic_shimmer = f"{round(float(ac['shimmer']) * 100, 1)}%" if isinstance(ac["shimmer"], (int, float)) else str(ac["shimmer"])
+                    elif ac.get("available") and ac.get("raw_value") is not None:
+                        acoustic_shimmer = f"{round(float(ac['raw_value']), 1)}%"
+                sent = latest_breakdown.get("sentiment", {})
+                if isinstance(sent, dict):
+                    if "valence" in sent and sent["valence"] is not None:
+                        nlp_valence = f"{round(float(sent['valence']), 2)}" if isinstance(sent["valence"], (int, float)) else str(sent["valence"])
+                    elif sent.get("available") and sent.get("raw_value") is not None:
+                        nlp_valence = f"{round(float(sent['raw_value']) / 100, 2)}"
+                if "heart_rate" in latest_breakdown and latest_breakdown["heart_rate"] is not None:
+                    heart_rate = latest_breakdown["heart_rate"]
+
         return {
             "currentStage": case_resp.data["case_stage"],
             "latestScore": case_resp.data["current_distress_score"],
             "scoreExplanation": score_explanation,
             "interactions": interactions,
-            "trend": trend
+            "trend": trend,
+            "assigned_clinician_name": assigned_clinician_name,
+            "assigned_clinician_role": assigned_clinician_role,
+            "milestones": milestones_list,
+            "acoustic_shimmer": acoustic_shimmer,
+            "nlp_valence": nlp_valence,
+            "heart_rate": heart_rate,
         }
     except HTTPException:
         raise

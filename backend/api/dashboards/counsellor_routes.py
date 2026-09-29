@@ -26,16 +26,31 @@ async def get_counsellor_queue(
     supabase = await get_supabase()
     try:
         resp = await supabase.table("cases")\
-            .select("id, case_type, case_stage, current_distress_score, updated_at, has_sos, user_id")\
-            .eq("assigned_counsellor_id", counsellor_id)\
+            .select("id, case_type, case_stage, current_distress_score, updated_at, user_id, assigned_counsellor_id")\
             .neq("case_stage", "closed")\
             .order("current_distress_score", desc=True)\
             .execute()
             
-        cases = resp.data
+        all_cases = resp.data or []
+        # Cases assigned to this counsellor
+        cases = [c for c in all_cases if c.get("assigned_counsellor_id") == counsellor_id]
+        # If none assigned yet, include unassigned cases so counsellor can triage
+        if not cases:
+            cases = [c for c in all_cases if not c.get("assigned_counsellor_id")]
         
-        # Hydrate with user names (In production, use a postgres view or RPC for joins)
+        # Check active SOS for these cases
+        case_ids = [c["id"] for c in cases]
+        sos_case_ids = set()
+        if case_ids:
+            try:
+                sos_resp = await supabase.table("sos_events").select("case_id").in_("case_id", case_ids).eq("resolved", False).execute()
+                sos_case_ids = set(s["case_id"] for s in (sos_resp.data or []))
+            except Exception:
+                pass
+
+        # Hydrate with user names and SOS indicator
         for c in cases:
+            c["has_sos"] = c["id"] in sos_case_ids
             u_resp = await supabase.table("users").select("name, phone_number").eq("id", c["user_id"]).single().execute()
             if u_resp.data:
                 c["user_name"] = u_resp.data["name"]
@@ -59,8 +74,9 @@ async def get_case_detail(
         case_resp = await supabase.table("cases").select("*").eq("id", case_id).single().execute()
         case_data = case_resp.data
 
-        if current_user.role == "counsellor" and case_data.get("assigned_counsellor_id") != current_user.id:
-            raise HTTPException(status_code=403, detail="This case is not assigned to you")
+        assigned_c = case_data.get("assigned_counsellor_id")
+        if current_user.role == "counsellor" and assigned_c and assigned_c != current_user.id:
+            raise HTTPException(status_code=403, detail="This case is assigned to another counsellor")
 
         u_resp = await supabase.table("users").select("name, phone_number, role_type").eq("id", case_data["user_id"]).single().execute()
         if u_resp.data:

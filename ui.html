@@ -1,0 +1,1104 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#F2F2F7;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "secondary-fixed": "#6ffbbe", "primary-container": "#2170e4", "on-tertiary": "#ffffff", "surface-container-high": "#e2e7ff", "surface-tint": "#005ac2", "on-error": "#ffffff", "surface-variant": "#dae2fd", "surface-container-lowest": "#ffffff", "on-secondary-fixed-variant": "#005236", "primary-fixed-dim": "#adc6ff", "outline": "#727785", "surface-dim": "#d2d9f4", "error-container": "#ffdad6", "on-primary-fixed-variant": "#004395", "on-primary": "#ffffff", "primary": "#3B82F6", "on-surface": "#131b2e", "surface-container": "#eaedff", "inverse-on-surface": "#eef0ff", "on-tertiary-container": "#fffbff", "on-tertiary-fixed": "#410004", "inverse-primary": "#adc6ff", "secondary": "#006c49", "tertiary": "#b61722", "surface": "#F2F2F7", "secondary-fixed-dim": "#4edea3", "on-surface-variant": "#424754", "on-secondary": "#ffffff", "surface-container-highest": "#dae2fd", "tertiary-container": "#da3437", "on-secondary-container": "#00714d", "on-error-container": "#93000a", "background": "#F2F2F7", "primary-fixed": "#d8e2ff", "on-tertiary-fixed-variant": "#930013", "surface-container-low": "#f2f3ff", "tertiary-fixed-dim": "#ffb3ad", "on-primary-fixed": "#001a42", "outline-variant": "#c2c6d6", "on-secondary-fixed": "#002113", "on-background": "#131b2e", "error": "#ba1a1a", "tertiary-fixed": "#ffdad7", "inverse-surface": "#283044", "surface-bright": "#faf8ff", "on-primary-container": "#fefcff", "secondary-container": "#6cf8bb" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" }, spacing: { "space-lg": "1rem", "space-md": "0.75rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-xl": "1.5rem", "gutter": "1rem", "margin": "1rem" }, fontFamily: { "body-lg": ["Inter"], "caption": ["Inter"], "headline-lg": ["Inter"], "display-lg": ["Inter"], "body-md": ["Inter"], "headline-sm": ["Inter"], "display-metric": ["Inter"], "label-sm": ["Inter"], "label-md": ["Inter"] }, fontSize: { "body-lg": ["17px", { lineHeight: "22px", letterSpacing: "-0.01em", fontWeight: "400" }], "caption": ["11px", { lineHeight: "13px", letterSpacing: "0.04em", fontWeight: "500" }], "headline-lg": ["22px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "700" }], "display-lg": ["34px", { lineHeight: "41px", letterSpacing: "-0.02em", fontWeight: "700" }], "body-md": ["15px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }], "headline-sm": ["17px", { lineHeight: "22px", letterSpacing: "-0.01em", fontWeight: "600" }], "display-metric": ["32px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "700" }], "label-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }], "label-md": ["13px", { lineHeight: "18px", letterSpacing: "0.01em", fontWeight: "600" }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+    #view-checkin {
+      transition: background-color 0.4s ease;
+    }
+    .emoji-bounce {
+      animation: emojiPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes emojiPop {
+      0% { transform: scale(0.82); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    /* Enhanced glassmorphism styling */
+    .glass-nav-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    }
+    .glass-tab-indicator {
+      background: rgba(59, 130, 246, 0.14);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(59, 130, 246, 0.22);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7);
+    }
+    /* Glass button for confirm */
+    .glass-confirm-btn {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+    }
+  </style>
+</head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen relative overflow-x-hidden">
+<!-- TOP APP HEADER (Visible on tab screens; check-in view has its own immersive header) -->
+<header class="fixed top-0 w-full z-40 bg-surface/85 backdrop-blur-xl border-b border-black/[0.04] pt-safe transition-all duration-200" id="app-header"><div class="flex justify-between items-center px-margin h-6 text-on-surface text-[14px] font-semibold tracking-tight select-none"><span class="">9:41</span><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[17px]">signal_cellular_4_bar</span><span class="material-symbols-outlined text-[17px]">wifi</span><span class="material-symbols-outlined text-[20px]">battery_full</span></div></div><div class="h-14 px-margin flex items-center justify-between"><div class="flex items-center gap-2.5 cursor-pointer" onclick="switchTab('home')"><div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg></div><span class="text-[20px] font-extrabold tracking-tight text-slate-900 select-none">AAVAAZ</span></div><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-[13px] cursor-pointer shadow-sm active:scale-95 transition-transform" onclick="switchTab('profile')" title="Go to Profile">PS</div></div></div></header>
+<main class="flex-1 w-full pt-20 pb-28 px-margin bg-surface">
+<!-- VIEW 1: HOME -->
+<div class="screen-view flex-col w-full select-none flex" id="view-home">
+<!-- Top Greeting Header -->
+<header class="flex items-end justify-between mb-3 pt-1">
+<div class="flex flex-col">
+<span class="font-caption text-caption tracking-wider uppercase text-on-surface-variant/70">HI, USER</span>
+<h2 class="font-display-lg text-display-lg text-on-surface tracking-tight -mt-1 font-bold">Today</h2>
+</div>
+<button aria-label="Trigger SOS Emergency Protocol" class="sos-trigger-btn px-4 py-2 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-[14px] flex items-center gap-1.5 shadow-md shadow-red-500/20 active:scale-95 transition-all cursor-pointer" onclick="openSosModal()"><span class="material-symbols-outlined text-[18px] leading-none" style="font-variation-settings: &quot;FILL&quot; 1;">shield</span><span class="">SOS</span></button></header>
+<!-- Quick Action Banner: Prompt to Check-in -->
+
+<!-- Section 1: Distress Index Hero Card -->
+<section class="flex flex-col mb-4">
+<div class="rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] flex flex-col">
+<!-- 180-Degree Distress Gauge Arc Visualizer -->
+<div class="relative flex flex-col items-center justify-center pt-3 pb-2">
+<svg aria-hidden="true" class="w-full max-w-[270px] overflow-visible" viewBox="0 0 240 135">
+<!-- Segment 1: Sage (0 - 40%) -->
+<path class="opacity-95" d="M 30 115 A 90 90 0 0 1 67.09 42.19" fill="none" stroke="#10b981" stroke-linecap="round" stroke-width="16"></path>
+<!-- Segment 2: Amber (40% - 70%) -->
+<path class="opacity-95" d="M 74.5 37.05 A 90 90 0 0 1 172.91 42.19" fill="none" stroke="#f59e0b" stroke-linecap="round" stroke-width="16"></path>
+<!-- Segment 3: Terracotta/Critical (70% - 100%) -->
+<path class="opacity-95" d="M 180.32 47.05 A 90 90 0 0 1 210 115" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-width="16"></path>
+<!-- Dynamic Thumb Indicator at 72% point -->
+<g class="transition-all duration-700 ease-out" transform="translate(177.3, 45.6)">
+<circle class="animate-pulse" fill="#ef4444" fill-opacity="0.25" r="14"></circle>
+<circle fill="#ef4444" r="9" stroke="#ffffff" stroke-width="2.5"></circle>
+<circle fill="#ffffff" r="3.5"></circle>
+</g>
+</svg>
+<!-- Centered Metric Inside Gauge Core -->
+<div class="flex flex-col items-center -mt-10">
+<div class="flex items-baseline gap-0.5">
+<span class="font-display-lg text-display-lg text-on-surface tabular-nums tracking-tighter font-bold" id="hero-gauge-val">72</span>
+<span class="font-headline-sm text-headline-sm text-on-surface-variant font-medium">/100</span>
+</div>
+<span class="font-headline-sm text-label-md text-red-600 font-semibold flex items-center gap-1 mt-0.5" id="hero-gauge-status">
+<span class="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping"></span>
+Elevated Stress / Critical
+</span>
+</div>
+</div>
+<!-- Segment Boundaries Hairline Divider -->
+<div class="h-[1px] w-full bg-black/[0.06] my-3"></div>
+<!-- Semantic Tier Breakdown Legend -->
+<div class="grid grid-cols-3 gap-1 pt-1 text-center">
+<div class="flex items-center justify-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
+<span class="font-caption text-caption text-on-surface-variant">Baseline <span class="font-semibold text-on-surface">0–40</span></span>
+</div>
+<div class="flex items-center justify-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#f59e0b]"></span>
+<span class="font-caption text-caption text-on-surface-variant">Elevated <span class="font-semibold text-on-surface">41–70</span></span>
+</div>
+<div class="flex items-center justify-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-red-600"></span>
+<span class="font-caption text-caption text-red-600 font-semibold">Critical <span class="text-red-600">&gt;70</span></span>
+</div>
+</div>
+</div>
+</section><div class="mb-4 p-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform" onclick="switchTab('checkin')">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[22px]">sentiment_satisfied</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[13px] font-bold leading-tight">Daily Calibration Ready</span>
+<span class="text-[11px] text-blue-100">Log how you're feeling right now</span>
+</div>
+</div>
+<span class="text-[12px] font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full flex items-center gap-1">Check in <span class="material-symbols-outlined text-[14px]">arrow_forward</span></span>
+</div>
+<!-- Section 2: Weekly Distress Trend & Deconstruction Card -->
+<section class="flex flex-col mb-4">
+<div class="rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<div>
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold">Distress Trends &amp; Deconstruction</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant/90">7-Day Multimodal Composition</p>
+</div>
+
+</div>
+<!-- 7-Day Stacked Bar Chart with Grid Lines -->
+<div class="relative w-full h-44 flex flex-col justify-end pt-3 pb-1">
+<div class="absolute inset-x-0 top-3 bottom-6 flex flex-col justify-between pointer-events-none">
+<div class="w-full border-b border-dashed border-slate-200"></div>
+<div class="w-full border-b border-dashed border-slate-200"></div>
+<div class="w-full border-b border-dashed border-slate-200"></div>
+<div class="w-full border-b border-dashed border-slate-200"></div>
+</div>
+<div class="relative z-10 w-full h-[120px] flex items-end justify-between px-1">
+<!-- Mon -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-7 flex flex-col justify-end gap-[2px]">
+<div class="w-full h-[18px] bg-[#DDD6FE] rounded-t-sm" title="Sentiment: 15%"></div>
+<div class="w-full h-[24px] bg-[#818CF8]" title="Vocal: 20%"></div>
+<div class="w-full h-[30px] bg-[#4F46E5] rounded-b-sm" title="Physiological: 25%"></div>
+</div>
+</div>
+<!-- Tue -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-7 flex flex-col justify-end gap-[2px]">
+<div class="w-full h-[14px] bg-[#DDD6FE] rounded-t-sm" title="Sentiment: 12%"></div>
+<div class="w-full h-[18px] bg-[#818CF8]" title="Vocal: 15%"></div>
+<div class="w-full h-[26px] bg-[#4F46E5] rounded-b-sm" title="Physiological: 21%"></div>
+</div>
+</div>
+<!-- Wed -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-7 flex flex-col justify-end gap-[2px]">
+<div class="w-full h-[24px] bg-[#DDD6FE] rounded-t-sm" title="Sentiment: 20%"></div>
+<div class="w-full h-[32px] bg-[#818CF8]" title="Vocal: 27%"></div>
+<div class="w-full h-[38px] bg-[#4F46E5] rounded-b-sm" title="Physiological: 31%"></div>
+</div>
+</div>
+<!-- Thu -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-7 flex flex-col justify-end gap-[2px]">
+<div class="w-full h-[20px] bg-[#DDD6FE] rounded-t-sm" title="Sentiment: 17%"></div>
+<div class="w-full h-[26px] bg-[#818CF8]" title="Vocal: 22%"></div>
+<div class="w-full h-[34px] bg-[#4F46E5] rounded-b-sm" title="Physiological: 27%"></div>
+</div>
+</div>
+<!-- Fri -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-7 flex flex-col justify-end gap-[2px]">
+<div class="w-full h-[26px] bg-[#DDD6FE] rounded-t-sm" title="Sentiment: 22%"></div>
+<div class="w-full h-[36px] bg-[#818CF8]" title="Vocal: 30%"></div>
+<div class="w-full h-[40px] bg-[#4F46E5] rounded-b-sm" title="Physiological: 32%"></div>
+</div>
+</div>
+<!-- Sat -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-7 flex flex-col justify-end gap-[2px]">
+<div class="w-full h-[12px] bg-[#DDD6FE] rounded-t-sm" title="Sentiment: 10%"></div>
+<div class="w-full h-[16px] bg-[#818CF8]" title="Vocal: 14%"></div>
+<div class="w-full h-[22px] bg-[#4F46E5] rounded-b-sm" title="Physiological: 18%"></div>
+</div>
+</div>
+<!-- Sun -->
+<div class="flex flex-col items-center flex-1">
+<div class="w-7 flex flex-col justify-end gap-[2px] ring-2 ring-purple-300 ring-offset-2 rounded-md">
+<div class="w-full h-[22px] bg-[#DDD6FE] rounded-t-sm" title="Sentiment: 18%"></div>
+<div class="w-full h-[30px] bg-[#818CF8]" title="Vocal: 25%"></div>
+<div class="w-full h-[35px] bg-[#4F46E5] rounded-b-sm" title="Physiological: 29%"></div>
+</div>
+</div>
+</div>
+<!-- X-Axis Labels -->
+<div class="flex justify-between items-center text-center mt-2 px-1 text-slate-500 font-medium text-[11px]">
+<span class="flex-1">Mon</span>
+<span class="flex-1">Tue</span>
+<span class="flex-1">Wed</span>
+<span class="flex-1">Thu</span>
+<span class="flex-1">Fri</span>
+<span class="flex-1">Sat</span>
+<span class="flex-1 font-bold text-primary">Sun</span>
+</div>
+</div>
+<!-- Three-dot Legend -->
+<div class="flex items-center justify-center gap-4 py-2 mt-1 border-t border-black/[0.04]">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-[#4F46E5]"></span>
+<span class="font-caption text-caption text-on-surface-variant font-medium">Physiological</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-[#818CF8]"></span>
+<span class="font-caption text-caption text-on-surface-variant font-medium">Vocal</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-[#DDD6FE] border border-purple-300/60"></span>
+<span class="font-caption text-caption text-on-surface-variant font-medium">Sentiment</span>
+</div>
+</div>
+<!-- Segmented Control Pill -->
+<div class="mt-2 p-1 rounded-xl bg-[#F1F5F9] grid grid-cols-5 gap-1 text-center select-none" id="timeframe-segmented">
+<button class="time-pill py-1.5 rounded-lg text-[12px] font-medium text-slate-500 transition-all hover:text-slate-800 cursor-pointer" onclick="setTimeframe(this)">1d</button>
+<button class="time-pill py-1.5 rounded-lg text-[12px] font-medium text-slate-500 transition-all hover:text-slate-800 cursor-pointer" onclick="setTimeframe(this)">1w</button>
+<button class="time-pill py-1.5 rounded-lg text-[12px] font-medium text-slate-500 transition-all hover:text-slate-800 cursor-pointer" onclick="setTimeframe(this)">1m</button>
+<button class="time-pill py-1.5 rounded-lg text-[12px] font-medium text-slate-500 transition-all hover:text-slate-800 cursor-pointer" onclick="setTimeframe(this)">1y</button>
+<button class="time-pill py-1.5 rounded-lg text-[12px] font-bold text-on-surface bg-white shadow-sm transition-all cursor-pointer" onclick="setTimeframe(this)">All Time</button>
+</div>
+</div>
+</section>
+</div>
+<!-- VIEW 2: CHECK-IN (Immersive Fullscreen Experience inside container, persistent nav at bottom) -->
+<div class="screen-view fixed inset-0 z-40 flex-col justify-between px-6 pt-6 pb-28 text-white overflow-y-auto select-none hidden" id="view-checkin" style="background-color: #8B5CF6;">
+<!-- Mood Header -->
+<div class="flex items-center justify-between pt-safe">
+<button aria-label="Return to Home" class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 flex items-center justify-center transition-all active:scale-95 text-white cursor-pointer" onclick="switchTab('home')">
+<span class="material-symbols-outlined text-[22px]">arrow_back</span>
+</button>
+<span class="text-[13px] font-semibold tracking-wider uppercase text-white/80">Daily Calibration</span>
+<div class="w-10 h-10"></div>
+</div>
+<!-- Center Content -->
+<div class="flex flex-col items-center justify-center my-auto py-2 text-center">
+<h2 class="text-[26px] font-bold tracking-tight text-white mb-4 leading-tight max-w-[290px]">
+How are you feeling this day?
+</h2>
+<!-- Giant Custom Vector SVG Face -->
+<div class="relative mb-3 flex items-center justify-center">
+<div class="w-[130px] h-[130px] rounded-full flex items-center justify-center transition-all duration-300 transform shadow-2xl" id="giant-svg-container">
+        <svg class="w-[130px] h-[130px] emoji-bounce drop-shadow-xl" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="64" fill="#F5F3FF" stroke="#4C1D95" stroke-width="8"></circle>
+          <circle cx="48" cy="56" r="7.5" fill="#4C1D95"></circle>
+          <circle cx="92" cy="56" r="7.5" fill="#4C1D95"></circle>
+          <line x1="46" y1="88" x2="94" y2="88" stroke="#4C1D95" stroke-width="8" stroke-linecap="round"></line>
+        </svg>
+      </div>
+</div>
+<!-- Dynamic Mood Subtitle -->
+<h3 class="text-[19px] font-bold text-white tracking-wide mb-6 min-h-[26px]" id="mood-title-label">I'm Feeling Neutral</h3>
+<!-- Curved Arc Trajectory with 5 Custom Vector SVG Mood Face Buttons -->
+<div class="relative w-full max-w-[340px] h-24 flex items-center justify-center mb-6">
+<svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 340 110">
+<path d="M 25 35 Q 170 100 315 35" fill="none" stroke="rgba(255,255,255,0.25)" stroke-dasharray="4 4" stroke-width="2"></path>
+</svg>
+<div class="relative w-full h-full flex items-center justify-between px-1">
+<!-- Level 1: Depressed -->
+<button aria-label="Depressed" class="mood-arc-chip -translate-y-4 rounded-full p-0 flex items-center justify-center transition-all active:scale-90 w-11 h-11 cursor-pointer" data-level="1" onclick="setMoodLevel(1)">
+<svg class="w-10 h-10 drop-shadow" viewBox="0 0 46 46">
+<circle cx="23" cy="23" fill="#FEF2F2" r="21" stroke="#7F1D1D" stroke-width="2.5"></circle>
+<line stroke="#7F1D1D" stroke-linecap="round" stroke-width="2.5" x1="14" x2="19" y1="16.5" y2="21.5"></line>
+<line stroke="#7F1D1D" stroke-linecap="round" stroke-width="2.5" x1="19" x2="14" y1="16.5" y2="21.5"></line>
+<line stroke="#7F1D1D" stroke-linecap="round" stroke-width="2.5" x1="27" x2="32" y1="16.5" y2="21.5"></line>
+<line stroke="#7F1D1D" stroke-linecap="round" stroke-width="2.5" x1="32" x2="27" y1="16.5" y2="21.5"></line>
+<path d="M 15 32 Q 23 23 31 32" fill="none" stroke="#7F1D1D" stroke-linecap="round" stroke-width="2.5"></path>
+</svg>
+</button>
+<!-- Level 2: Sad / Anxious -->
+<button aria-label="Sad and Anxious" class="mood-arc-chip translate-y-2 rounded-full p-0 flex items-center justify-center transition-all active:scale-90 w-11 h-11 cursor-pointer" data-level="2" onclick="setMoodLevel(2)">
+<svg class="w-10 h-10 drop-shadow" viewBox="0 0 46 46">
+<circle cx="23" cy="23" fill="#FFF7ED" r="21" stroke="#7C2D12" stroke-width="2.5"></circle>
+<line stroke="#7C2D12" stroke-linecap="round" stroke-width="2" x1="14" x2="19" y1="14" y2="16"></line>
+<line stroke="#7C2D12" stroke-linecap="round" stroke-width="2" x1="32" x2="27" y1="14" y2="16"></line>
+<circle cx="16.5" cy="19" fill="#7C2D12" r="2"></circle>
+<circle cx="29.5" cy="19" fill="#7C2D12" r="2"></circle>
+<path d="M 17 30 Q 23 26 29 30" fill="none" stroke="#7C2D12" stroke-linecap="round" stroke-width="2.5"></path>
+</svg>
+</button>
+<!-- Level 3: Neutral -->
+<button aria-label="Neutral" class="mood-arc-chip translate-y-5 rounded-full p-0 flex items-center justify-center transition-all active:scale-95 w-12 h-12 ring-4 ring-white shadow-[0_0_18px_rgba(255,255,255,0.7)] cursor-pointer" data-level="3" onclick="setMoodLevel(3)">
+<svg class="w-11 h-11 drop-shadow" viewBox="0 0 46 46">
+<circle cx="23" cy="23" fill="#F5F3FF" r="21" stroke="#4C1D95" stroke-width="2.5"></circle>
+<circle cx="16" cy="19" fill="#4C1D95" r="2.5"></circle>
+<circle cx="30" cy="19" fill="#4C1D95" r="2.5"></circle>
+<line stroke="#4C1D95" stroke-linecap="round" stroke-width="2.5" x1="16" x2="30" y1="28" y2="28"></line>
+</svg>
+</button>
+<!-- Level 4: Good / Content -->
+<button aria-label="Good and Content" class="mood-arc-chip translate-y-2 w-11 h-11 rounded-full p-0 flex items-center justify-center transition-all active:scale-90 cursor-pointer" data-level="4" onclick="setMoodLevel(4)">
+<svg class="w-10 h-10 drop-shadow" viewBox="0 0 46 46">
+<circle cx="23" cy="23" fill="#F0F9FF" r="21" stroke="#0C4A6E" stroke-width="2.5"></circle>
+<circle cx="16" cy="19" fill="#0C4A6E" r="2.5"></circle>
+<circle cx="30" cy="19" fill="#0C4A6E" r="2.5"></circle>
+<path d="M 16 27 Q 23 33 30 27" fill="none" stroke="#0C4A6E" stroke-linecap="round" stroke-width="2.5"></path>
+</svg>
+</button>
+<!-- Level 5: Excellent / Calm -->
+<button aria-label="Excellent and Calm" class="mood-arc-chip -translate-y-4 w-11 h-11 rounded-full p-0 flex items-center justify-center transition-all active:scale-90 cursor-pointer" data-level="5" onclick="setMoodLevel(5)">
+<svg class="w-10 h-10 drop-shadow" viewBox="0 0 46 46">
+<circle cx="23" cy="23" fill="#FEFCE8" r="21" stroke="#713F12" stroke-width="2.5"></circle>
+<path d="M 13.5 19 Q 16.5 15 19.5 19" fill="none" stroke="#713F12" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M 26.5 19 Q 29.5 15 32.5 19" fill="none" stroke="#713F12" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M 15 26 Q 23 37 31 26 Z" fill="#713F12" stroke="#713F12" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+</button>
+</div>
+</div>
+<!-- Confirm Button (Requested feature with instant feedback state) -->
+<div class="w-full max-w-[320px] flex flex-col items-center gap-2">
+<button class="glass-confirm-btn w-full py-4 rounded-full font-bold text-[17px] flex items-center justify-center gap-2.5 active:scale-[0.97] transition-all duration-200 cursor-pointer tracking-wide" id="mood-submit-btn" onclick="confirmSetMood()" style="color: rgb(76, 29, 149);">
+<svg class="w-5 h-5 transition-transform duration-200" fill="none" id="mood-submit-icon" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewBox="0 0 24 24">
+<polyline points="20 6 9 17 4 12"></polyline>
+</svg>
+<span id="mood-submit-text" class="">Confirm Mood</span>
+</button>
+<p class="text-[11px] text-white/70 font-medium tracking-wide" id="mood-submit-hint">Tap to calibrate your distress baseline</p>
+</div>
+</div>
+</div>
+<!-- VIEW 3: CASES -->
+<div class="screen-view flex-col w-full select-none hidden" id="view-cases">
+<!-- Screen Header -->
+<div class="flex flex-col mb-4 pt-1">
+<h2 class="text-[34px] leading-tight font-extrabold text-on-surface tracking-tight">Case Tracking</h2>
+
+</div>
+<!-- Metrics Row -->
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-black/[0.03] flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-[13px] font-medium text-slate-500">Active Cases</span>
+<div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-primary">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+</div>
+</div>
+<div class="mt-3 flex items-baseline gap-1.5">
+<span class="text-[32px] font-extrabold text-on-surface tabular-nums tracking-tight">1</span>
+<span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">In Progress</span>
+</div>
+</div>
+<div class="bg-white rounded-2xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-black/[0.03] flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="text-[13px] font-medium text-slate-500">Resolved</span>
+<div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+</div>
+</div>
+<div class="mt-3 flex items-baseline gap-1.5">
+<span class="text-[32px] font-extrabold text-slate-400 tabular-nums tracking-tight">0</span>
+<span class="text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Archived</span>
+</div>
+</div>
+</div>
+<!-- Interactive Collapsible Case Card -->
+<div class="rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-black/[0.04] overflow-hidden mb-4 transition-all" id="case-card-1234">
+<button class="w-full p-4 flex items-start justify-between text-left cursor-pointer hover:bg-slate-50/70 transition-colors" id="case-toggle-btn" onclick="toggleCaseAccordion()" type="button">
+<div class="flex flex-col gap-1.5 flex-1 pr-2">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-0.5 rounded-full bg-[#F3E8FF] text-[#7E22CE] text-[11px] font-semibold tracking-wide uppercase">Under Investigation</span>
+<span class="text-[12px] font-mono font-medium text-slate-400">#1234</span>
+</div>
+<div class="mt-0.5">
+<h3 class="text-[18px] font-bold text-on-surface leading-snug">Harassment Complaint</h3>
+<p class="text-[12px] text-[#3c3c43]/70 font-normal mt-0.5">Filed on Oct 12 • Priority Escalation</p>
+</div>
+</div>
+<div class="w-8 h-8 rounded-full bg-[#F2F2F7] flex items-center justify-center text-slate-500 transition-transform duration-300" id="case-chevron-icon">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+</div>
+</button>
+<div class="flex flex-col px-4 pb-4 pt-1 transition-all hidden" id="case-expanded-content">
+<div class="h-[1px] w-full bg-black/[0.06] mb-4"></div>
+<!-- Timeline Tracker Section -->
+<div class="mb-5">
+<h4 class="text-[12px] font-bold tracking-wider uppercase text-slate-400 mb-3.5 flex items-center gap-1.5">
+<span class="">Case Milestones &amp; Progress</span>
+</h4>
+<div class="relative flex flex-col gap-0 pl-1">
+<!-- Milestone 1 -->
+<div class="relative flex items-start gap-3.5 pb-6">
+<div class="absolute left-[11px] top-6 bottom-0 w-[2px] bg-[#10B981]"></div>
+<div class="w-6 h-6 rounded-full bg-[#10B981] flex items-center justify-center text-white shrink-0 z-10 shadow-sm">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</div>
+<div class="flex flex-col pt-0.5">
+<span class="text-[14px] font-bold text-on-surface">Case Filed</span>
+<span class="text-[12px] text-slate-500 mt-0.5">Oct 12, 10:30 AM — Telemetry Logged</span>
+</div>
+</div>
+<!-- Milestone 2 -->
+<div class="relative flex items-start gap-3.5 pb-6">
+<div class="absolute left-[11px] top-6 bottom-0 w-[2px] bg-[#10B981]"></div>
+<div class="w-6 h-6 rounded-full bg-[#10B981] flex items-center justify-center text-white shrink-0 z-10 shadow-sm">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</div>
+<div class="flex flex-col pt-0.5">
+<span class="text-[14px] font-bold text-on-surface">Assigned Counselor</span>
+<span class="text-[12px] text-slate-500 mt-0.5">Oct 14, 02:15 PM — Dr. Aris Thorne</span>
+</div>
+</div>
+<!-- Milestone 3 -->
+<div class="relative flex items-start gap-3.5 pb-6">
+<div class="absolute left-[11px] top-6 bottom-0 w-[2px] bg-slate-200"></div>
+<div class="relative w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center shrink-0 z-10 ring-4 ring-blue-100 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-white"></span>
+</div>
+<div class="flex flex-col pt-0.5">
+<div class="flex items-center gap-2">
+<span class="text-[14px] font-bold text-primary">Next Hearing</span>
+<span class="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-primary px-2 py-0.2 rounded-full">Upcoming</span>
+</div>
+<span class="text-[12px] text-slate-600 font-medium mt-0.5">Nov 04, 11:00 AM — District Court 3B</span>
+</div>
+</div>
+<!-- Milestone 4 -->
+<div class="relative flex items-start gap-3.5">
+<div class="w-6 h-6 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center shrink-0 z-10">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+</div>
+<div class="flex flex-col pt-0.5">
+<span class="text-[14px] font-semibold text-slate-400">Resolution &amp; Closure</span>
+<span class="text-[12px] text-slate-400 mt-0.5">Pending trial hearing determination</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Case Details Section -->
+<div class="bg-[#F8FAFC] rounded-xl p-3.5 mb-4 border border-slate-200/60 flex flex-col gap-2.5">
+<div class="flex items-center justify-between text-[12px]">
+<span class="font-medium text-slate-500">Case Type / Status</span>
+<span class="font-semibold text-on-surface">Emergency Protective Order / Active</span>
+</div>
+<div class="h-[1px] bg-slate-200/60 w-full"></div>
+<div class="flex items-center justify-between text-[12px]">
+<span class="font-medium text-slate-500">Presiding Judge</span>
+<span class="font-semibold text-on-surface">Hon. Justice R. Vance</span>
+</div>
+<div class="h-[1px] bg-slate-200/60 w-full"></div>
+<div class="flex items-center justify-between text-[12px]">
+<span class="font-medium text-slate-500">Acts &amp; Sections</span>
+<span class="font-semibold text-on-surface text-right">Sec. 354D, 506 IPC &amp; IT Act</span>
+</div>
+</div>
+<!-- Attached Documentation -->
+<div class="mb-4 flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<h4 class="text-[12px] font-bold tracking-wider uppercase text-slate-400">Attached Documentation</h4>
+<span class="text-[11px] text-primary font-medium cursor-pointer hover:underline">2 Files</span>
+</div>
+<!-- File 1 -->
+<div class="flex items-center justify-between p-2.5 rounded-xl bg-[#F8FAFC] border border-slate-200/60 hover:bg-slate-100 transition-colors">
+<div class="flex items-center gap-2.5 overflow-hidden">
+<div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+</div>
+<div class="flex flex-col truncate">
+<span class="text-[13px] font-semibold text-on-surface truncate">Official_Case_Report.pdf</span>
+<span class="text-[11px] text-slate-400">2.4 MB • Legal Intake Doc</span>
+</div>
+</div>
+<button aria-label="Download Official_Case_Report.pdf" class="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 text-primary flex items-center justify-center transition-colors shrink-0 cursor-pointer">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+</button>
+</div>
+<!-- File 2 -->
+<div class="flex items-center justify-between p-2.5 rounded-xl bg-[#F8FAFC] border border-slate-200/60 hover:bg-slate-100 transition-colors">
+<div class="flex items-center gap-2.5 overflow-hidden">
+<div class="w-8 h-8 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+</div>
+<div class="flex flex-col truncate">
+<span class="text-[13px] font-semibold text-on-surface truncate">Psychological_Triage_Summary.pdf</span>
+<span class="text-[11px] text-slate-400">1.1 MB • Dr. Aris Thorne</span>
+</div>
+</div>
+<button aria-label="Download Psychological_Triage_Summary.pdf" class="w-8 h-8 rounded-full bg-blue-50 hover:bg-blue-100 text-primary flex items-center justify-center transition-colors shrink-0 cursor-pointer">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+</button>
+</div>
+</div>
+<!-- Primary Action: Call Counselor -->
+<button class="w-full py-3.5 rounded-xl bg-[#3B82F6] hover:bg-blue-600 text-white font-semibold text-[14px] flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+<span class="">Speak to Case Counselor</span>
+</button>
+</div>
+</div>
+<!-- Footer Action Buttons -->
+<div class="flex flex-col gap-2.5 pt-1">
+<button class="w-full py-3.5 rounded-xl bg-[#3B82F6] hover:bg-blue-600 text-white font-semibold text-[14px] flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" x2="12" y1="11" y2="17"></line><line x1="9" x2="15" y1="14" y2="14"></line></svg>
+<span class="">File Another Grievance</span>
+</button>
+<button class="w-full py-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-primary font-semibold text-[14px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-blue-100/70 cursor-pointer">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" x2="16.65" y1="21" y2="16.65"></line></svg>
+<span class="">Search &amp; Link via CNR</span>
+</button>
+</div>
+</div>
+<!-- VIEW 4: ASSISTANT -->
+<div class="screen-view flex-col w-full h-[calc(100vh-175px)] select-none justify-between hidden" id="view-assistant">
+<div>
+<!-- Assistant Header -->
+
+<!-- Horizontal Quick Prompts Chips -->
+<div class="flex items-center gap-2 overflow-x-auto pb-2 -mx-margin px-margin no-scrollbar">
+
+
+
+
+</div>
+<!-- Chat Timeline -->
+<div class="flex flex-col gap-3.5 pt-2 max-h-[380px] overflow-y-auto pr-1" id="chat-stream">
+<!-- Assistant Msg -->
+<div class="flex flex-col items-start max-w-[85%]">
+<div class="rounded-2xl rounded-tl-none bg-white p-3.5 shadow-sm border border-black/[0.04] text-[14px] text-on-surface leading-relaxed">
+Hello Patricia, I noticed an elevated stress score of 72. I am right here with you. Would you like to try a 4-7-8 breathing exercise or dispatch assistance?
+</div>
+<span class="text-[10px] text-slate-400 mt-1 pl-1">09:39 AM • Clinical Copilot</span>
+</div>
+<!-- User Msg -->
+<div class="flex flex-col items-end self-end max-w-[85%]">
+<div class="rounded-2xl rounded-tr-none bg-[#3B82F6] p-3.5 text-white text-[14px] leading-relaxed shadow-sm">
+My chest feels slightly tight and heart rate is high after the meeting.
+</div>
+<span class="text-[10px] text-slate-400 mt-1 pr-1">09:40 AM</span>
+</div>
+<!-- Assistant Msg -->
+<div class="flex flex-col items-start max-w-[85%]">
+<div class="rounded-2xl rounded-tl-none bg-white p-3.5 shadow-sm border border-black/[0.04] text-[14px] text-on-surface leading-relaxed">
+Understood. Let's take slow, paced breaths. I am keeping your safety protocols on high readiness. Tap below whenever you need instant contact.
+</div>
+<span class="text-[10px] text-slate-400 mt-1 pl-1">09:41 AM • Clinical Copilot</span>
+</div>
+<div class="flex flex-col items-end self-end max-w-[85%]">
+      <div class="rounded-2xl rounded-tr-none bg-[#3B82F6] p-3.5 text-white text-[14px] leading-relaxed shadow-sm">
+        I feel anxious
+      </div>
+      <span class="text-[10px] text-slate-400 mt-1 pr-1">Just now</span>
+    </div><div class="flex flex-col items-start max-w-[85%]">
+        <div class="rounded-2xl rounded-tl-none bg-white p-3.5 shadow-sm border border-black/[0.04] text-[14px] text-on-surface leading-relaxed">
+          I've logged that update. Vitals will adjust baseline weighting immediately.
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 pl-1">Just now • Clinical Copilot</span>
+      </div><div class="flex flex-col items-end self-end max-w-[85%]">
+      <div class="rounded-2xl rounded-tr-none bg-[#3B82F6] p-3.5 text-white text-[14px] leading-relaxed shadow-sm">
+        I feel anxious
+      </div>
+      <span class="text-[10px] text-slate-400 mt-1 pr-1">Just now</span>
+    </div><div class="flex flex-col items-start max-w-[85%]">
+        <div class="rounded-2xl rounded-tl-none bg-white p-3.5 shadow-sm border border-black/[0.04] text-[14px] text-on-surface leading-relaxed">
+          I've logged that update. Vitals will adjust baseline weighting immediately.
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 pl-1">Just now • Clinical Copilot</span>
+      </div><div class="flex flex-col items-end self-end max-w-[85%]">
+      <div class="rounded-2xl rounded-tr-none bg-[#3B82F6] p-3.5 text-white text-[14px] leading-relaxed shadow-sm">
+        Guided breathing
+      </div>
+      <span class="text-[10px] text-slate-400 mt-1 pr-1">Just now</span>
+    </div><div class="flex flex-col items-start max-w-[85%]">
+        <div class="rounded-2xl rounded-tl-none bg-white p-3.5 shadow-sm border border-black/[0.04] text-[14px] text-on-surface leading-relaxed">
+          I've logged that update. Vitals will adjust baseline weighting immediately.
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 pl-1">Just now • Clinical Copilot</span>
+      </div><div class="flex flex-col items-end self-end max-w-[85%]">
+      <div class="rounded-2xl rounded-tr-none bg-[#3B82F6] p-3.5 text-white text-[14px] leading-relaxed shadow-sm">
+        Log panic episode
+      </div>
+      <span class="text-[10px] text-slate-400 mt-1 pr-1">Just now</span>
+    </div><div class="flex flex-col items-start max-w-[85%]">
+        <div class="rounded-2xl rounded-tl-none bg-white p-3.5 shadow-sm border border-black/[0.04] text-[14px] text-on-surface leading-relaxed">
+          I've logged that update. Vitals will adjust baseline weighting immediately.
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 pl-1">Just now • Clinical Copilot</span>
+      </div><div class="flex flex-col items-end self-end max-w-[85%]">
+      <div class="rounded-2xl rounded-tr-none bg-[#3B82F6] p-3.5 text-white text-[14px] leading-relaxed shadow-sm">
+        Call safety partner
+      </div>
+      <span class="text-[10px] text-slate-400 mt-1 pr-1">Just now</span>
+    </div><div class="flex flex-col items-start max-w-[85%]">
+        <div class="rounded-2xl rounded-tl-none bg-white p-3.5 shadow-sm border border-black/[0.04] text-[14px] text-on-surface leading-relaxed">
+          I've logged that update. Vitals will adjust baseline weighting immediately.
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 pl-1">Just now • Clinical Copilot</span>
+      </div></div>
+</div>
+<!-- Sticky Chat Input Bar -->
+<div class="pt-2 pb-1">
+<div class="rounded-full bg-white p-1.5 pl-4 shadow-sm border border-black/[0.06] flex items-center gap-2">
+<input class="flex-1 bg-transparent text-[14px] outline-none placeholder:text-slate-400 border-none focus:ring-0" id="chat-input" placeholder="Describe what you are experiencing..." type="text">
+<button class="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button class="w-9 h-9 rounded-full bg-[#3B82F6] text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform cursor-pointer" id="chat-send">
+<span class="material-symbols-outlined text-[18px]">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- VIEW 5: PROFILE -->
+<div class="screen-view flex-col w-full select-none hidden" id="view-profile">
+<header class="mb-space-lg pt-1">
+<h2 class="font-display-lg text-[28px] text-on-surface font-bold tracking-tight">Profile &amp; Emergency Setup</h2>
+<p class="font-caption text-caption text-on-surface-variant">Manage patient identity and fail-safe contacts</p>
+</header>
+<!-- User Avatar Card -->
+<div class="rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] flex items-center gap-4 mb-4">
+<div class="w-16 h-16 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-[22px] shadow-inner">
+PS
+</div>
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-[18px] text-on-surface font-bold">Patricia Sarah</h3>
+<span class="text-[13px] text-on-surface-variant font-medium">+1 (555) 382-9910</span>
+
+</div>
+</div>
+<!-- Inset Card 1: Personal Info -->
+<div class="rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] mb-4 flex flex-col gap-3">
+<h4 class="text-[12px] font-semibold tracking-wider uppercase text-on-surface-variant">Personal Information</h4>
+<div>
+<label class="block text-[12px] font-medium text-slate-500 mb-1">Display Name</label>
+<input class="w-full px-3 py-2.5 rounded-xl bg-[#F2F2F7] text-on-surface font-medium text-[14px] border-none focus:ring-2 focus:ring-primary outline-none" type="text" value="Patricia Sarah">
+</div>
+<div>
+<label class="block text-[12px] font-medium text-slate-500 mb-1">Age</label>
+<input class="w-full px-3 py-2.5 rounded-xl bg-[#F2F2F7] text-on-surface font-medium text-[14px] border-none focus:ring-2 focus:ring-primary outline-none" type="number" value="34">
+</div>
+</div>
+<!-- Inset Card 2: Emergency Contacts -->
+<div class="rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] mb-5 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<h4 class="text-[12px] font-semibold tracking-wider uppercase text-on-surface-variant">Emergency Contacts</h4>
+<span class="text-[11px] text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded-full">Primary Escalation</span>
+</div>
+<div>
+<label class="block text-[12px] font-medium text-slate-500 mb-1">SOS Emergency Contact Person</label>
+<input class="w-full px-3 py-2.5 rounded-xl bg-[#F2F2F7] text-on-surface font-medium text-[14px] border-none focus:ring-2 focus:ring-primary outline-none" type="text" value="Dr. Marcus Vance">
+</div>
+<div>
+<label class="block text-[12px] font-medium text-slate-500 mb-1">Phone Number</label>
+<input class="w-full px-3 py-2.5 rounded-xl bg-[#F2F2F7] text-on-surface font-medium text-[14px] border-none focus:ring-2 focus:ring-primary outline-none" type="tel" value="+1 (555) 902-1433">
+</div>
+</div>
+<!-- Profile Actions -->
+<div class="flex flex-col gap-2.5 mb-6">
+<button class="w-full py-3.5 rounded-xl bg-[#3B82F6] text-white font-headline-sm text-[15px] font-semibold active:scale-[0.98] transition-all shadow-md cursor-pointer">
+Save
+</button>
+<button class="w-full py-3 rounded-xl border border-slate-300 text-slate-600 font-headline-sm text-[15px] font-medium active:scale-[0.98] transition-all bg-transparent cursor-pointer">
+Sign Out
+</button>
+</div>
+</div>
+</main>
+<!-- SOS FULLSCREEN MODAL OVERLAY -->
+<div class="fixed inset-0 z-50 flex-col justify-between p-6 bg-gradient-to-b from-[#450a0a] via-[#2a0808] to-[#120303] text-white overflow-y-auto hidden" id="sos-overlay">
+<!-- Modal Header -->
+<div class="flex items-center justify-between pt-safe">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-red-500 animate-ping"></span>
+<span class="text-[12px] tracking-widest uppercase font-bold text-red-300">Live Satellite Uplink</span>
+</div>
+<button class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer" onclick="closeSosModal()">
+<span class="material-symbols-outlined text-[20px] text-white">close</span>
+</button>
+</div>
+<!-- Central Beacon & Title -->
+<div class="flex flex-col items-center justify-center text-center my-auto py-6">
+<div class="relative mb-6">
+<div class="w-28 h-28 rounded-full bg-red-600/30 animate-ping absolute inset-0"></div>
+<div class="w-28 h-28 rounded-full bg-red-500/20 flex items-center justify-center relative border border-red-500/40 shadow-[0_0_50px_rgba(239,68,68,0.5)]">
+<span class="material-symbols-outlined text-[56px] text-red-400" style="font-variation-settings: &quot;FILL&quot; 1;">shield</span>
+</div>
+</div>
+<h1 class="text-[34px] font-extrabold tracking-tight text-white mb-2 leading-tight">SOS ACTIVATED</h1>
+<p class="text-[14px] text-red-200/80 max-w-[280px]">Emergency telemetry broadcasted to designated first responders.</p>
+<!-- Timer Glassmorphic Card -->
+<div class="mt-6 w-full max-w-xs rounded-2xl bg-red-950/40 backdrop-blur-md border border-red-500/30 p-4 flex flex-col items-center">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+<span class="text-[26px] font-bold font-mono tracking-wider text-red-100 tabular-nums">29:45</span>
+</div>
+<span class="text-[11px] text-red-300 uppercase tracking-wider font-semibold">remaining until auto-escalation</span>
+</div>
+<!-- Location Card -->
+<div class="mt-4 w-full max-w-xs rounded-2xl bg-white/5 border border-white/10 p-3.5 flex items-center gap-3 text-left">
+<div class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+</div>
+<div class="text-[12px] text-red-100">
+<span class="font-bold block">37.7749° N, 122.4194° W</span>
+<span class="text-white/60">Bedside Ward 4B, St. Jude Center</span>
+</div>
+</div>
+</div>
+<!-- Modal Actions -->
+<div class="flex flex-col gap-3 pb-safe pt-2">
+<button class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-[16px] flex items-center justify-center gap-2 shadow-lg shadow-red-900/60 active:scale-98 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">local_hospital</span>
+Dispatch EMS Emergency
+</button>
+<button class="w-full py-3.5 rounded-xl bg-white/15 hover:bg-white/20 border border-white/20 text-white font-semibold text-[15px] active:scale-98 transition-all cursor-pointer" onclick="closeSosModal()">
+Tap to Resolve SOS
+</button>
+</div>
+</div>
+<!-- FLOATING 5-ITEM SUSPENDED FROSTED GLASSMORPHIC TAB BAR (Persistent glassmorphism across all pages, z-50) -->
+<div class="fixed bottom-0 w-full z-50 pointer-events-none pb-safe" id="bottom-bar-container"><div class="px-margin pb-space-sm pt-space-xs flex justify-center"><nav class="pointer-events-auto w-full max-w-[420px] h-16 rounded-full glass-nav-card px-1.5 flex items-center justify-between relative select-none" id="floating-nav">
+<!-- Glassmorphic Sliding Pill Indicator across 5 items -->
+<div class="absolute h-12 rounded-full glass-tab-indicator transition-all duration-300 ease-out pointer-events-none" id="tab-indicator" style="width: calc(20% - 6px); left: calc(3% + 2px);"></div>
+<!-- Tab 1: Home -->
+<button class="nav-tab-btn flex-1 h-12 flex flex-col items-center justify-center transition-colors relative z-10 cursor-pointer text-primary font-bold" data-target="home" onclick="switchTab('home')" aria-current="page">
+<span class="material-symbols-outlined text-[21px]">grid_view</span>
+<span class="font-caption text-[10px] mt-0.5">Home</span>
+</button>
+<!-- Tab 2: Check-in -->
+<button class="nav-tab-btn flex-1 h-12 flex flex-col items-center justify-center transition-colors relative z-10 hover:text-on-surface cursor-pointer text-on-surface-variant" data-target="checkin" onclick="switchTab('checkin')">
+<span class="material-symbols-outlined text-[22px]">sentiment_satisfied</span>
+<span class="font-caption text-[10px] mt-0.5">Check-in</span>
+</button>
+<!-- Tab 3: Cases -->
+<button class="nav-tab-btn flex-1 h-12 flex flex-col items-center justify-center transition-colors relative z-10 hover:text-on-surface cursor-pointer text-on-surface-variant" data-target="cases" onclick="switchTab('cases')">
+<div class="relative">
+<span class="material-symbols-outlined text-[21px]">shield</span>
+<span class="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-red-600"></span>
+</div>
+<span class="font-caption text-[10px] mt-0.5">Cases</span>
+</button>
+<!-- Tab 4: Assistant -->
+<button class="nav-tab-btn flex-1 h-12 flex flex-col items-center justify-center transition-colors relative z-10 hover:text-on-surface cursor-pointer text-on-surface-variant" data-target="assistant" onclick="switchTab('assistant')">
+<span class="material-symbols-outlined text-[21px]">auto_awesome</span>
+<span class="font-caption text-[10px] mt-0.5">Assistant</span>
+</button>
+<!-- Tab 5: Profile -->
+<button class="nav-tab-btn flex-1 h-12 flex flex-col items-center justify-center transition-colors relative z-10 hover:text-on-surface cursor-pointer text-on-surface-variant" data-target="profile" onclick="switchTab('profile')">
+<span class="material-symbols-outlined text-[21px]">account_circle</span>
+<span class="font-caption text-[10px] mt-0.5">Profile</span>
+</button>
+</nav></div></div>
+<!-- Toast Notification for Confirm Action -->
+<div class="fixed top-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 transform -translate-y-16 opacity-0" id="toast-notification">
+<div class="px-5 py-2.5 rounded-full bg-slate-900/90 backdrop-blur-md text-white text-[13px] font-semibold flex items-center gap-2 shadow-2xl border border-white/20">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+<span id="toast-message" class="">Calibration logged successfully!</span>
+</div>
+</div>
+<!-- Interactive JS Runtime -->
+<script>
+  let currentMoodLevel = 3;
+
+  // Mood configuration dictionary
+  const moodConfig = {
+    1: {
+      title: "I'm Feeling Depressed",
+      bg: "#EF4444",
+      btnText: "#7F1D1D",
+      score: 88,
+      statusText: "Elevated Stress / Critical",
+      statusColor: "#DC2626",
+      svg: `
+        <svg class="w-[130px] h-[130px] emoji-bounce drop-shadow-xl" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="64" fill="#FEF2F2" stroke="#7F1D1D" stroke-width="8"></circle>
+          <line x1="42" y1="50" x2="56" y2="64" stroke="#7F1D1D" stroke-width="8" stroke-linecap="round"></line>
+          <line x1="56" y1="50" x2="42" y2="64" stroke="#7F1D1D" stroke-width="8" stroke-linecap="round"></line>
+          <line x1="84" y1="50" x2="98" y2="64" stroke="#7F1D1D" stroke-width="8" stroke-linecap="round"></line>
+          <line x1="98" y1="50" x2="84" y2="64" stroke="#7F1D1D" stroke-width="8" stroke-linecap="round"></line>
+          <path d="M 44 98 Q 70 70 96 98" fill="none" stroke="#7F1D1D" stroke-width="8" stroke-linecap="round"></path>
+        </svg>
+      `
+    },
+    2: {
+      title: "I'm Feeling Sad & Anxious",
+      bg: "#F97316",
+      btnText: "#7C2D12",
+      score: 64,
+      statusText: "Moderate Distress / Caution",
+      statusColor: "#D97706",
+      svg: `
+        <svg class="w-[130px] h-[130px] emoji-bounce drop-shadow-xl" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="64" fill="#FFF7ED" stroke="#7C2D12" stroke-width="8"></circle>
+          <line x1="42" y1="42" x2="58" y2="48" stroke="#7C2D12" stroke-width="6" stroke-linecap="round"></line>
+          <line x1="98" y1="42" x2="82" y2="48" stroke="#7C2D12" stroke-width="6" stroke-linecap="round"></line>
+          <circle cx="50" cy="58" r="7" fill="#7C2D12"></circle>
+          <circle cx="90" cy="58" r="7" fill="#7C2D12"></circle>
+          <path d="M 50 92 Q 70 80 90 92" fill="none" stroke="#7C2D12" stroke-width="8" stroke-linecap="round"></path>
+        </svg>
+      `
+    },
+    3: {
+      title: "I'm Feeling Neutral",
+      bg: "#8B5CF6",
+      btnText: "#4C1D95",
+      score: 48,
+      statusText: "Balanced Baseline State",
+      statusColor: "#6366F1",
+      svg: `
+        <svg class="w-[130px] h-[130px] emoji-bounce drop-shadow-xl" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="64" fill="#F5F3FF" stroke="#4C1D95" stroke-width="8"></circle>
+          <circle cx="48" cy="56" r="7.5" fill="#4C1D95"></circle>
+          <circle cx="92" cy="56" r="7.5" fill="#4C1D95"></circle>
+          <line x1="46" y1="88" x2="94" y2="88" stroke="#4C1D95" stroke-width="8" stroke-linecap="round"></line>
+        </svg>
+      `
+    },
+    4: {
+      title: "I'm Feeling Good & Content",
+      bg: "#0EA5E9",
+      btnText: "#0C4A6E",
+      score: 28,
+      statusText: "Optimal Baseline / Steady",
+      statusColor: "#059669",
+      svg: `
+        <svg class="w-[130px] h-[130px] emoji-bounce drop-shadow-xl" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="64" fill="#F0F9FF" stroke="#0C4A6E" stroke-width="8"></circle>
+          <circle cx="48" cy="56" r="7.5" fill="#0C4A6E"></circle>
+          <circle cx="92" cy="56" r="7.5" fill="#0C4A6E"></circle>
+          <path d="M 48 84 Q 70 102 92 84" fill="none" stroke="#0C4A6E" stroke-width="8" stroke-linecap="round"></path>
+        </svg>
+      `
+    },
+    5: {
+      title: "I'm Feeling Excellent & Calm",
+      bg: "#10B981",
+      btnText: "#064E3B",
+      score: 14,
+      statusText: "Calm & Resilient Baseline",
+      statusColor: "#059669",
+      svg: `
+        <svg class="w-[130px] h-[130px] emoji-bounce drop-shadow-xl" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="64" fill="#ECFDF5" stroke="#064E3B" stroke-width="8"></circle>
+          <path d="M 40 58 Q 50 46 60 58" fill="none" stroke="#064E3B" stroke-width="7" stroke-linecap="round"></path>
+          <path d="M 80 58 Q 90 46 100 58" fill="none" stroke="#064E3B" stroke-width="7" stroke-linecap="round"></path>
+          <path d="M 44 80 Q 70 114 96 80 Z" fill="#064E3B" stroke="#064E3B" stroke-width="4" stroke-linejoin="round"></path>
+        </svg>
+      `
+    }
+  };
+
+  // Switch Screen View reliably while keeping the glassmorphic nav persistent
+  function switchTab(targetName) {
+    const tabKeys = ['home', 'checkin', 'cases', 'assistant', 'profile'];
+    const activeIndex = tabKeys.indexOf(targetName);
+    if (activeIndex === -1) return;
+
+    // 1. Show active view container, hide others
+    tabKeys.forEach(name => {
+      const viewEl = document.getElementById('view-' + name);
+      if (viewEl) {
+        if (name === targetName) {
+          viewEl.classList.remove('hidden');
+          viewEl.classList.add('flex');
+        } else {
+          viewEl.classList.add('hidden');
+          viewEl.classList.remove('flex');
+        }
+      }
+    });
+
+    // 2. Hide app header during fullscreen check-in to preserve immersion
+    const appHeader = document.getElementById('app-header');
+    if (appHeader) {
+      if (targetName === 'checkin') {
+        appHeader.classList.add('-translate-y-full');
+      } else {
+        appHeader.classList.remove('-translate-y-full');
+      }
+    }
+
+    // 3. Update tab buttons styling
+    const navButtons = document.querySelectorAll('.nav-tab-btn');
+    navButtons.forEach(btn => {
+      if (btn.getAttribute('data-target') === targetName) {
+        btn.classList.add('text-primary', 'font-bold');
+        btn.classList.remove('text-on-surface-variant');
+        btn.setAttribute('aria-current', 'page');
+      } else {
+        btn.classList.remove('text-primary', 'font-bold');
+        btn.classList.add('text-on-surface-variant');
+        btn.removeAttribute('aria-current');
+      }
+    });
+
+    // 4. Update sliding pill indicator position with glassmorphism style
+    const indicator = document.getElementById('tab-indicator');
+    if (indicator) {
+      const leftOffset = 3 + (activeIndex * 20);
+      indicator.style.left = `calc(${leftOffset}% + ${2 - activeIndex}px)`;
+    }
+
+    // 5. If check-in screen, ensure active mood level is rendered
+    if (targetName === 'checkin') {
+      setMoodLevel(currentMoodLevel);
+    }
+
+    // Scroll window to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Set Mood Level on arc
+  function setMoodLevel(level) {
+    currentMoodLevel = level;
+    const config = moodConfig[level];
+    if (!config) return;
+
+    const overlay = document.getElementById('view-checkin');
+    if (overlay) {
+      overlay.style.backgroundColor = config.bg;
+    }
+
+    const giantContainer = document.getElementById('giant-svg-container');
+    if (giantContainer) {
+      giantContainer.innerHTML = config.svg;
+    }
+
+    const titleLabel = document.getElementById('mood-title-label');
+    if (titleLabel) {
+      titleLabel.innerText = config.title;
+    }
+
+    const submitBtn = document.getElementById('mood-submit-btn');
+    if (submitBtn) {
+      submitBtn.style.color = config.btnText;
+      const textSpan = document.getElementById('mood-submit-text');
+      if (textSpan && textSpan.innerText !== "Confirm Mood") {
+        textSpan.innerText = "Confirm Mood";
+      }
+    }
+
+    const chips = document.querySelectorAll('.mood-arc-chip');
+    chips.forEach(chip => {
+      const chipLevel = parseInt(chip.getAttribute('data-level'), 10);
+      if (chipLevel === level) {
+        chip.classList.add('w-12', 'h-12', 'ring-4', 'ring-white', 'shadow-[0_0_18px_rgba(255,255,255,0.7)]');
+        chip.classList.remove('w-11', 'h-11');
+      } else {
+        chip.classList.remove('w-12', 'h-12', 'ring-4', 'ring-white', 'shadow-[0_0_18px_rgba(255,255,255,0.7)]');
+        chip.classList.add('w-11', 'h-11');
+      }
+    });
+  }
+
+  // Confirm Mood Handler with interactive confirmation state & toast
+  function confirmSetMood() {
+    const config = moodConfig[currentMoodLevel];
+    const submitBtn = document.getElementById('mood-submit-btn');
+    const submitText = document.getElementById('mood-submit-text');
+    const submitIcon = document.getElementById('mood-submit-icon');
+
+    // Visual feedback on button
+    if (submitText) submitText.innerText = "Mood Saved!";
+    if (submitIcon) {
+      submitIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />`;
+    }
+    if (submitBtn) {
+      submitBtn.classList.add('scale-[1.02]');
+    }
+
+    // Update the hero gauge on Home screen dynamically
+    const heroVal = document.getElementById('hero-gauge-val');
+    const heroStatus = document.getElementById('hero-gauge-status');
+    if (heroVal && config) {
+      heroVal.innerText = config.score;
+    }
+    if (heroStatus && config) {
+      heroStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full animate-ping" style="background-color: ${config.statusColor};"></span> ${config.statusText}`;
+      heroStatus.style.color = config.statusColor;
+    }
+
+    // Show toast message
+    showToast("Calibration logged successfully!");
+
+    // Smoothly transition back to Home
+    setTimeout(() => {
+      if (submitBtn) submitBtn.classList.remove('scale-[1.02]');
+      switchTab('home');
+      // Reset button state
+      setTimeout(() => {
+        if (submitText) submitText.innerText = "Confirm Mood";
+      }, 500);
+    }, 700);
+  }
+
+  // Toast Notification
+  function showToast(message) {
+    const toast = document.getElementById('toast-notification');
+    const msg = document.getElementById('toast-message');
+    if (!toast || !msg) return;
+    msg.innerText = message;
+    toast.classList.remove('-translate-y-16', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+      toast.classList.remove('translate-y-0', 'opacity-100');
+      toast.classList.add('-translate-y-16', 'opacity-0');
+    }, 2400);
+  }
+
+  // Case Accordion
+  function toggleCaseAccordion() {
+    const content = document.getElementById('case-expanded-content');
+    const chevron = document.getElementById('case-chevron-icon');
+    if (!content || !chevron) return;
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      chevron.classList.add('rotate-180');
+    } else {
+      content.classList.add('hidden');
+      chevron.classList.remove('rotate-180');
+    }
+  }
+
+  // SOS Modal Handlers
+  function openSosModal() {
+    const modal = document.getElementById('sos-overlay');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate([150, 80, 150]);
+      }
+    }
+  }
+
+  function closeSosModal() {
+    const modal = document.getElementById('sos-overlay');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  // Timeframe Segmented Control
+  function setTimeframe(btn) {
+    const container = document.getElementById('timeframe-segmented');
+    if (!container) return;
+    container.querySelectorAll('.time-pill').forEach(pill => {
+      pill.className = 'time-pill py-1.5 rounded-lg text-[12px] font-medium text-slate-500 transition-all hover:text-slate-800 cursor-pointer';
+    });
+    btn.className = 'time-pill py-1.5 rounded-lg text-[12px] font-bold text-on-surface bg-white shadow-sm transition-all cursor-pointer';
+  }
+
+  // Chat message interactivity
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+  const chatStream = document.getElementById('chat-stream');
+
+  function sendMessage(text) {
+    if (!text.trim() || !chatStream) return;
+    const userBubble = document.createElement('div');
+    userBubble.className = 'flex flex-col items-end self-end max-w-[85%]';
+    userBubble.innerHTML = `
+      <div class="rounded-2xl rounded-tr-none bg-[#3B82F6] p-3.5 text-white text-[14px] leading-relaxed shadow-sm">
+        ${text}
+      </div>
+      <span class="text-[10px] text-slate-400 mt-1 pr-1">Just now</span>
+    `;
+    chatStream.appendChild(userBubble);
+    if (chatInput) chatInput.value = '';
+    chatStream.scrollTop = chatStream.scrollHeight;
+
+    setTimeout(() => {
+      const botBubble = document.createElement('div');
+      botBubble.className = 'flex flex-col items-start max-w-[85%]';
+      botBubble.innerHTML = `
+        <div class="rounded-2xl rounded-tl-none bg-white p-3.5 shadow-sm border border-black/[0.04] text-[14px] text-on-surface leading-relaxed">
+          I've logged that update. Vitals will adjust baseline weighting immediately.
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 pl-1">Just now • Clinical Copilot</span>
+      `;
+      chatStream.appendChild(botBubble);
+      chatStream.scrollTop = chatStream.scrollHeight;
+    }, 600);
+  }
+
+  if (chatSend && chatInput) {
+    chatSend.addEventListener('click', () => sendMessage(chatInput.value));
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage(chatInput.value);
+    });
+  }
+
+  // Quick Chips in Assistant
+  document.querySelectorAll('.chip-btn').forEach(chip => {
+    chip.addEventListener('click', () => {
+      sendMessage(chip.innerText);
+    });
+  });
+
+  // Initial setup on ready
+  window.addEventListener('DOMContentLoaded', () => {
+    setMoodLevel(3);
+    switchTab('home');
+  });
+  setMoodLevel(3);
+</script>
+
+
+
+
+</body></html>

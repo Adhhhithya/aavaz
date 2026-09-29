@@ -15,6 +15,8 @@ ALL_TABLES = [
     "otp_codes", "scheduled_calls", "victim_memory", "legal_documents"
 ]
 
+from uuid import UUID
+
 class CreateUserPayload(BaseModel):
     username: str
     password: str
@@ -26,11 +28,11 @@ class CreateUserPayload(BaseModel):
     preferred_language: Optional[str] = "en"
 
 class SetPasswordPayload(BaseModel):
-    user_id: str
+    user_id: UUID
     new_password: str
 
 class UpdateRolePayload(BaseModel):
-    user_id: str
+    user_id: UUID
     role: str
 
 # ---------------------------------------------------------------------------
@@ -989,14 +991,16 @@ async def create_user(payload: CreateUserPayload):
         }
     except Exception as e:
         logger.error(f"Error creating user: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        status_code = 400 if "already been registered" in error_msg else 500
+        raise HTTPException(status_code=status_code, detail=error_msg)
 
 @router.post("/api/users/set-password")
 async def set_user_password(payload: SetPasswordPayload):
     """Updates password for a user in Supabase Auth."""
     supabase = await get_supabase()
     try:
-        await supabase.auth.admin.update_user_by_id(payload.user_id, {
+        await supabase.auth.admin.update_user_by_id(str(payload.user_id), {
             "password": payload.new_password
         })
         return {"status": "success", "message": f"Password updated for user {payload.user_id}"}
@@ -1010,21 +1014,21 @@ async def update_user_role(payload: UpdateRolePayload):
     supabase = await get_supabase()
     try:
         # Update Supabase Auth metadata
-        user = await supabase.auth.admin.get_user_by_id(payload.user_id)
+        user = await supabase.auth.admin.get_user_by_id(str(payload.user_id))
         meta = user.user.user_metadata or {}
         meta["role"] = payload.role
-        await supabase.auth.admin.update_user_by_id(payload.user_id, {"user_metadata": meta})
+        await supabase.auth.admin.update_user_by_id(str(payload.user_id), {"user_metadata": meta})
 
         # Update staff table if applicable
         try:
-            await supabase.table("staff").update({"role": payload.role}).eq("user_id", payload.user_id).execute()
+            await supabase.table("staff").update({"role": payload.role}).eq("user_id", str(payload.user_id)).execute()
         except Exception:
             pass
 
         # Update users table if valid enum
         if payload.role in ('victim', 'witness', 'family'):
             try:
-                await supabase.table("users").update({"role_type": payload.role}).eq("id", payload.user_id).execute()
+                await supabase.table("users").update({"role_type": payload.role}).eq("id", str(payload.user_id)).execute()
             except Exception:
                 pass
 
@@ -1034,21 +1038,22 @@ async def update_user_role(payload: UpdateRolePayload):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/api/users/{user_id}")
-async def delete_user(user_id: str):
+async def delete_user(user_id: UUID):
     """Deletes user from Supabase Auth and database."""
     supabase = await get_supabase()
+    user_id_str = str(user_id)
     try:
         # 1. Delete from DB tables
         for tbl in ["staff", "users"]:
             try:
                 field = "user_id" if tbl == "staff" else "id"
-                await supabase.table(tbl).delete().eq(field, user_id).execute()
+                await supabase.table(tbl).delete().eq(field, user_id_str).execute()
             except Exception:
                 pass
 
         # 2. Delete from Supabase Auth
-        await supabase.auth.admin.delete_user(user_id)
-        return {"status": "success", "message": f"User {user_id} deleted"}
+        await supabase.auth.admin.delete_user(user_id_str)
+        return {"status": "success", "message": f"User {user_id_str} deleted"}
     except Exception as e:
         logger.error(f"Error deleting user {user_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

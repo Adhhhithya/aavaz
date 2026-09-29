@@ -84,7 +84,7 @@ def run_gate():
 
     # 4. Trigger SOS
     logger.info("[App] Triggering SOS Distress Signal...")
-    res = client.post("/api/v1/cases/sos/sos", headers={"Authorization": f"Bearer {victim_token}"}, json={"case_id": "test", "location_lat": 0, "location_lng": 0})
+    res = client.post("/api/v1/cases/sos/sos", headers={"Authorization": f"Bearer {victim_token}"}, json={"case_id": case_id, "location_lat": 18.5204, "location_lng": 73.8567})
     assert res.status_code == 200, f"SOS trigger failed: {res.text}"
     sos_data = res.json()
     if sos_data.get("case_id"):
@@ -99,11 +99,14 @@ def run_gate():
     }
     
     # We send a transcript turn indicating distress and witness intimidation
+    call_id_1 = f"gate_call_{uuid.uuid4().hex[:8]}"
     turn_payload = {
         "event": "transcript",
         "data": {
+            "call_id": call_id_1,
             "transcript": "My husband hit me again and he threatened me if I testify in court tomorrow. Please help, I'm bleeding and scared.",
             "metadata": {
+                "call_id": call_id_1,
                 "user_id": victim_id,
                 "case_id": case_id,
                 "turn_id": str(uuid.uuid4()),
@@ -145,11 +148,14 @@ def run_gate():
 
     # 7. Failure Degradation
     logger.info("[IVR] Simulating failure degradation (Empty ASR)...")
+    call_id_2 = f"gate_call_{uuid.uuid4().hex[:8]}"
     empty_payload = {
         "event": "transcript",
         "data": {
+            "call_id": call_id_2,
             "transcript": "",
             "metadata": {
+                "call_id": call_id_2,
                 "user_id": victim_id,
                 "case_id": case_id,
                 "turn_id": str(uuid.uuid4()),
@@ -165,9 +171,28 @@ def run_gate():
     logger.info("[Cleanup] Tearing down S11 E2E Test Data...")
     async def teardown():
         sb_client = await get_supabase()
+        if case_id:
+            try:
+                await sb_client.table("tasks").delete().eq("case_id", case_id).execute()
+            except Exception:
+                pass
+            try:
+                await sb_client.table("sos_events").delete().eq("case_id", case_id).execute()
+            except Exception:
+                pass
+            try:
+                await sb_client.table("interactions").delete().eq("case_id", case_id).execute()
+            except Exception:
+                pass
         if victim_id:
-            await sb_client.table("cases").delete().eq("user_id", victim_id).execute()
-            await sb_client.table("users").delete().eq("id", victim_id).execute()
+            try:
+                await sb_client.table("cases").delete().eq("user_id", victim_id).execute()
+            except Exception:
+                pass
+            try:
+                await sb_client.table("users").delete().eq("id", victim_id).execute()
+            except Exception:
+                pass
     asyncio.run(teardown())
     logger.info(" ✓ Cleanup successful.")
 

@@ -5,8 +5,9 @@
  * and the platform's standard button patterns.
  */
 import React from 'react';
-import { StyleSheet, Text, Pressable, ActivityIndicator, View } from 'react-native';
+import { StyleSheet, Text, ActivityIndicator, View } from 'react-native';
 import { Colors, Typography, Radius, TouchTargets, Shadows, Spacing } from '../theme/tokens';
+import ScalePressable from './ScalePressable';
 
 export default function SystemButton({
   title,
@@ -31,14 +32,13 @@ export default function SystemButton({
   };
 
   return (
-    <Pressable
+    <ScalePressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [
+      style={[
         styles.base,
         { backgroundColor: getBackgroundColor() },
         variant === 'filled' && !disabled && Shadows.sm,
-        pressed && { opacity: 0.7 },
         style,
       ]}
     >
@@ -52,7 +52,7 @@ export default function SystemButton({
           {title}
         </Text>
       )}
-    </Pressable>
+    </ScalePressable>
   );
 }
 

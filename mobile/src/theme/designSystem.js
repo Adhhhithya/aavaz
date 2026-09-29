@@ -2,7 +2,9 @@ const canvasTokens = {
   base: '#F8FAFC', // Slate 50
   surface: '#FFFFFF',
   surfaceHover: '#F1F5F9', // Slate 100
+  surfaceSubtle: '#F8FAFC', // Slate 50
   border: '#E2E8F0', // Slate 200
+  deep: '#0F172A', // Slate 900
 };
 
 const primaryTokens = {
@@ -40,14 +42,26 @@ const accentTokens = {
   
   // Legacy mappings to prevent breaks
   sos: '#EF4444', 
+  sosBg: 'rgba(239, 68, 68, 0.12)',
   sage: '#10B981',
   amber: '#F59E0B',
+  terracotta: '#EF4444',
+  blue: '#3B82F6',
+  crimson: '#991B1B',
+  emerald: '#10B981',
+  indigo: '#6366F1',
+  teal: '#14B8A6',
+  periwinkle: '#EBE8F6',
+  periwinkleText: '#4F46E5',
 };
 
 const textTokens = {
   primary: '#0F172A', // Slate 900
   secondary: '#475569', // Slate 600
   muted: '#94A3B8', // Slate 400
+  light: '#94A3B8', // Slate 400
+  subtle: '#64748B', // Slate 500
+  white: '#FFFFFF',
   inverse: '#FFFFFF',
 };
 
@@ -118,6 +132,20 @@ export const DS = {
       shadowRadius: 14,
       elevation: 4,
     },
+    ambient: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.12,
+      shadowRadius: 24,
+      elevation: 6,
+    },
+    hover: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      elevation: 3,
+    },
     // legacy support
     card: {
       shadowColor: '#000',
@@ -132,6 +160,11 @@ export const DS = {
   glass: {
     border: 'rgba(255, 255, 255, 0.12)',
     surface: 'rgba(255, 255, 255, 0.08)',
+  },
+  gradient: {
+    background: ['#F8FAFC', '#EFF6FF'],
+    cta: ['#3B82F6', '#2563EB'],
+    danger: ['#EF4444', '#DC2626'],
   },
   colors: {
     primary: primaryTokens,

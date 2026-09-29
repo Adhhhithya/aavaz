@@ -17,7 +17,7 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
     try:
         supabase = await get_supabase()
         
-        event_id = payload.call_id or "unknown_call"
+        event_id = payload.get_call_id
         
         # --- Idempotency Check ---
         # Use an atomic insert. If this fails due to a unique constraint violation,
@@ -26,8 +26,8 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
             await supabase.table("webhook_events").insert({
                 "provider": "bolna",
                 "external_event_id": event_id,
-                "event_type": payload.call_status or "completed",
-                "payload": payload.dict()
+                "event_type": payload.get_status,
+                "payload": payload.model_dump()
             }).execute()
         except Exception as e:
             if "duplicate key value violates unique constraint" in str(e).lower() or "23505" in str(e):
@@ -35,7 +35,7 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
                 return {"status": "ok", "message": "Already processed"}
             raise e
         
-        caller_phone = payload.caller_phone or "Unknown"
+        caller_phone = payload.get_caller_phone or "Unknown"
         # 1. Lookup user by phone number
         user_resp = await supabase.table("users").select("id").eq("phone_number", caller_phone).execute()
         
@@ -69,10 +69,12 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
                 "priority_rank": 0
             }
             case_insert_resp = await supabase.table("cases").insert(new_case).execute()
-            case_id = case_insert_resp.data[0]["id"]
+            case_record = case_insert_resp.data[0] if case_insert_resp.data else {}
+            case_id = case_record.get("id")
             logger.info(f"Registered new case from IVR: {case_id}")
         else:
-            case_id = case_resp.data[0]["id"]
+            case_record = case_resp.data[0]
+            case_id = case_record.get("id")
             
         # 3. Dynamic Multimodal Scoring
         try:
@@ -80,6 +82,8 @@ async def bolna_webhook(payload: BolnaWebhookPayload):
                 transcript=payload.transcript or "",
                 call_duration=payload.duration_seconds or 0,
                 audio_url=payload.audio_url or None,
+                submitter_role=(case_record.get("submitter_role") if case_record else None) or "victim",
+                history_score=float(case_record.get("current_distress_score") or 0.0)
             )
             final_score = fusion_result.distress_score
             intervention = fusion_result.intervention.value

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Filter, ArrowRight, Clock, ShieldCheck, CheckCircle } from 'lucide-react';
+import { LogOut, Filter, ArrowRight, Clock, ShieldCheck, CheckCircle, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import NumberFlow from '@number-flow/react';
 import RiskBadge from '../../components/ui/RiskBadge';
@@ -11,6 +11,7 @@ import { Button } from '../../components/ui/Button';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../config/supabase';
 import useAlertStore from '../../store/alertStore';
+import LeafletSosMap from '../../components/ui/LeafletSosMap';
 
 export default function CounsellorQueue() {
   const { user, logout, authFetch } = useAuth();
@@ -18,6 +19,7 @@ export default function CounsellorQueue() {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [showMap, setShowMap] = useState(true);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -46,8 +48,11 @@ export default function CounsellorQueue() {
                 id: c.id,
                 user_name: c.user_name || 'Anonymous Victim',
                 type: (c.case_type || 'unclassified').replace(/_/g, ' '),
-                score, risk,
+                score,
+                risk,
                 has_sos: Boolean(c.has_sos),
+                location_lat: c.location_lat || 18.5204,
+                location_lng: c.location_lng || 73.8567,
                 time: c.updated_at ? new Date(c.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
               };
             });
@@ -64,11 +69,11 @@ export default function CounsellorQueue() {
 
     // Supabase Realtime Subscription
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel(`counsellor-queue-${user.id}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'cases',
           filter: `assigned_counsellor_id=eq.${user.id}`,
@@ -85,8 +90,14 @@ export default function CounsellorQueue() {
       )
       .subscribe();
 
+    // Fallback polling (updates queue automatically even if websocket is disconnected)
+    const pollInterval = setInterval(() => {
+      fetchQueue();
+    }, 15000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [user, authFetch, logout, navigate]);
 
@@ -98,25 +109,57 @@ export default function CounsellorQueue() {
 
   const highPriorityCount = cases.filter((c) => c.score >= 70 || c.has_sos).length;
 
+  const sosIncidents = cases
+    .filter((c) => c.has_sos || c.score >= 75)
+    .map((c) => ({
+      id: c.id,
+      case_id: c.id,
+      case_code: c.id.substring(0, 8),
+      user_name: c.user_name,
+      distress_score: c.score,
+      location_lat: c.location_lat || 18.5204 + (Math.random() - 0.5) * 0.05,
+      location_lng: c.location_lng || 73.8567 + (Math.random() - 0.5) * 0.05,
+      is_sos: c.has_sos,
+      triggered_at: c.time,
+    }));
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      
-
-
       <main className="flex-1 p-6 md:p-10 max-w-5xl mx-auto w-full space-y-8 animate-in fade-in duration-300">
         <PageHeader 
           title="Triage Queue"
           subtitle={`You have ${highPriorityCount} priority case${highPriorityCount !== 1 ? 's' : ''} requiring review.`}
           right={
-            <Button 
-              variant={filter !== 'all' ? 'default' : 'outline'}
-              onClick={() => setFilter(f => f === 'all' ? 'critical' : f === 'critical' ? 'sos' : 'all')}
-              className={cn("gap-2 rounded-full", filter !== 'all' && "bg-primary-base text-white")}
-            >
-              <Filter size={16} /> {filter === 'all' ? 'All Cases' : filter === 'critical' ? 'High Risk' : 'SOS Only'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showMap ? 'default' : 'outline'}
+                onClick={() => setShowMap(v => !v)}
+                className={cn("gap-2 rounded-full text-xs font-bold", showMap ? "bg-primary-base text-white" : "border-border text-text-secondary")}
+              >
+                <MapPin size={15} /> {showMap ? 'Hide Map' : 'SOS Incident Map'}
+              </Button>
+              <Button 
+                variant={filter !== 'all' ? 'default' : 'outline'}
+                onClick={() => setFilter(f => f === 'all' ? 'critical' : f === 'critical' ? 'sos' : 'all')}
+                className={cn("gap-2 rounded-full", filter !== 'all' && "bg-primary-base text-white")}
+              >
+                <Filter size={16} /> {filter === 'all' ? 'All Cases' : filter === 'critical' ? 'High Risk' : 'SOS Only'}
+              </Button>
+            </div>
           }
         />
+
+        {/* Live OpenStreetMap SOS Incident Map */}
+        {showMap && (
+          <div className="animate-in fade-in duration-200">
+            <LeafletSosMap
+              incidents={sosIncidents}
+              height="300px"
+              title="Assigned Caseload — Emergency Geolocation & OpenStreetMap Incident Radar"
+              onMarkerClick={(item) => navigate(`/counsellor/case/${item.case_id || item.id}`)}
+            />
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-20">

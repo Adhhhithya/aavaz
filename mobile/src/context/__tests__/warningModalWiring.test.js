@@ -5,7 +5,9 @@ const path = require('node:path');
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..', '..');
 const WARNING_CONTEXT_PATH = path.join(ROOT_DIR, 'src', 'context', 'WarningModalContext.jsx');
-const APP_PATH = path.join(ROOT_DIR, 'App.js');
+const APP_PATH = fs.existsSync(path.join(ROOT_DIR, 'app', '_layout.js'))
+  ? path.join(ROOT_DIR, 'app', '_layout.js')
+  : path.join(ROOT_DIR, 'App.js');
 const SCREENS_DIR = path.join(ROOT_DIR, 'src', 'screens');
 
 function readWarningContextSource() {

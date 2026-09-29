@@ -33,10 +33,12 @@ import {
 import { DS } from '../theme/designSystem';
 import { api, API_BASE_URL } from '../services/api';
 import { useWarningModal } from '../context/WarningModalContext';
+import { useLanguage } from '../context/LanguageContext';
 import GrievanceRegistrationScreen from './GrievanceRegistrationScreen';
 
 export default function CaseLifecycleScreen({ userProfile, onContactCounselor }) {
   const { showWarning, showError, showSuccess } = useWarningModal();
+  const { t } = useLanguage();
   const [cases, setCases] = useState([]);
   const [expandedCaseId, setExpandedCaseId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -158,20 +160,20 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
       >
         {/* Screen Title */}
         <View style={styles.header}>
-          <Text style={styles.screenTitle}>Case Tracking</Text>
+          <Text style={styles.screenTitle}>{t('caseStatusTitle')}</Text>
           <Text style={styles.screenSubtitle}>
-            Track legal progress, official steps, and psychological support
+            {t('caseStatusSubtitle')}
           </Text>
 
           {/* Metric Summary Chips */}
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{activeCount}</Text>
-              <Text style={styles.statLabel}>Active Cases</Text>
+              <Text style={styles.statLabel}>{t('activeCase')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{resolvedCount}</Text>
-              <Text style={styles.statLabel}>Resolved</Text>
+              <Text style={styles.statLabel}>{t('stageResolved')}</Text>
             </View>
           </View>
         </View>
@@ -182,9 +184,9 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
             <View style={styles.emptyIconBox}>
               <FolderHeart size={44} color={DS.primary.main} />
             </View>
-            <Text style={styles.emptyTitle}>No active reports on file</Text>
+            <Text style={styles.emptyTitle}>{t('noActiveCaseTitle')}</Text>
             <Text style={styles.emptySubtitle}>
-              You currently have no ongoing complaints or incidents registered under your profile.
+              {t('noActiveCaseDesc')}
             </Text>
 
             <View style={styles.actionButtonGroup}>
@@ -194,7 +196,7 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
                 activeOpacity={0.85}
               >
                 <FilePlus size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-                <Text style={styles.fileNewGrievanceButtonText}>File Official Grievance</Text>
+                <Text style={styles.fileNewGrievanceButtonText}>{t('actionRegisterNew')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -208,7 +210,7 @@ export default function CaseLifecycleScreen({ userProfile, onContactCounselor })
                 ) : (
                   <>
                     <Search size={16} color={DS.primary.main} style={{ marginRight: 6 }} />
-                    <Text style={styles.fileNewSecondaryButtonText}>Link eCourts CNR</Text>
+                    <Text style={styles.fileNewSecondaryButtonText}>{t('linkEcourtsTitle')}</Text>
                   </>
                 )}
               </TouchableOpacity>

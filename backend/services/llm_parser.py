@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Groq client
 client = AsyncGroq(api_key=settings.GROQ_API_KEY)
-MODEL_NAME = "openai/gpt-oss-120b"
+MODEL_NAME = "qwen/qwen3.8-27b"
 
 def build_system_prompt(case_context: dict = None, voice: bool = False) -> str:
     """

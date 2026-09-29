@@ -35,12 +35,14 @@ export default function TabsLayout() {
   // Derive activeTab from pathname for FloatingTabBar
   let activeTab = 'Home';
   if (pathname.includes('cases')) activeTab = 'Cases';
+  if (pathname.includes('checkin')) activeTab = 'Checkin';
   if (pathname.includes('assistant')) activeTab = 'Assistant';
   if (pathname.includes('profile')) activeTab = 'Profile';
 
   const handleTabPress = (tabId) => {
     switch (tabId) {
       case 'Home': router.navigate('/(tabs)/home'); break;
+      case 'Checkin': router.navigate('/(tabs)/checkin'); break;
       case 'Cases': router.navigate('/(tabs)/cases'); break;
       case 'Assistant': router.navigate('/(tabs)/assistant'); break;
       case 'Profile': router.navigate('/(tabs)/profile'); break;
@@ -60,6 +62,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="cases" />
         <Tabs.Screen name="assistant" />
         <Tabs.Screen name="profile" />
+        <Tabs.Screen name="checkin" />
       </Tabs>
       <FloatingTabBar activeTab={activeTab} onTabPress={handleTabPress} />
     </View>

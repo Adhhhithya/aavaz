@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 
@@ -19,11 +20,26 @@ import DistrictAdmin from './pages/Admin/DistrictDashboard';
 import StateAdmin from './pages/Admin/StateDashboard';
 import NationalAdmin from './pages/Admin/NationalDashboard';
 
+function RootRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen bg-canvas-base flex items-center justify-center text-text-muted">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  
+  if (user.role === 'victim') return <Navigate to="/victim/dashboard" replace />;
+  if (user.role === 'counsellor') return <Navigate to="/counsellor/queue" replace />;
+  if (user.role === 'admin_district') return <Navigate to="/admin/district" replace />;
+  if (user.role === 'admin_state') return <Navigate to="/admin/state" replace />;
+  if (user.role === 'admin_national') return <Navigate to="/admin/national" replace />;
+  
+  return <Navigate to="/login" replace />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
+      <LanguageProvider>
+        <Router>
+          <Routes>
           <Route path="/login" element={<Login />} />
 
           {/* Victim Routes */}
@@ -45,8 +61,14 @@ export default function App() {
           {/* Admin & Counsellor Routes with Global Layout */}
           <Route
             path="/"
-            element={<GlobalLayout />}
+            element={
+              <ProtectedRoute>
+                <GlobalLayout />
+              </ProtectedRoute>
+            }
           >
+            <Route index element={<RootRedirect />} />
+
             {/* Counsellor */}
             <Route
               path="counsellor"
@@ -92,6 +114,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
+      </LanguageProvider>
     </AuthProvider>
   );
 }
