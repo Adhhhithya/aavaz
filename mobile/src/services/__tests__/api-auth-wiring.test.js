@@ -20,15 +20,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const API_JS = path.join(__dirname, '..', 'api.js');
+const CONFIG_JS = path.join(__dirname, '..', '..', 'config', 'index.js');
 
 function readApiSource() {
   return fs.readFileSync(API_JS, 'utf8');
 }
 
-test('api.js exposes setAuthToken/clearAuthToken', () => {
+function readConfigSource() {
+  return fs.readFileSync(CONFIG_JS, 'utf8');
+}
+
+test('api.js exposes setAuthToken/clearAuthToken/getAuthToken', () => {
   const source = readApiSource();
   assert.match(source, /export function setAuthToken/);
   assert.match(source, /export function clearAuthToken/);
+  assert.match(source, /export function getAuthToken/);
 });
 
 test('api.js attaches Authorization: Bearer when a token is set', () => {
@@ -36,12 +42,17 @@ test('api.js attaches Authorization: Bearer when a token is set', () => {
   assert.match(source, /Authorization.*Bearer \$\{authToken\}/s);
 });
 
-test('api.js get/post both route through the header-building helper', () => {
+test('api.js get/post/put/delete all route through the header-building helper', () => {
   const source = readApiSource();
   const getBlock = source.slice(source.indexOf('get: async'), source.indexOf('post: async'));
-  const postBlock = source.slice(source.indexOf('post: async'));
+  const postBlock = source.slice(source.indexOf('post: async'), source.indexOf('put: async'));
+  const putBlock = source.slice(source.indexOf('put: async'), source.indexOf('delete: async'));
+  const deleteBlock = source.slice(source.indexOf('delete: async'));
+
   assert.match(getBlock, /buildHeaders\(/, 'GET must attach headers via buildHeaders');
   assert.match(postBlock, /buildHeaders\(/, 'POST must attach headers via buildHeaders');
+  assert.match(putBlock, /buildHeaders\(/, 'PUT must attach headers via buildHeaders');
+  assert.match(deleteBlock, /buildHeaders\(/, 'DELETE must attach headers via buildHeaders');
 });
 
 test('api.js post() supports a one-off Authorization override for the phone-verified registration token', () => {
@@ -56,6 +67,17 @@ test('api.js post() supports a one-off Authorization override for the phone-veri
 test('api.js never hardcodes a fabricated session token', () => {
   const source = readApiSource();
   assert.doesNotMatch(source, /mock_jwt/i);
+});
+
+test('config/index.js never contains service_role secret', () => {
+  const source = readConfigSource();
+  assert.doesNotMatch(source, /service_role/i, 'config/index.js must never bundle a service_role key');
+});
+
+test('api.js validates URL protocol prefix against injection', () => {
+  const source = readApiSource();
+  assert.match(source, /startsWith\('http:\/\/'\)/);
+  assert.match(source, /startsWith\('https:\/\/'\)/);
 });
 
 // Regression guard for the S2 fix: screens must no longer send user_id in
