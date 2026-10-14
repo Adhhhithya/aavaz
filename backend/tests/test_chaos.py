@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 from main import app
 from tests.fake_supabase import FakeSupabaseClient
@@ -12,10 +12,13 @@ async def test_chaos_health_endpoint_db_outage():
     Test the health endpoint behaviour under DB outage.
     """
     with patch("api.health_routes.get_supabase", new_callable=AsyncMock) as mock_sup:
-        mock_table = AsyncMock()
-        mock_table.select.return_value.limit.return_value.execute.side_effect = Exception("DB DEAD")
-        
-        mock_db = AsyncMock()
+        mock_db = MagicMock()
+        mock_table = MagicMock()
+        mock_select = MagicMock()
+        mock_limit = MagicMock()
+        mock_limit.execute = AsyncMock(side_effect=Exception("DB DEAD"))
+        mock_select.limit.return_value = mock_limit
+        mock_table.select.return_value = mock_select
         mock_db.table.return_value = mock_table
         mock_sup.return_value = mock_db
         
@@ -46,10 +49,10 @@ async def test_chaos_concurrent_sos_duplicate_handling():
          patch("api.scoring.fusion.calculate_dynamic_score", new_callable=AsyncMock) as mock_process:
         
         mock_sup.return_value = fake_db
-        mock_process.return_value = AsyncMock(
+        mock_process.return_value = MagicMock(
             distress_score=95.0, 
-            emotion_tag=AsyncMock(value="fear"),
-            intervention=AsyncMock(value="police_dispatch"),
+            emotion_tag=MagicMock(value="fear"),
+            intervention=MagicMock(value="police_dispatch"),
             score_breakdown={}
         )
         

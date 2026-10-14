@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 from services.llm_parser import generate_chat_response
 from services.pushbullet_service import send_sms
@@ -44,8 +44,8 @@ async def test_send_sms_retries_on_failure():
             mock_get_iden.return_value = "dummy_iden"
             
             # Test 1: Succeeds on third attempt
-            mock_response = AsyncMock()
-            mock_response.raise_for_status = AsyncMock()
+            mock_response = MagicMock()
+            mock_response.raise_for_status = MagicMock()
             mock_post.side_effect = [
                 httpx.TimeoutException("Timeout 1"),
                 httpx.TimeoutException("Timeout 2"),

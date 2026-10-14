@@ -61,7 +61,7 @@ async def test_token_signed_with_a_different_secret_is_rejected():
 
     forged = pyjwt.encode(
         {"purpose": "victim", "sub": "victim-attacker-controlled", "exp": 9999999999},
-        "some-other-secret",
+        "some-other-secret-key-32-bytes-long",
         algorithm="HS256",
     )
     with pytest.raises(HTTPException) as exc_info:
