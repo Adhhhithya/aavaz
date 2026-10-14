@@ -69,8 +69,7 @@ class BolnaDistressAssessment(BaseModel):
     immediate_threat_detected: Optional[bool] = False
     summary_notes: Optional[str] = ""
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 class BolnaPreCallPayload(BaseModel):
     call_id: Optional[str] = None

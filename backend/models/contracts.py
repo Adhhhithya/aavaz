@@ -11,7 +11,7 @@ at rest - use victim_id / case_id references throughout.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Literal, Optional
 from pydantic import BaseModel, Field, field_validator
@@ -140,7 +140,7 @@ class DistressResult(BaseModel):
     intervention: InterventionType = InterventionType.NONE
     signals: list[str] = Field(default_factory=list)
     score_breakdown: dict[str, ScoreComponent]
-    computed_at: datetime = Field(default_factory=datetime.utcnow)
+    computed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +211,7 @@ class EscalationState(BaseModel):
     recommended_action: str = "human_handoff"
     status: EscalationStatus = EscalationStatus.PENDING
     counsellor_task_id: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ---------------------------------------------------------------------------
@@ -244,7 +244,7 @@ class Turn(BaseModel):
     acoustic: Optional[AcousticFeatures] = None
     distress: Optional[DistressResult] = None
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ConversationState(BaseModel):
